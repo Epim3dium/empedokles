@@ -1,7 +1,7 @@
-#ifndef EPI_CIRCLE_HPP
-#define EPI_CIRCLE_HPP
+#ifndef EMP_CIRCLE_HPP
+#define EMP_CIRCLE_HPP
 #include "math/math_defs.hpp"
-namespace epi {
+namespace emp {
 
 struct Circle {
 

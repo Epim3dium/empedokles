@@ -16,7 +16,7 @@ add_executable(
 
 target_link_libraries(unit_tests
   PRIVATE
-    epimetheus
+    empedokles
     gtest_main
   )
 

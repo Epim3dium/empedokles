@@ -1,9 +1,9 @@
-#ifndef EPI_CONVEX_POLYGON_HPP
-#define EPI_CONVEX_POLYGON_HPP
+#ifndef EMP_CONVEX_POLYGON_HPP
+#define EMP_CONVEX_POLYGON_HPP
 #include "math/math_defs.hpp"
 #include <vector>
 #include "AABB.hpp"
-namespace epi {
+namespace emp {
 class ConvexPolygon {
     std::vector<vec2f> points;
     std::vector<vec2f> model;

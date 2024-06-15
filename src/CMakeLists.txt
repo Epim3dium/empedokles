@@ -37,8 +37,8 @@ set(HEADER_FILES
     debug/debug.hpp
 )
 include_directories(.)
-add_library(epimetheus
+add_library(empedokles
     ${SOURCE_FILES} ${HEADER_FILES}
 )
-target_compile_options(epimetheus PRIVATE -glldb)
+target_compile_options(empedokles PRIVATE -glldb)
 

@@ -9,7 +9,7 @@
 #include <math.h>
 #include <numeric>
 #include <vector>
-namespace epi {
+namespace emp {
 AABB AABB::CreateFromCircle(const Circle& c) {
     return AABB::CreateMinMax(c.pos - vec2f(c.radius, c.radius),
                               c.pos + vec2f(c.radius, c.radius));
@@ -173,4 +173,4 @@ ConcavePolygon::ConcavePolygon(std::vector<ConvexPolygon> polygons) {
 }
 vec2f operator*(vec2f a, vec2f b) { return vec2f(a.x * b.x, a.y * b.y); }
 
-} // namespace epi
+} // namespace emp

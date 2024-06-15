@@ -1,5 +1,5 @@
-#ifndef EPI_LINEAR_ALLOCATOR
-#define EPI_LINEAR_ALLOCATOR
+#ifndef EMP_LINEAR_ALLOCATOR
+#define EMP_LINEAR_ALLOCATOR
 #include "allocator.hpp"
 #include <stdint.h>
 #include <string.h>
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <memory>
 
-namespace epi {
+namespace emp {
 
 class LinearAllocator : public Allocator {
 public:
@@ -34,4 +34,4 @@ private:
 };
 
 }
-#endif //EPI_LINEAR_ALLOCATOR
+#endif //EMP_LINEAR_ALLOCATOR

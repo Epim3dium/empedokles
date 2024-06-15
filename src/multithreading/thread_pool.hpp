@@ -142,4 +142,4 @@ public:
 };
 
 }
-#endif // EPI_THREAD_POOL_HPP
+#endif // EMP_THREAD_POOL_HPP

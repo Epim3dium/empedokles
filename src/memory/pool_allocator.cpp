@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace epi {
+namespace emp {
 PoolAllocator::PoolAllocator(const std::size_t totalSize, const std::size_t chunkSize)
 : Allocator(totalSize) {
     assert(chunkSize >= 8 && "Chunk size must be greater or equal to 8");
@@ -31,7 +31,7 @@ void *PoolAllocator::Allocate(const std::size_t allocationSize, const std::size_
 
     m_used += m_chunkSize;
     m_peak = std::max(m_peak, m_used);
-    EPI_LOG(LogLevel::DEBUG3) << "A" << "\t@S " << m_start_ptr << "\t@R " << (void*) freePosition << "\tM " << m_used;
+    EMP_LOG(LogLevel::DEBUG3) << "A" << "\t@S " << m_start_ptr << "\t@R " << (void*) freePosition << "\tM " << m_used;
 
     return (void*) freePosition;
 }
@@ -41,7 +41,7 @@ void PoolAllocator::Free(void * ptr) {
 
     m_freeList.push((Node *) ptr);
 
-    EPI_LOG(LogLevel::DEBUG3) << "F" << "\t@S " << m_start_ptr << "\t@F " << ptr << "\tM " << m_used;
+    EMP_LOG(LogLevel::DEBUG3) << "F" << "\t@S " << m_start_ptr << "\t@F " << ptr << "\tM " << m_used;
 }
 
 void PoolAllocator::Reset() {

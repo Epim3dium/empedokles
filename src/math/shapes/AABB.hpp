@@ -1,5 +1,5 @@
-#ifndef EPI_AABB_HPP
-#define EPI_AABB_HPP
+#ifndef EMP_AABB_HPP
+#define EMP_AABB_HPP
 
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderTarget.hpp"
@@ -12,7 +12,7 @@
 #include <numeric>
 #include <vector>
 
-namespace epi {
+namespace emp {
 struct Circle;
 struct ConvexPolygon;
 

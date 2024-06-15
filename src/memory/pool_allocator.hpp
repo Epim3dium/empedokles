@@ -2,10 +2,10 @@
 #include "allocator.hpp"
 #include "templates/stack_linked_list.hpp"
 
-#ifndef EPI_POOL_ALLOCATOR_H
-#define EPI_POOL_ALLOCATOR_H
+#ifndef EMP_POOL_ALLOCATOR_H
+#define EMP_POOL_ALLOCATOR_H
 
-namespace epi {
+namespace emp {
 
 class PoolAllocator : public Allocator {
 private:

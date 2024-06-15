@@ -6,6 +6,6 @@ include_directories(../src)
 
 target_link_libraries(demo
   PRIVATE
-    epimetheus
+    empedokles
 )
 target_compile_options(demo PRIVATE -glldb)

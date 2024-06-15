@@ -22,4 +22,4 @@ vec2f rotateVec(vec2f vec, float angle);
 
 
 }
-#endif// EPI_MATH_FUNC_HPP
+#endif// EMP_MATH_FUNC_HPP

@@ -1,7 +1,7 @@
 #include "linear_allocator.hpp"
 /* Constructors */
 
-namespace epi {
+namespace emp {
 LinearAllocator::LinearAllocator(size_t total_size) : Allocator(total_size), m_size(total_size), m_free(total_size), m_preAlloc(false), m_initialized(false) {
     m_start = (uint8_t*)malloc(m_size * sizeof(uint8_t));
     m_end = (void*)((uintptr_t)m_start + m_size * sizeof(uint8_t));

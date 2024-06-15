@@ -1,11 +1,11 @@
-#ifndef EPI_PARALLEL_ITERATOR
-#define EPI_PARALLEL_ITERATOR
+#ifndef EMP_PARALLEL_ITERATOR
+#define EMP_PARALLEL_ITERATOR
 #include <iterator>
 //to iterate over multiple memory blocks .ex:
 //int i[10]
 //float f[10]
 //RawPrallelIterator(i, f)
-namespace epi {
+namespace emp {
 
 template <typename... Types>
 class RawParallelIterator {

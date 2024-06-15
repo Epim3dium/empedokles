@@ -1,7 +1,7 @@
-#ifndef EPI_ALLOCATOR_H
-#define EPI_ALLOCATOR_H
+#ifndef EMP_ALLOCATOR_H
+#define EMP_ALLOCATOR_H
 #include <cstddef>
-namespace epi {
+namespace emp {
 
 class Allocator {
 protected:
