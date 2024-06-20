@@ -30,8 +30,8 @@ bool isTriangulable(const std::vector<vec2f>& points) {
     return false;
 }
 
-std::vector<std::vector<vec2f>> triangulateEarClipping(const std::vector<vec2f>& points) {
-    std::vector<std::vector<vec2f>> result;
+std::vector<Triangle> triangulateEarClipping(const std::vector<vec2f>& points) {
+    std::vector<Triangle> result;
     std::vector<vec2f> tmp = points;
     while (result.size() != points.size() - 2) {
         size_t res_size_last = result.size();
@@ -66,7 +66,7 @@ std::vector<std::vector<vec2f>> triangulateEarClipping(const std::vector<vec2f>&
     }
     return result;
 }
-std::vector<std::vector<vec2f>> triangulate(const std::vector<vec2f>& points) {
+std::vector<Triangle> triangulate(const std::vector<vec2f>& points) {
     return triangulateEarClipping(points);
 }
 bool hasSharedEdge(std::vector<vec2f> points0,
@@ -602,20 +602,13 @@ float area(const std::vector<vec2f>& model) {
     }
     return abs(area / 2.0);
 }
-struct ProjectionResult {
-    float min;
-    std::vector<vec2f> min_points;
-    float max;
-    std::vector<vec2f> max_points;
-};
 // std::pair<float, float> calcProjectionPolygon(const std::vector<vec2f>&r, vec2f projectionAxis) {
 // }
 struct IntersetionPolygonPolygonAxis {
-    std::vector<vec2f> cp_calc_info;
     bool detected = false;
     float overlap = INFINITY;
     vec2f cn;
-    bool continue_calc  = true;
+    bool foundSeparatingAxis  = false;
 };
 IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::vector<vec2f>& p1, const std::vector<vec2f>& p2, vec2f axisProj, bool flipAxis = false) {
     
@@ -629,8 +622,6 @@ IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::
     float overlap = INFINITY;
     vec2f cn;
 
-    //calculate contact point only after finding max penetration
-    std::vector<vec2f> cp_calc_info;
     // Work out min and max 1D points for r1
     float min_dist = INFINITY;
     float min_r1 = INFINITY, max_r1 = -INFINITY;
@@ -641,26 +632,16 @@ IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::
     }
 
     float min_r2 = INFINITY, max_r2 = -INFINITY;
-    std::vector<vec2f> min_p2, max_p2;
     for (auto p : poly2) {
         float q = dot(p, axisProj);
         
         //additional if statements to find if edge is almost parallel to axisProj edge
-        if(nearlyEqual(q, min_r2, 0.15f)) {
-            min_p2.push_back(p);
-            min_r2 = (q + min_r2 * (min_p2.size() - 1)) / min_p2.size();
-        }else if(q < min_r2) {
+        if(q < min_r2) {
             min_r2 = q;
-            min_p2 = {p};
         }
         
-        if(nearlyEqual(q, max_r2, 0.15f)) {
-            max_p2.push_back(p);
-            max_r2 = (q + max_r2 * (max_p2.size() - 1)) / max_p2.size();
-        }
-        else if(q > max_r2) {
+        if(q > max_r2) {
             max_r2 = q;
-            max_p2 = {p};
         }
     }
 
@@ -668,7 +649,7 @@ IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::
     auto minmax = std::min(max_r1, max_r2);
     auto maxmin = std::max(min_r1, min_r2); 
     if (!(max_r2 >= min_r1 && max_r1 >= min_r2)) {
-        result.continue_calc = false;
+        result.foundSeparatingAxis = true;
         return result;
     }
     if(!(minmax - maxmin < overlap && minmax - maxmin >= 0.f)) {
@@ -681,62 +662,10 @@ IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::
     if(flipAxis)
         cn *= -1.f;
     
-    if(minmax == max_r2) {
-        cp_calc_info = max_p2;
-    }else {
-        cp_calc_info = min_p2;
+    if(minmax != max_r2) {
         cn *= -1.f;
     }
-    return {cp_calc_info, true, overlap, cn, true};
-}
-IntersectionPolygonPolygonResult intersectPolygonPolygonUsingAxis(const std::vector<vec2f>& poly1, const std::vector<vec2f>& poly2, const vec2f axisProj, bool flipAxis) {
-    auto tmp = intersectPolygonPolygonUsingAxisHelper(poly1, poly2, axisProj, flipAxis);
-    std::vector<vec2f> collision_points;
-    for(auto p : tmp.cp_calc_info) {
-        collision_points.push_back(findClosestPointOnEdge(p, flipAxis ? poly2 : poly1));
-    }
-    return {tmp.detected && tmp.continue_calc, tmp.cn, tmp.overlap, collision_points};
-}
-SeparatingAxisInfo calcSeparatingAxisPolygonPolygon(const std::vector<vec2f>&r1, const std::vector<vec2f> &r2) {
-    const std::vector<vec2f>* verticies[] = {&r1, &r2};
-
-    float overlap = INFINITY;
-    vec2f axis;
-    bool polyUsedInAxisProj = false;
-    size_t index_ret = -1;
-
-    for (int poly1 = 0; poly1 < 2; poly1++) {
-        auto poly2 = !poly1;
-        
-        for (int i = 0; i < verticies[poly1]->size(); i++) {
-            auto prev = (*verticies[poly1])[i];
-            auto vert = (*verticies[poly1])[(i + 1) % verticies[poly1]->size()];
-            vec2f perp = vert - prev;
-            vec2f axisProj = { -perp.y, perp.x };
-            axisProj = normal(axisProj);
-            auto t = intersectPolygonPolygonUsingAxisHelper(r1, r2, axisProj, poly1);
-            
-            if(!t.continue_calc) {
-                return {false};
-            }
-            if(!t.detected) {
-                continue;
-            }
-            if(overlap < t.overlap) {
-                continue;
-            }
-            
-            overlap = t.overlap;
-            axis = axisProj;
-            polyUsedInAxisProj = poly1;
-            index_ret = i; 
-        }
-    }
-    if(overlap <= 0.f) {
-        return {false};
-    }
-    assert(index_ret != -1U);
-    return {true, axis, polyUsedInAxisProj, index_ret};
+    return {true, overlap, cn, false};
 }
 IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f>&r1, const std::vector<vec2f> &r2) {
     const std::vector<vec2f>* verticies[] = {&r1, &r2};
@@ -745,20 +674,31 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
     vec2f cn;
 
     //calculate contact point only after finding max penetration
-    std::pair<std::vector<vec2f>, int> cp_calc_info;
+    struct CpCalcInfo {
+        vec2f a;
+        vec2f b;
+        int flipAxis;
+    };
+    typedef std::vector<CpCalcInfo> CpCalcInfos;
+    CpCalcInfos cp_calc_info;
     
-    for (int poly1 = 0; poly1 < 2; poly1++) {
-        auto poly2 = !poly1;
+    for (int flipAxis = 0; flipAxis < 2; flipAxis++) {
         
-        auto prev = verticies[poly1]->back();
-        for (auto vert : *verticies[poly1]) {
+        auto prev = r1.back();
+        for (auto vert : (flipAxis ? r2 : r1)) {
             vec2f perp = vert - prev;
+            std::pair<vec2f, vec2f> used = {vert, prev};
+
             prev = vert;
             vec2f axisProj = { -perp.y, perp.x };
             axisProj = normal(axisProj);
-            auto t = intersectPolygonPolygonUsingAxisHelper(r1, r2, axisProj, poly1);
+            if(axisProj == -cn || axisProj == cn) {
+                cp_calc_info.push_back({used.first, used.second, flipAxis});
+                continue;
+            }
+            auto t = intersectPolygonPolygonUsingAxisHelper(r1, r2, axisProj, flipAxis);
             
-            if(!t.continue_calc) {
+            if(t.foundSeparatingAxis) {
                 return {false};
             }
             if(!t.detected) {
@@ -770,16 +710,15 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
             
             overlap = t.overlap;
             cn = t.cn;
-            cp_calc_info = {t.cp_calc_info, poly1};
+            auto avg = (used.first + used.second) / 2.f;
+            cp_calc_info = {{used.first, used.second, flipAxis}};
         }
     }
     if(overlap <= 0.f) {
         return {false};
     }
-    std::vector<vec2f> collision_points;
-    for(auto p : cp_calc_info.first) {
-        collision_points.push_back(findClosestPointOnEdge(p, *verticies[cp_calc_info.second]));
-    }
+
+    std::vector<vec2f> collision_points = findContactPoints(r1, r2); 
 
     return {true, cn, overlap, collision_points};
 }
@@ -851,5 +790,29 @@ float calculateInertia(const std::vector<vec2f>& model, float mass) {
         mmoi = 0.f;
     }
     return abs(mmoi);
+}
+
+MMOIInfo calculateMMOI(const std::vector<vec2f>& model, float thickness, float density) {
+    const auto triangles = triangulate(model);
+    std::vector<float> mass(triangles.size(), 0.f);
+    std::vector<float> mmoi(triangles.size(), 0.f);
+    std::vector<vec2f> centroid(triangles.size(), {0.f, 0.f});
+    float combinedMass = 0;
+    float combinedMMOI = 0;
+    vec2f combinedCentroid(0, 0);
+    for (int i = 0; i < triangles.size(); ++i) {
+        mass[i] = triangles[i].calcMass(thickness, density);
+        mmoi[i] = triangles[i].calcMMOI(mass[i]);
+        centroid[i] = triangles[i].calcCentroid();
+
+        combinedMass += mass[i];
+        combinedCentroid += mass[i] * centroid[i];
+    }
+    combinedCentroid /= combinedMass;
+
+    for (int i = 0; i < triangles.size(); ++i) {
+        combinedMMOI += mmoi[i] + mass[i] * qlen(centroid[i] - combinedCentroid);
+    }
+    return {combinedMMOI, combinedMass};
 }
 } // namespace emp

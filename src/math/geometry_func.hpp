@@ -7,7 +7,7 @@
 namespace emp {
     
 bool isTriangulable(const std::vector<vec2f>& points);
-std::vector<std::vector<vec2f>> triangulate(const std::vector<vec2f>& points);
+std::vector<Triangle> triangulate(const std::vector<vec2f>& points);
 std::vector<std::vector<vec2f>> partitionConvex(const std::vector<std::vector<vec2f>>& polygons);
 
 float calcTriangleVolume(vec2f a, vec2f b, vec2f c);
@@ -39,6 +39,11 @@ bool isOverlappingPointPoly(const vec2f& p, const std::vector<vec2f>& poly_point
 //returns true if aabb and aabb are overlapping
 bool isOverlappingAABBAABB(const AABB& r1, const AABB& r2);
 float calculateInertia(const std::vector<vec2f>& model, float mass);
+struct MMOIInfo {
+    float MMOI;
+    float mass;
+};
+MMOIInfo calculateMMOI(const std::vector<vec2f>& model, float thickness, float density);
 
 /**
  * structure containing all info returned by Ray and AABB intersection
@@ -111,16 +116,8 @@ struct IntersectionPolygonPolygonResult {
  * Calculates all information connected to Polygon and Polygon intersection
  * @return IntersectionPolygonPolygonResult that contains: (in order) [bool]detected, [vec2f]contact_normal, [float]overlap
  */
-IntersectionPolygonPolygonResult intersectPolygonPolygonUsingAxis(const std::vector<vec2f>& poly1, const std::vector<vec2f>& poly2, const vec2f axisProj, bool flipAxis = false);
 IntersectionPolygonPolygonResult intersectPolygonPolygon(const ConvexPolygon &r1, const ConvexPolygon &r2);
 IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f>&r1, const std::vector<vec2f> &r2);
-struct SeparatingAxisInfo {
-    bool exists;
-    vec2f axisProj;
-    bool wasItSecondShape;
-    size_t edge_index;
-};
-SeparatingAxisInfo calcSeparatingAxisPolygonPolygon(const std::vector<vec2f>&r1, const std::vector<vec2f> &r2);
 
 struct IntersectionPolygonCircleResult {
     bool detected;

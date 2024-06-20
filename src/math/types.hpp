@@ -16,6 +16,7 @@
 #include "math/math_func.hpp"
 #include "shapes/AABB.hpp"
 #include "shapes/ray.hpp"
+#include "shapes/triangle.hpp"
 #include "shapes/circle.hpp"
 #include "shapes/convex_polygon.hpp"
 #include "shapes/concave_polygon.hpp"
