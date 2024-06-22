@@ -1,7 +1,9 @@
 #include "transform.hpp"
+#include "debug/log.hpp"
 
 namespace emp {
     void Transform::m_updateLocalTransform() {
+        m_local_transform = sf::Transform::Identity;
         m_local_transform.translate(position);
         m_local_transform.rotate(rotation / M_PI * 180.f);
         m_local_transform.scale(scale);

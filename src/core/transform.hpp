@@ -33,6 +33,10 @@ public:
     void removeChild(Transform* child);
     void setParent(Transform* parent);
     void update();
+    Transform(const Transform&) = delete;
+    Transform(Transform&&) = delete;
+    Transform& operator=(const Transform&) = delete;
+    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { update(); }
 };
 };
 #endif
