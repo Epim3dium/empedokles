@@ -17,6 +17,7 @@ public:
     float mass() const {
         return m_mass;
     }
+    float generalizedInverseMass(vec2f radius, vec2f normal) const;
 
     vec2f prev_pos = vec2f(0.f, 0.f);
     vec2f vel_pre_solve = vec2f(0.f, 0.f);
@@ -30,7 +31,12 @@ public:
 
     bool isStatic = false;
 
+    void integrate(float delT);
+    void deriveVelocities(float delT);
     void update();
+    Rigidbody(const Rigidbody&) = delete;
+    Rigidbody(Rigidbody&&) = delete;
+    Rigidbody& operator=(const Rigidbody&) = delete;
     Rigidbody(Transform* transform, Collider* collider, float density = 1.f);
 };
 };
