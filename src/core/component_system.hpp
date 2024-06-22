@@ -59,10 +59,10 @@ public:
     template<class ...InitVals>
     ComponentInstance(InitVals... vals) {
         inst = CompSys::create(vals...);
-        EMP_LOG(DEBUG3) << "created: " << typeid(Comp).name() << "\tat: " << inst; 
+        EMP_LOG(DEBUG2) << "created: " << typeid(Comp).name() << "\tat: " << inst; 
     }
     ~ComponentInstance() {
-        EMP_LOG(DEBUG3) << "destroyed: " << typeid(Comp).name() << "\tat: " << inst; 
+        EMP_LOG(DEBUG2) << "destroyed: " << typeid(Comp).name() << "\tat: " << inst; 
         CompSys::destroy(inst);
     }
 };

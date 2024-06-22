@@ -71,7 +71,7 @@ public:
 
     
     inline friend void run(App& app) {
-        sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(app.window_size.x, app.window_size.y), "My window");
+        sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(app.window_size.x, app.window_size.y), "demo");
         window.setFramerateLimit(60);
         if(!app.setup(window)) {
             return;

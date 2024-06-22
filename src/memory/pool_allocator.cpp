@@ -16,7 +16,7 @@ PoolAllocator::PoolAllocator(const std::size_t totalSize, const std::size_t chun
 
 void PoolAllocator::Init() {
     m_start_ptr = malloc(m_totalSize);
-    EMP_LOG(LogLevel::DEBUG3) << "A[MALLOC]" << "\t@S " << m_start_ptr; 
+    EMP_LOG(LogLevel::DEBUG3) << "A[INIT]" << "\t@S " << m_start_ptr << "\tM" << m_totalSize; 
     this->Reset();
 }
 
