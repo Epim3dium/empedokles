@@ -14,6 +14,7 @@ set(SOURCE_FILES
     physics/collider.cpp
     physics/rigidbody.cpp
     physics/physics_system.cpp
+    physics/broad_phase.cpp
 )
 set(HEADER_FILES
     memory/parallel_iterator.hpp
@@ -41,6 +42,7 @@ set(HEADER_FILES
     physics/rigidbody.hpp
     physics/material.hpp
     physics/physics_system.hpp
+    physics/broad_phase.hpp
     
     core/app.hpp
     core/transform.hpp
