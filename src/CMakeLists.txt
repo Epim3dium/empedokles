@@ -8,6 +8,11 @@ set(SOURCE_FILES
 
     memory/linear_allocator.cpp
     memory/pool_allocator.cpp
+
+    core/transform.cpp
+
+    physics/collider.cpp
+    physics/rigidbody.cpp
 )
 set(HEADER_FILES
     memory/parallel_iterator.hpp
@@ -19,6 +24,7 @@ set(HEADER_FILES
 
     multithreading/thread_pool.hpp
 
+
     math/types.hpp
     math/shapes/AABB.hpp
     math/shapes/circle.hpp
@@ -29,6 +35,13 @@ set(HEADER_FILES
     math/math_defs.hpp
     math/math.hpp
     math/geometry_func.hpp
+
+    physics/collider.hpp
+    physics/rigidbody.hpp
+    physics/material.hpp
+    
+    core/app.hpp
+    core/transform.hpp
 
     templates/set.hpp
     templates/stack_linked_list.hpp
