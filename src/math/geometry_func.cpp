@@ -35,8 +35,10 @@ std::vector<ResultT> triangulateEarClipping(const std::vector<vec2f>& points) {
     std::vector<ResultT> result;
     std::vector<vec2f> tmp = points;
     while (result.size() != points.size() - 2) {
-        size_t res_size_last = result.size();
-        for (int i = 0; i < tmp.size(); i++) {
+        bool expandedResult = false;
+        int begin = rand() % tmp.size();
+        for (int ii = begin; ii < begin + tmp.size(); ii++) {
+            int i = ii % tmp.size();
             auto first = tmp[i];
             auto mid_index = (i + 1) % tmp.size();
             auto mid = tmp[mid_index];
@@ -58,10 +60,11 @@ std::vector<ResultT> triangulateEarClipping(const std::vector<vec2f>& points) {
                 continue;
             }
             result.push_back({last, mid, first});
+            expandedResult = true;
             tmp.erase(tmp.begin() + mid_index);
             break;
         }
-        if (res_size_last == result.size()) {
+        if (!expandedResult) {
             break;
         }
     }
@@ -654,14 +657,14 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
 
             std::pair<float, vec2f> min_r1 = {INFINITY, {}}, max_r1 = {-INFINITY, {}};
             for (int p = 0; p < poly1.size(); p++) {
-                float q = (poly1[p].x * axis_proj.x + poly1[p].y * axis_proj.y);
+                float q = dot(poly1[p], axis_proj);
                 min_r1 = compMin(min_r1, {q, poly1[p]});
                 max_r1 = compMax(max_r1, {q, poly1[p]});
             }
 
             std::pair<float, vec2f> min_r2 = {INFINITY, {}}, max_r2 = {-INFINITY, {}};
             for (int p = 0; p < poly2.size(); p++) {
-                float q = (poly2[p].x * axis_proj.x + poly2[p].y * axis_proj.y);
+                float q = dot(poly2[p], axis_proj);
                 min_r2 = compMin(min_r2, {q, poly2[p]});
                 max_r2 = compMax(max_r2, {q, poly2[p]});
             }
