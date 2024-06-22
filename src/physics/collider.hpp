@@ -1,9 +1,15 @@
 #ifndef EMP_COLLIDER_HPP
 #define EMP_COLLIDER_HPP
+#include "core/component_system.hpp"
 #include "math/math_defs.hpp"
 #include "core/transform.hpp"
 #include <vector>
 namespace emp {
+class Collider;
+
+typedef ComponentSystem<Collider> ColliderSystem;
+typedef ComponentInstance<Collider, ColliderSystem> ColliderInstance;
+
 class Collider {
     typedef std::vector<vec2f> ConvexVertexCloud;
 private:
@@ -41,7 +47,9 @@ public:
     Collider(const Collider&) = delete;
     Collider(Collider&&) = delete;
     Collider& operator=(const Collider&) = delete;
+private:
     Collider(std::vector<vec2f> shape, emp::Transform* trans, bool correctCOM = false);
+    friend ColliderSystem;
 };
 };
 #endif

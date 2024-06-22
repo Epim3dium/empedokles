@@ -4,6 +4,9 @@
 #include "math/math_defs.hpp"
 #include "physics/collider.hpp"
 namespace emp {
+class Rigidbody;
+typedef ComponentSystem<Rigidbody> RigidbodySystem;
+typedef ComponentInstance<Rigidbody, RigidbodySystem> RigidbodyInstance;
 class Rigidbody {
     float m_inertia = 1.f;
     float m_mass = 1.f;
@@ -37,6 +40,8 @@ public:
     Rigidbody(const Rigidbody&) = delete;
     Rigidbody(Rigidbody&&) = delete;
     Rigidbody& operator=(const Rigidbody&) = delete;
+private:
+    friend RigidbodySystem;
     Rigidbody(Transform* transform, Collider* collider, float density = 1.f);
 };
 };
