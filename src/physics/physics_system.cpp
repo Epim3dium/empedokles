@@ -16,7 +16,7 @@ namespace emp {
         auto normal_impulse = normal_lagrange / sub_dt;
         return fmin(-(coef * abs(normal_impulse)), (tangent_speed / generalized_inv_mass_sum));
     }
-    float PhysicsSystem::m_applyPositionalCorrection(Entry& b1, Entry& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
+    float PhysicsSystem::m_applyPositionalCorrection(PhysicsManagerEntry& b1, PhysicsManagerEntry& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
         const vec2f& pos1 = b1.transform->position;
         const vec2f& pos2 = b2.transform->position;
         const float& rot1 = b1.transform->rotation;
@@ -54,7 +54,7 @@ namespace emp {
     vec2f PhysicsSystem::m_calcContactVel(vec2f vel, float ang_vel, vec2f r) {
         return vel + ang_vel * vec2f(-r.y, r.x);
     }
-    PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(Entry b1, const int convexIdx1, Entry b2, const int convexIdx2, float delT, float compliance) {
+    PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(PhysicsManagerEntry b1, const int convexIdx1, PhysicsManagerEntry b2, const int convexIdx2, float delT, float compliance) {
         PenetrationConstraint result;
         result.body1 = b1;
         result.body2 = b2;
@@ -97,8 +97,6 @@ namespace emp {
         if(d > penetration * 2.f) {
             return {false};
         }
-        contactpoints.push_back(intersection.cp1);
-        contactpoints.push_back(intersection.cp2);
 
         result.normal = intersection.contact_normal;
         result.penetration = penetration;
@@ -142,34 +140,31 @@ namespace emp {
         }
         return result;
     }
-    std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_detectPenetrations(std::vector<Entry>& bodies, float delT) {
+    std::vector<BroadPhaseSolver::CollidingPair> PhysicsSystem::m_broadPhase(std::vector<PhysicsManagerEntry>& bodies) {
+        return m_broad_phase_solver->findPotentialPairs(bodies);
+    }
+    std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(const std::vector<BroadPhaseSolver::CollidingPair>& pairs, std::vector<PhysicsManagerEntry>& bodies, float delT) {
         std::vector<PenetrationConstraint> result;
-        for(int i = 0; i < bodies.size(); i++) {
-            for(int ii = i + 1; ii < bodies.size(); ii++) {
-                auto b1 = bodies[i];
-                auto b2 = bodies[ii];
-                auto& shape1 = bodies[i].collider->constituentConvex();
-                auto& shape2 = bodies[ii].collider->constituentConvex();
-                for(int j = 0; j < shape1.size(); j++) {
-                    for(int k = 0; k < shape2.size(); k++) {
-                        auto res = m_handleCollision(bodies[i], j, bodies[ii], k, delT);
-                        if(res.detected) {
-                            result.push_back(res);
-                        }
-                    }
-                }
+        for(auto [b1i, b2i, s1i, s2i] : pairs) {
+            auto b1 = bodies[b1i];
+            auto b2 = bodies[b2i];
+            auto& shape1 = b1.collider->constituentConvex();
+            auto& shape2 = b2.collider->constituentConvex();
+            auto res = m_handleCollision(b1, s1i, b2, s2i, delT);
+            if(res.detected) {
+                result.push_back(res);
             }
         }
         return result;
     }
     //need to update colliders after
-    void PhysicsSystem::m_integrate(std::vector<Entry>& bodies, float h) {
+    void PhysicsSystem::m_integrate(std::vector<PhysicsManagerEntry>& bodies, float h) {
         for(auto b : bodies) {
             b.rigidbody->integrate(h);
         }
     }
     //need to update colliders after
-    void PhysicsSystem::m_deriveVelocities(std::vector<Entry>& bodies, float h) {
+    void PhysicsSystem::m_deriveVelocities(std::vector<PhysicsManagerEntry>& bodies, float h) {
         for(auto b : bodies) {
             b.rigidbody->deriveVelocities(h);
         }
@@ -235,13 +230,14 @@ namespace emp {
             }
         }
     }
-    void PhysicsSystem::m_step(std::vector<Entry> bodies, float deltaTime) {
+    void PhysicsSystem::m_step(std::vector<PhysicsManagerEntry> bodies, float deltaTime) {
         m_integrate(bodies, deltaTime);
         for(auto b : bodies) {
             b.transform->update();
             b.collider->update();
         }
-        auto penetrations = m_detectPenetrations(bodies, deltaTime);;
+        auto potential_pairs = m_broadPhase(bodies);
+        auto penetrations = m_narrowPhase(potential_pairs, bodies, deltaTime);;
         m_deriveVelocities(bodies, deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
