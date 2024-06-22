@@ -8,7 +8,8 @@ namespace emp {
     
 bool isTriangulable(const std::vector<vec2f>& points);
 std::vector<Triangle> triangulate(const std::vector<vec2f>& points);
-std::vector<std::vector<vec2f>> partitionConvex(const std::vector<std::vector<vec2f>>& polygons);
+std::vector<std::vector<vec2f>> triangulateAsVector(const std::vector<vec2f>& points);
+std::vector<std::vector<vec2f>> mergeToConvex(const std::vector<std::vector<vec2f>>& polygons);
 
 float calcTriangleVolume(vec2f a, vec2f b, vec2f c);
 //returns true if r1 contains the whole of r2
@@ -39,11 +40,13 @@ bool isOverlappingPointPoly(const vec2f& p, const std::vector<vec2f>& poly_point
 //returns true if aabb and aabb are overlapping
 bool isOverlappingAABBAABB(const AABB& r1, const AABB& r2);
 float calculateInertia(const std::vector<vec2f>& model, float mass);
-struct MMOIInfo {
+struct MIAInfo {
     float MMOI;
     float mass;
+    float area;
+    vec2f centroid;
 };
-MMOIInfo calculateMMOI(const std::vector<vec2f>& model, float thickness, float density);
+MIAInfo calculateMassInertiaArea(const std::vector<vec2f>& model, float thickness = 1.f, float density = 1.f);
 
 /**
  * structure containing all info returned by Ray and AABB intersection

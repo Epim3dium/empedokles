@@ -30,8 +30,9 @@ bool isTriangulable(const std::vector<vec2f>& points) {
     return false;
 }
 
-std::vector<Triangle> triangulateEarClipping(const std::vector<vec2f>& points) {
-    std::vector<Triangle> result;
+template<class ResultT>
+std::vector<ResultT> triangulateEarClipping(const std::vector<vec2f>& points) {
+    std::vector<ResultT> result;
     std::vector<vec2f> tmp = points;
     while (result.size() != points.size() - 2) {
         size_t res_size_last = result.size();
@@ -67,7 +68,10 @@ std::vector<Triangle> triangulateEarClipping(const std::vector<vec2f>& points) {
     return result;
 }
 std::vector<Triangle> triangulate(const std::vector<vec2f>& points) {
-    return triangulateEarClipping(points);
+    return triangulateEarClipping<Triangle>(points);
+}
+std::vector<std::vector<vec2f>> triangulateAsVector(const std::vector<vec2f>& points) {
+    return triangulateEarClipping<std::vector<vec2f>>(points);
 }
 bool hasSharedEdge(std::vector<vec2f> points0,
                    const std::vector<vec2f>& points1) {
@@ -348,7 +352,7 @@ partitionConvexHertelMehlhorn(std::vector<std::vector<vec2f>> result) {
     return result;
 }
 std::vector<std::vector<vec2f>>
-partitionConvex(const std::vector<std::vector<vec2f>>& polygons) {
+mergeToConvex(const std::vector<std::vector<vec2f>>& polygons) {
     return partitionConvexHertelMehlhorn(polygons);
 }
 float calcTriangleVolume(vec2f a, vec2f b, vec2f c) {
@@ -620,8 +624,6 @@ std::pair<Key, Data> compMin(std::pair<Key, Data> p1, std::pair<Key, Data> p2) {
     return (p1.first < p2.first ? p1 : p2);
 }
 IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f> &r1, const std::vector<vec2f>&r2) {
-    const std::vector<vec2f> *p1 = &r1;
-    const std::vector<vec2f> *p2 = &r2;
 
     float overlap = INFINITY;
     vec2f cn;
@@ -641,7 +643,7 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
             vec2f axis_proj = normal(vec2f(-axis_proj_perp.y, axis_proj_perp.x));
             
             //very rare TODO: remove findClosestPointONRay from inner loop
-            if(cn == axis_proj || cn == -axis_proj) {
+            if(incidentEdgeOwner == flipShapes && (nearlyEqual(cn, axis_proj) || nearlyEqual(cn, -axis_proj))) {
                 auto closest_current = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
                 auto closest_potential = findClosestPointOnRay(poly1[a], poly1[b] - poly1[a], contact_vertex);
                 if(qlen(closest_current - contact_vertex) > qlen(closest_potential - contact_vertex)) {
@@ -664,8 +666,8 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
                 max_r2 = compMax(max_r2, {q, poly2[p]});
             }
 
-            auto [minmax, _] = compMin(max_r1, max_r2);
-            auto [maxmin, __] = compMax(min_r1, min_r2);
+            auto minmax = compMin(max_r1, max_r2).first;
+            auto maxmin = compMax(min_r1, min_r2).first;
             auto current_overlap = minmax - maxmin;
             if(current_overlap < overlap) {
                 overlap = current_overlap;
@@ -684,7 +686,7 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
                 return {false};
         }
     }
-    if(overlap <= 0.f)
+    if(nearlyEqual(overlap, 0.f))
         return {false};
 
     auto closest = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
@@ -762,19 +764,21 @@ float calculateInertia(const std::vector<vec2f>& model, float mass) {
     return abs(mmoi);
 }
 
-MMOIInfo calculateMMOI(const std::vector<vec2f>& model, float thickness, float density) {
+MIAInfo calculateMassInertiaArea(const std::vector<vec2f>& model, float thickness, float density) {
     const auto triangles = triangulate(model);
     std::vector<float> mass(triangles.size(), 0.f);
     std::vector<float> mmoi(triangles.size(), 0.f);
     std::vector<vec2f> centroid(triangles.size(), {0.f, 0.f});
     float combinedMass = 0;
     float combinedMMOI = 0;
+    float combinedArea = 0;
     vec2f combinedCentroid(0, 0);
     for (int i = 0; i < triangles.size(); ++i) {
         mass[i] = triangles[i].calcMass(thickness, density);
         mmoi[i] = triangles[i].calcMMOI(mass[i]);
         centroid[i] = triangles[i].calcCentroid();
 
+        combinedArea += triangles[i].calcArea();
         combinedMass += mass[i];
         combinedCentroid += mass[i] * centroid[i];
     }
@@ -783,6 +787,6 @@ MMOIInfo calculateMMOI(const std::vector<vec2f>& model, float thickness, float d
     for (int i = 0; i < triangles.size(); ++i) {
         combinedMMOI += mmoi[i] + mass[i] * qlen(centroid[i] - combinedCentroid);
     }
-    return {combinedMMOI, combinedMass};
+    return {combinedMMOI, combinedMass, combinedArea, combinedCentroid};
 }
 } // namespace emp

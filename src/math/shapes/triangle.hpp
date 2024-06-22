@@ -37,6 +37,9 @@ struct Triangle {
     vec2f calcCentroid() const {
         return (a + b + c) / 3.f;
     }
+    operator std::vector<vec2f>() {
+        return {a, b, c};
+    }
     Triangle (vec2f p1, vec2f p2, vec2f p3) : a(p1), b(p2), c(p3) {}
 };
 };
