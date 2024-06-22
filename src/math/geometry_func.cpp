@@ -609,118 +609,88 @@ struct IntersetionPolygonPolygonAxis {
     float overlap = INFINITY;
     vec2f cn;
     bool foundSeparatingAxis  = false;
+    vec2f most_pertruding;
 };
-IntersetionPolygonPolygonAxis intersectPolygonPolygonUsingAxisHelper(const std::vector<vec2f>& p1, const std::vector<vec2f>& p2, vec2f axisProj, bool flipAxis = false) {
-    
-    if(flipAxis) {
-        axisProj *= -1.f;
-    }
-    auto& poly1 = flipAxis ? p2 : p1;
-    auto& poly2 = flipAxis ? p1 : p2;
-    
-    IntersetionPolygonPolygonAxis result;
-    float overlap = INFINITY;
-    vec2f cn;
-
-    // Work out min and max 1D points for r1
-    float min_dist = INFINITY;
-    float min_r1 = INFINITY, max_r1 = -INFINITY;
-    for (auto p : poly1) {
-        float q = dot(p, axisProj);
-        min_r1 = std::min(min_r1, q);
-        max_r1 = std::max(max_r1, q);
-    }
-
-    float min_r2 = INFINITY, max_r2 = -INFINITY;
-    for (auto p : poly2) {
-        float q = dot(p, axisProj);
-        
-        //additional if statements to find if edge is almost parallel to axisProj edge
-        if(q < min_r2) {
-            min_r2 = q;
-        }
-        
-        if(q > max_r2) {
-            max_r2 = q;
-        }
-    }
-
-    // Calculate actual overlap along projected axis, and store the minimum
-    auto minmax = std::min(max_r1, max_r2);
-    auto maxmin = std::max(min_r1, min_r2); 
-    if (!(max_r2 >= min_r1 && max_r1 >= min_r2)) {
-        result.foundSeparatingAxis = true;
-        return result;
-    }
-    if(!(minmax - maxmin < overlap && minmax - maxmin >= 0.f)) {
-        result.detected = false;
-        return result;
-    }
-    overlap = minmax - maxmin;
-    
-    cn = axisProj;
-    if(flipAxis)
-        cn *= -1.f;
-    
-    if(minmax != max_r2) {
-        cn *= -1.f;
-    }
-    return {true, overlap, cn, false};
+template<class Key, class Data>
+std::pair<Key, Data> compMax(std::pair<Key, Data> p1, std::pair<Key, Data> p2) {
+    return (p1.first > p2.first ? p1 : p2);
 }
-IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f>&r1, const std::vector<vec2f> &r2) {
-    const std::vector<vec2f>* verticies[] = {&r1, &r2};
+template<class Key, class Data>
+std::pair<Key, Data> compMin(std::pair<Key, Data> p1, std::pair<Key, Data> p2) {
+    return (p1.first < p2.first ? p1 : p2);
+}
+IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f> &r1, const std::vector<vec2f>&r2) {
+    const std::vector<vec2f> *p1 = &r1;
+    const std::vector<vec2f> *p2 = &r2;
 
     float overlap = INFINITY;
     vec2f cn;
-
-    //calculate contact point only after finding max penetration
-    struct CpCalcInfo {
-        vec2f a;
-        vec2f b;
-        int flipAxis;
-    };
-    typedef std::vector<CpCalcInfo> CpCalcInfos;
-    CpCalcInfos cp_calc_info;
     
-    for (int flipAxis = 0; flipAxis < 2; flipAxis++) {
-        
-        auto prev = r1.back();
-        for (auto vert : (flipAxis ? r2 : r1)) {
-            vec2f perp = vert - prev;
-            std::pair<vec2f, vec2f> used = {vert, prev};
+    int incidentEdgeOwner = -1;
+    std::pair<vec2f, vec2f> incident_edge;
+    vec2f contact_vertex;
 
-            prev = vert;
-            vec2f axisProj = { -perp.y, perp.x };
-            axisProj = normal(axisProj);
-            if(axisProj == -cn || axisProj == cn) {
-                cp_calc_info.push_back({used.first, used.second, flipAxis});
-                continue;
-            }
-            auto t = intersectPolygonPolygonUsingAxisHelper(r1, r2, axisProj, flipAxis);
+    for (int flipShapes = 0; flipShapes < 2; flipShapes++) {
+        auto& poly1 =( flipShapes ? r2 : r1);
+        auto& poly2 =( flipShapes ? r1 : r2);
+        vec2f contact_vertex_p1;
+        vec2f contact_vertex_p2;
+        for (int a = 0; a < poly1.size(); a++) {
+            int b = (a + 1) % poly1.size();
+            vec2f axis_proj_perp = poly1[b] - poly1[a];
+            vec2f axis_proj = normal(vec2f(-axis_proj_perp.y, axis_proj_perp.x));
             
-            if(t.foundSeparatingAxis) {
+            //very rare TODO: remove findClosestPointONRay from inner loop
+            if(cn == axis_proj || cn == -axis_proj) {
+                auto closest_current = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
+                auto closest_potential = findClosestPointOnRay(poly1[a], poly1[b] - poly1[a], contact_vertex);
+                if(qlen(closest_current - contact_vertex) > qlen(closest_potential - contact_vertex)) {
+                    incidentEdgeOwner = flipShapes;
+                    incident_edge = {poly1[a], poly1[b]};
+                }
+            }
+
+            std::pair<float, vec2f> min_r1 = {INFINITY, {}}, max_r1 = {-INFINITY, {}};
+            for (int p = 0; p < poly1.size(); p++) {
+                float q = (poly1[p].x * axis_proj.x + poly1[p].y * axis_proj.y);
+                min_r1 = compMin(min_r1, {q, poly1[p]});
+                max_r1 = compMax(max_r1, {q, poly1[p]});
+            }
+
+            std::pair<float, vec2f> min_r2 = {INFINITY, {}}, max_r2 = {-INFINITY, {}};
+            for (int p = 0; p < poly2.size(); p++) {
+                float q = (poly2[p].x * axis_proj.x + poly2[p].y * axis_proj.y);
+                min_r2 = compMin(min_r2, {q, poly2[p]});
+                max_r2 = compMax(max_r2, {q, poly2[p]});
+            }
+
+            auto [minmax, _] = compMin(max_r1, max_r2);
+            auto [maxmin, __] = compMax(min_r1, min_r2);
+            auto current_overlap = minmax - maxmin;
+            if(current_overlap < overlap) {
+                overlap = current_overlap;
+                cn = axis_proj;
+                incidentEdgeOwner = flipShapes;
+                incident_edge.first = poly1[a];
+                incident_edge.second = poly1[b];
+                contact_vertex = (minmax == max_r2.first ? max_r2.second : min_r2.second);
+
+                if((minmax != max_r2.first) ^ flipShapes) {
+                    cn *= -1.f;
+                }
+            }
+
+            if (!(max_r2.first >= min_r1.first && max_r1.first >= min_r2.first))
                 return {false};
-            }
-            if(!t.detected) {
-                continue;
-            }
-            if(overlap < t.overlap) {
-                continue;
-            }
-            
-            overlap = t.overlap;
-            cn = t.cn;
-            auto avg = (used.first + used.second) / 2.f;
-            cp_calc_info = {{used.first, used.second, flipAxis}};
         }
     }
-    if(overlap <= 0.f) {
+    if(overlap <= 0.f)
         return {false};
-    }
 
-    std::vector<vec2f> collision_points = findContactPoints(r1, r2); 
-
-    return {true, cn, overlap, collision_points};
+    auto closest = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
+    auto cp1 = (incidentEdgeOwner ? contact_vertex : closest);
+    auto cp2 = (incidentEdgeOwner ? closest : contact_vertex);
+    return {true, cn, overlap, cp1, cp2};
 }
 IntersectionPolygonPolygonResult intersectPolygonPolygon(const ConvexPolygon &r1, const ConvexPolygon &r2) {
     return intersectPolygonPolygon(r1.getVertecies(), r2.getVertecies());

@@ -110,7 +110,8 @@ struct IntersectionPolygonPolygonResult {
     bool detected;
     vec2f contact_normal;
     float overlap;
-    std::vector<vec2f> cp;
+    vec2f cp1;
+    vec2f cp2;
 };
 /**
  * Calculates all information connected to Polygon and Polygon intersection

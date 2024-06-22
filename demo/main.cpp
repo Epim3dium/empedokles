@@ -37,147 +37,262 @@ void resolveCollision(Point& p1, Point& p2, float deltaTime) {
 }
 struct Body {
     ConvexPolygon shape;
-    float MMOI = 1.f;
+    float inertia = 1.f;
     float mass = 1.f;
     
     vec2f prev_pos;
-    vec2f velocity;
-    vec2f velocity_carry;
+    vec2f vel_pre_solve;
+    vec2f vel;
     vec2f force;
 
     float prev_rot = 0.f;
-    float angular_vel = 0.f;
-    float ang_vel_carry = 0.f;
+    float ang_vel_pre_solve = 0.f;
+    float ang_vel = 0.f;
     float torque = 0.f;
 
     bool isStatic = false;
     Body(std::vector<vec2f> point_cloud, float thickness = 1.f, float density = 1.f) 
         : shape(ConvexPolygon::CreateFromPoints(point_cloud))
     {
-        auto mmoi_info = calculateMMOI(shape.getModelVertecies(), thickness, density);
-        MMOI = mmoi_info.MMOI;
-        mass = mmoi_info.mass;
-        EMP_LOG_DEBUG << "created body; mass: " << mass << "\tMMOI: " << MMOI;
+        auto inertia_info = calculateMMOI(shape.getModelVertecies(), thickness, density);
+        inertia = inertia_info.MMOI;
+        mass = inertia_info.mass;
+        EMP_LOG_DEBUG << "created body; mass: " << mass << "\tinertia: " << inertia;
     }
 };
-float handleCollision(Body& b1, Body& b2, float h, float vn_prev) {
+struct PenetrationConstraint {
+    bool detected = false;
+    Body* body1;
+    Body* body2;
+    vec2f normal;
+    float penetration;
+    vec2f pos1_at_col;
+    vec2f pos2_at_col;
+    float rot1_at_col;
+    float rot2_at_col;
+    //not rotated not translated
+    vec2f radius1;
+    //not rotated not translated
+    vec2f radius2;
+    float normal_lagrange;
+};
+float calcRestitution(float coef, float normal_speed, float pre_solve_norm_speed, vec2f gravity, float delT) {
+    // TODO: The XPBD paper has this, but it seems to be prevent bounces in cases
+    // where bodies should clearly be bouncing.
+    // Maybe change the threshold to be even lower? Or is this even needed at all?
+    /*
+    // If normal velocity is small enough, use restitution of 0 to avoid jittering
+    if normal_speed.abs() <= 2.0 * gravity.length() * sub_dt {
+        coefficient = 0.0;
+    }
+    */
+    return fmin(-normal_speed + (-coef * pre_solve_norm_speed), 0.f);
+}
+float calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt) {
+    auto normal_impulse = normal_lagrange / sub_dt;
+    return fmin(-(coef * abs(normal_impulse)), (tangent_speed / generalized_inv_mass_sum));
+}
+float calcGeneralizedInverseMass(float mass, float inertia, vec2f radius, vec2f normal) {
+    return 1.f / mass + (cross(radius, normal) / inertia * cross(radius, normal));
+}
+float applyPositionalCorrection(Body& b1, Body& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float mass1, float mass2, float inertia1, float inertia2, float delT, float compliance = 0.f) {
+    const auto r1 = rotateVec(radius1, b1.shape.getRot());
+    const auto r2 = rotateVec(radius2, b2.shape.getRot());
+    const auto w1 = calcGeneralizedInverseMass(b1.mass, b1.inertia, r1, normal);
+    const auto w2 = calcGeneralizedInverseMass(b2.mass, b2.inertia, r2, normal);
+
+    const auto tilde_compliance = compliance / (delT * delT);
+
+    auto delta_lagrange = -c;
+    delta_lagrange /= (w1 + w2 + tilde_compliance);
+
+    auto p = delta_lagrange * normal;
+
+    b1.shape.setPos(b1.shape.getPos() + p / b1.mass);
+    b2.shape.setPos(b2.shape.getPos() - p / b2.mass);
+
+    b1.shape.setRot(b1.shape.getRot() + cross(r1, p) / b1.inertia);
+    b2.shape.setRot(b2.shape.getRot() - cross(r2, p) / b2.inertia);
+    return delta_lagrange;
+}
+std::vector<vec2f> contactpoints;
+vec2f calcContactVel(vec2f vel, float ang_vel, vec2f r) {
+    return vel + ang_vel * vec2f(-r.y, r.x);
+}
+PenetrationConstraint handleCollision(Body& b1, Body& b2, float delT) {
+    PenetrationConstraint result;
+    result.body1 = &b1;
+    result.body2 = &b2;
     if(b1.isStatic && b2.isStatic)
-        return 0.f;
-    constexpr float a = 0.0f;
+        return result;
+    constexpr float compliance = 0.0f;
+    constexpr float sfriction = 0.8f;
+    constexpr float dfriction = 0.4f;
     auto intersection = intersectPolygonPolygon(b1.shape, b2.shape);
+    result.detected = intersection.detected;
     if(!intersection.detected) {
-        return 0.f;
+        return result;
     }
     float vn = 0.f;
-    auto n = -intersection.contact_normal;
-    for(auto cp : intersection.cp) {
-        auto c = intersection.overlap / intersection.cp.size();
-        const auto r1 = cp - b1.shape.getPos();
-        const auto r2 = cp - b2.shape.getPos();
-        const auto r1modeled = rotateVec(r1, -b1.shape.getRot());
-        const auto r2modeled = rotateVec(r2, -b2.shape.getRot());
+    auto normal = -intersection.contact_normal;
 
-        const auto w1 = 1.f / b1.mass + (cross(r1, n) / b1.MMOI * cross(r1, n));
-        const auto w2 = 1.f / b2.mass + (cross(r2, n) / b2.MMOI * cross(r2, n));
+    const auto penetration = intersection.overlap;
+    auto p1 = intersection.cp1;
+    auto p2 = intersection.cp2;
 
-        const auto ahat = a / (h * h) ;
+    result.normal = intersection.contact_normal;
+    result.penetration = penetration;
+    result.pos1_at_col = b1.shape.getPos();
+    result.pos2_at_col = b2.shape.getPos();
+    result.rot1_at_col = b1.shape.getRot();
+    result.rot2_at_col = b2.shape.getRot();
 
-        auto dlambda = -c /* - ahat */;
-        dlambda /= (w1 + w2 + ahat);
-        //static friction
-        const auto r1hat = b1.prev_pos + rotateVec(r1modeled, b1.prev_rot);
-        const auto r2hat = b2.prev_pos + rotateVec(r2modeled, b2.prev_rot);
-        const auto dp = (cp - r1hat) - (cp - r2hat);
-        const auto dptangent = dp - (dot(dp, n)) * n;
-        const auto lambdadp = dptangent / (w1 + w2 + ahat);
+    // result.vel1_pre_solve = b1.vel;
+    // result.vel2_pre_solve = b2.vel;
+    // result.ang_vel1_pre_solve = b1.ang_vel;
+    // result.ang_vel2_pre_solve = b2.ang_vel;
 
-        auto p = dlambda * n;
+    const auto r1modeled = p1 - b1.shape.getPos();
+    const auto r2modeled = p2 - b2.shape.getPos();
+    const auto r1 = rotateVec(r1modeled, -b1.shape.getRot());
+    const auto r2 = rotateVec(r2modeled, -b2.shape.getRot());
+    result.radius1 = r1;
+    result.radius2 = r2;
 
-        b1.shape.setPos(b1.shape.getPos() + p * w1);
-        b2.shape.setPos(b2.shape.getPos() - p * w2);
+    auto delta_lagrange = applyPositionalCorrection(b1, b2, penetration, normal, r1, r2, b1.mass, b2.mass, b1.inertia, b2.inertia, delT);
+    result.normal_lagrange = delta_lagrange;
+    const auto normal_impulse = delta_lagrange / delT;
 
-        b1.shape.setRot(b1.shape.getRot() + cross(r1, p) / b1.MMOI);
-        b2.shape.setRot(b2.shape.getRot() - cross(r2, p) / b2.MMOI);
-        //applying friction
-        //dynamic
-        const vec2f r1perp(-r1.y, r1.x);
-        const vec2f r2perp(-r2.y, r2.x);
+    auto delta_p1 = b1.shape.getPos() - b1.prev_pos
+        + rotateVec(r1, b1.shape.getRot())
+        - rotateVec(r1, b1.prev_rot);
+    auto delta_p2 = b2.shape.getPos() - b2.prev_pos
+        + rotateVec(r2, b2.shape.getRot())
+        - rotateVec(r2, b2.prev_rot);
+    auto delta_p = delta_p1 - delta_p2;
+    auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
+    auto sliding_len = length(delta_p_tangent);
 
-        const auto p1ang_vel_lin = r1perp * b1.angular_vel;
-        const auto p2ang_vel_lin = r2perp * b2.angular_vel;
-
-        const auto vel_sum1 = b1.velocity;
-        const auto vel_sum2 = b2.velocity;
-
-        //calcauto relative velocity
-        const auto rel_vel = vel_sum1 - vel_sum2;
-        vn = dot(n, rel_vel);
-        const auto tangent = rel_vel - n * vn;
-
-        constexpr float dfric = 0.1f;
-        constexpr float e = 0.0f;
-        const auto normal_force = dlambda / (h * h);
-        const auto vtl = length(tangent);
-        const auto inv_vtl = (vtl == 0.f ? 0.f : 1.f / vtl);
-        const auto dv_fric = -tangent * inv_vtl * fmin(h * dfric * abs(normal_force), vtl); 
-
-        const auto dv_rest = n * (-vn + fmin(-e * vn_prev, 0.f));
-        EMP_LOG_DEBUG << dv_rest.x << " : " << dv_rest.y << "\t\t" << vn;
-
-        p = dv_fric / (w1 + w2); 
-        b1.velocity_carry += p * w1;
-        b2.velocity_carry -= p * w2;
-
-        // p = dv_rest / (w1 + w2); 
-        // b1.velocity_carry += p * w1;
-        // b2.velocity_carry -= p * w2;
-
-        // b1.ang_vel_carry += 0.5f * cross(r1, p) / b1.MMOI;
-        // b2.ang_vel_carry -= 0.5f * cross(r2, p) / b2.MMOI;
+    if(sliding_len <= 0.f) {
+        return result;
     }
-    return vn;
+    auto tangent = delta_p_tangent / sliding_len;
+    if(sliding_len < sfriction * penetration){
+        delta_lagrange = applyPositionalCorrection(b1, b2, sliding_len, tangent, r1, r2, b1.mass, b2.mass, b1.inertia, b2.inertia, delT);
+    }
+    return result;
 }
-void step(std::vector<Body*> bodies, float h) {
+std::vector<PenetrationConstraint> detectPenetrations(std::vector<Body*>& bodies, float delT) {
+    std::vector<PenetrationConstraint> result;
+    for(int i = 0; i < bodies.size(); i++) {
+        for(int ii = i + 1; ii < bodies.size(); ii++) {
+            auto res = handleCollision(*bodies[i], *bodies[ii], delT);
+            if(res.detected) {
+                result.push_back(res);
+            }
+        }
+    }
+    return result;
+}
+void integrate(std::vector<Body*>& bodies, float h) {
     for(auto b : bodies) {
         auto& curr = *b;
         curr.prev_pos = curr.shape.getPos();
-        curr.velocity += h * curr.force / curr.mass;
-        curr.shape.setPos(curr.shape.getPos() + curr.velocity * h);
+        curr.vel += h * curr.force / curr.mass;
+        curr.shape.setPos(curr.shape.getPos() + curr.vel * h);
 
         curr.prev_rot = curr.shape.getRot();
-        curr.angular_vel += h * curr.torque / curr.MMOI;
-        curr.shape.setRot(curr.shape.getRot() + curr.angular_vel * h);
+        curr.ang_vel += h * curr.torque / curr.inertia;
+        curr.shape.setRot(curr.shape.getRot() + curr.ang_vel * h);
     }
-    struct LagrangeInfo {
-        vec2f dir;
-        float mag = 0.f;
-    };
-    static std::unordered_map<int, vec2f> vn_prev;
-    //solvePositions
-    for(int i = 0; i < bodies.size(); i++) {
-        for(int ii = i + 1; ii < bodies.size(); ii++) {
-            handleCollision(*bodies[i], *bodies[ii], h, 0.f);
-        }
-    }
-
+}
+void deriveVelocities(std::vector<Body*>& bodies, float h) {
     for(auto b : bodies) {
         auto& curr = *b;
         if(curr.isStatic)
             continue;
-        curr.velocity = (curr.shape.getPos() - curr.prev_pos) / h + curr.velocity_carry;
-        curr.velocity_carry = vec2f(0, 0);
-        curr.angular_vel = (curr.shape.getRot() - curr.prev_rot) / h + curr.ang_vel_carry;
-        curr.ang_vel_carry = 0;
+        curr.vel_pre_solve = curr.vel;
+        curr.vel = (curr.shape.getPos() - curr.prev_pos) / h;
+        curr.ang_vel_pre_solve = curr.ang_vel;
+        curr.ang_vel = (curr.shape.getRot() - curr.prev_rot) / h;
     }
 }
-void substeps(std::vector<Body*> bodies, float delT, size_t substepCount = 8U) {
-    for(int i = 0; i < substepCount; i++) {
-        step(bodies, delT / (float)substepCount);
+void solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT) {
+    for(auto& constraint : constraints) {
+        auto& b1 = *constraint.body1;
+        auto& b2 = *constraint.body2;
+
+        const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_at_col);
+        const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_at_col);
+        const auto pre_solve_contact_vel1 = calcContactVel(b1.vel_pre_solve, b1.ang_vel_pre_solve, pre_r1model);
+        const auto pre_solve_contact_vel2 = calcContactVel(b2.vel_pre_solve, b2.ang_vel_pre_solve, pre_r2model);
+        const auto pre_solve_relative_vel = pre_solve_contact_vel1 - pre_solve_contact_vel2;
+        const auto pre_solve_normal_speed = dot(pre_solve_relative_vel, constraint.normal);
+
+        const auto r1model = rotateVec(constraint.radius1, b1.shape.getRot());
+        const auto r2model = rotateVec(constraint.radius2, b2.shape.getRot());
+        const auto contact_vel1 = calcContactVel(b1.vel, b1.ang_vel, r1model);
+        const auto contact_vel2 = calcContactVel(b2.vel, b2.ang_vel, r2model);
+        const auto relative_vel = contact_vel1 - contact_vel2;
+        const auto normal_speed = dot(relative_vel, constraint.normal);
+
+        const auto tangent_vel = relative_vel - constraint.normal * normal_speed;
+        const auto tangent_speed = length(tangent_vel);
+
+        vec2f p = {0, 0};
+        constexpr float rest = 0.1f;
+        auto restitution_speed = calcRestitution(rest, normal_speed, pre_solve_normal_speed, {}, delT);
+        if(abs(restitution_speed) > 0.f){
+            const auto w1 = calcGeneralizedInverseMass(b1.mass, b1.inertia, r1model, constraint.normal);
+            const auto w2 = calcGeneralizedInverseMass(b2.mass, b2.inertia, r2model, constraint.normal);
+            const auto restitution_impulse = restitution_speed / (w1 + w2);
+            p += restitution_impulse * constraint.normal;
+        }
+
+        constexpr float dfric = 0.4f;
+        // Compute dynamic friction
+        if(abs(tangent_speed) > 0.f){
+            const auto tangent = tangent_vel / tangent_speed;
+            const auto w1 = calcGeneralizedInverseMass(b1.mass, b1.inertia, r1model, tangent);
+            const auto w2 = calcGeneralizedInverseMass(b2.mass, b2.inertia, r2model, tangent);
+            const auto friction_impulse =
+                calcDynamicFriction(dfric, tangent_speed, w1 + w2, constraint.normal_lagrange, delT);
+            p += friction_impulse * tangent;
+            // constraint.contact.tangent_impulse += friction_impulse;
+        }
+        if(!b1.isStatic) {
+            const auto delta_lin_vel = p / b1.mass;
+            const auto delta_ang_vel = cross(r1model, p) / b1.inertia;
+            b1.vel += delta_lin_vel;
+            b1.ang_vel += delta_ang_vel;
+        }
+        if(!b2.isStatic) {
+            const auto delta_lin_vel = p / b2.mass;
+            const auto delta_ang_vel = cross(r2model, p) / b2.inertia;
+            b2.vel -= delta_lin_vel;
+            b2.ang_vel -= delta_ang_vel;
+        }
     }
-    for(auto b : bodies) {
-        auto& curr = *b;
-        curr.force = {0, 0};
-        curr.torque = 0.f;
+}
+void step(std::vector<Body*> bodies, float deltaTime) {
+    integrate(bodies, deltaTime);
+    auto penetrations = detectPenetrations(bodies, deltaTime);;
+    deriveVelocities(bodies, deltaTime);
+    solveVelocities(penetrations, deltaTime);
+}
+void substeps(std::vector<Body*> bodies, float delT, float gravity, size_t substepCount = 8U) {
+    for(int i = 0; i < substepCount; i++) {
+        for(auto b : bodies ){
+            if(!b->isStatic) {
+                b->force += vec2f(0, gravity / (float)substepCount) * b->mass;
+            }
+        }
+        step(bodies, delT / (float)substepCount);
+        for(auto b : bodies) {
+            auto& curr = *b;
+            curr.force = {0, 0};
+            curr.torque = 0.f;
+        }
     }
 }
 
@@ -187,13 +302,11 @@ class Demo : public App {
     std::vector<vec2f> points;
     vec2f center = window_size  / 2.f;
     static constexpr float radius = 200;
-    static constexpr float gravity = 500.f;
-    IntersectionPolygonPolygonResult info;
+    static constexpr float gravity = 500.f * 8.f;
 
     bool setup(sf::Window& window) override {
         Body* platform = new Body({window_size, vec2f(10.f, window_size.y), vec2f(10.f, window_size.y - 50.f),
-                                   vec2f(window_size.x, window_size.y - 50.f)},
-                                  1000.f, 1000.f);
+                                   vec2f(window_size.x, window_size.y - 50.f)}, 10000.f, 10000.f);
         platform->isStatic = true;
         bodies.push_back(platform);
 
@@ -211,16 +324,12 @@ class Demo : public App {
             points.clear();
         }
         if(keys[sf::Keyboard::Tab].pressed) {
-            auto body = new Body(points, 100.f, 100.f);
+            auto body = new Body(points, 10000.f, 10000.f);
             body->isStatic = true;
             bodies.push_back(body);
             points.clear();
         }
-        for(auto b : bodies ){
-            if(!b->isStatic)
-                b->force += vec2f(0, gravity) * b->mass;
-        }
-        substeps(bodies, dt.asSeconds());
+        substeps(bodies, dt.asSeconds(), gravity);
 
     }
     void render(sf::RenderWindow& window) override {
@@ -238,16 +347,17 @@ class Demo : public App {
             cs.setPosition(p);
             window.draw(cs);
         }
+        for(auto p : contactpoints ) {
+            cs.setPosition(p);
+            window.draw(cs);
+        }
+        static size_t last_c_p_s = 0;
+        if(last_c_p_s != 0) 
+            while(sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) ;;
+        last_c_p_s = contactpoints.size();
+        contactpoints.clear();
         cs.setFillColor(sf::Color::Red);
         sf::Color color = sf::Color::Green;
-        for(auto p : info.cp ) {
-            sf::Vertex verts[2];
-            verts[0].color = color;
-            verts[1].color = color;
-            verts[0].position = p + info.contact_normal * 10.f;
-            verts[1].position = p;
-            window.draw(verts, 2U, sf::Lines);
-        }
 
         for(auto b : bodies) {
             auto prev = b->shape.getVertecies().back();
