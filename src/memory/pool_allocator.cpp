@@ -8,6 +8,7 @@
 namespace emp {
 PoolAllocator::PoolAllocator(const std::size_t totalSize, const std::size_t chunkSize)
 : Allocator(totalSize) {
+    assert(chunkSize >= sizeof(Node) && "Object cannot be smaller than Node");
     assert(chunkSize >= 8 && "Chunk size must be greater or equal to 8");
     assert(totalSize % chunkSize == 0 && "Total Size must be a multiple of Chunk Size");
     this->m_chunkSize = chunkSize;
@@ -15,11 +16,18 @@ PoolAllocator::PoolAllocator(const std::size_t totalSize, const std::size_t chun
 
 void PoolAllocator::Init() {
     m_start_ptr = malloc(m_totalSize);
+    EMP_LOG(LogLevel::DEBUG3) << "A[MALLOC]" << "\t@S " << m_start_ptr; 
     this->Reset();
 }
 
+void PoolAllocator::Cleanup() {
+    if(m_start_ptr != nullptr) {
+        free(m_start_ptr);
+    }
+    m_start_ptr = nullptr;
+}
 PoolAllocator::~PoolAllocator() {
-    free(m_start_ptr);
+    Cleanup();
 }
 
 void *PoolAllocator::Allocate(const std::size_t allocationSize, const std::size_t alignment) {

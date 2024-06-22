@@ -22,6 +22,7 @@ public:
     inline void* getStartPtr() const { return m_start_ptr; }
     inline size_t getTotalSize() const { return m_totalSize; }
 
+    virtual void Cleanup();
     virtual ~PoolAllocator();
 
     virtual void* Allocate(const std::size_t size, const std::size_t alignment = 0) override;
