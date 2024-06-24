@@ -93,6 +93,15 @@ class Demo : public App {
             cs.setPosition(p);
             window.draw(cs);
         }
+        EMP_DEBUGCALL(
+            cs.setFillColor(sf::Color::Transparent);
+            cs.setOutlineColor(sf::Color::Green);
+            cs.setOutlineThickness(1.f);
+            for(auto p : phy_sys.debug_contactpoints) {
+                cs.setPosition(p);
+                window.draw(cs);
+            }
+        );
 
         sf::Color color = sf::Color::Green;
 

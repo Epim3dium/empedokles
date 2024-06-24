@@ -18,7 +18,7 @@ public:
     std::unordered_map<sf::Mouse::Button, KeyState> buttons;
     vec2f mouse_position;
 
-    vec2f window_size = {800, 600};
+    vec2f window_size = {960, 540};
     virtual bool setup(sf::Window& window) {
         return true;
     }

@@ -2,7 +2,7 @@
 #define EMP_DEBUG_H
 #include "log.hpp"
 namespace emp {
-
+#define EMP_DEBUG 1
 #if EMP_DEBUG == 1
 
 #   define EMP_ASSERT(x) (assert(x))
