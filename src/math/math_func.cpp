@@ -3,6 +3,12 @@
 #include <algorithm>
 
 namespace emp {
+bool nearlyEqual(float a, float b, float dt) {
+    return abs(a - b) < dt;
+}
+bool nearlyEqual(vec2f a, vec2f b, float dt) {
+    return nearlyEqual(a.x, b.x, dt) && nearlyEqual(a.y, b.y, dt);
+}
 void sort_clockwise(std::vector<sf::Vector2f>::iterator begin,
                          std::vector<sf::Vector2f>::iterator end) {
     std::sort(begin, end, [](sf::Vector2f a, sf::Vector2f b) {

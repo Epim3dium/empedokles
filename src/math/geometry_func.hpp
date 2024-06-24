@@ -26,10 +26,6 @@ std::vector<vec2f> findContactPoints(const std::vector<vec2f>& p0, const std::ve
 float area(const std::vector<vec2f>& model);
 vec2f centerOfMass(std::vector<vec2f> model);
 //returns true if a and b are nearly equal
-#define VERY_SMALL_AMOUNT 0.001f
-bool nearlyEqual(float a, float b, float dt = VERY_SMALL_AMOUNT);
-//returns true if a and b are nearly equal
-bool nearlyEqual(vec2f a, vec2f b, float dt = VERY_SMALL_AMOUNT);
 
 //returns true if p is within aabb
 bool isOverlappingPointAABB(const vec2f& p, const AABB& r) ;

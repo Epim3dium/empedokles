@@ -495,12 +495,6 @@ vec2f findClosestPointOnEdge(vec2f point, const std::vector<vec2f>& points) {
     }
     return closest;
 }
-bool nearlyEqual(float a, float b, float dt) {
-    return abs(a - b) < dt;
-}
-bool nearlyEqual(vec2f a, vec2f b, float dt) {
-    return nearlyEqual(a.x, b.x, dt) && nearlyEqual(a.y, b.y, dt);
-}
 std::vector<vec2f> findContactPointFast(const ConvexPolygon* p0, const ConvexPolygon* p1, vec2f cn) {
     float best = 0.f;
     std::vector<vec2f> contact_point;

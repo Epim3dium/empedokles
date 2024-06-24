@@ -5,6 +5,10 @@
 #include "math_defs.hpp"
 namespace emp {
 
+#define VERY_SMALL_AMOUNT 0.001f
+bool nearlyEqual(float a, float b, float dt = VERY_SMALL_AMOUNT);
+//returns true if a and b are nearly equal
+bool nearlyEqual(vec2f a, vec2f b, float dt = VERY_SMALL_AMOUNT);
 void sort_clockwise(std::vector<sf::Vector2f>::iterator begin, std::vector<sf::Vector2f>::iterator end);
 sf::Vector2f rotate(sf::Vector2f vec, float angle);
 float length(sf::Vector2f v);
