@@ -94,9 +94,12 @@ namespace emp {
         auto p2 = intersection.cp2;
         auto d = dot(p2 - p1, normal);
         //TODO fix contact points
-        if(d > penetration * 2.f) {
-            return {false};
-        }
+        // if(d > penetration * 2.f) {
+        //     EMP_LOG_DEBUG << "fixed";
+        //     return {false};
+        // }
+        EMP_DEBUGCALL(debug_contactpoints.push_back(p1));
+        EMP_DEBUGCALL(debug_contactpoints.push_back(p2));
 
         result.normal = intersection.contact_normal;
         result.penetration = penetration;
@@ -242,6 +245,7 @@ namespace emp {
         m_solveVelocities(penetrations, deltaTime);
     }
     void PhysicsSystem::substeps(float delT, float gravity, size_t substepCount) {
+        EMP_DEBUGCALL(debug_contactpoints.clear();)
         for(int i = 0; i < substepCount; i++) {
             for(auto b : m_entries ){
                 if(!b.rigidbody->isStatic) {

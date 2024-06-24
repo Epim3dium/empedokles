@@ -6,6 +6,7 @@
 #include "physics/collider.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
+#include "debug/debug.hpp"
 
 #include <memory>
 namespace emp {
@@ -49,6 +50,7 @@ class PhysicsSystem {
     void m_solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT);
     void m_step(std::vector<PhysicsManagerEntry> bodies, float deltaTime);
 public:
+    EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
 
     void add(Transform* trans, Collider* col, Rigidbody* rb, Material* mat) {
         m_entries.push_back({trans, col, rb, mat});
