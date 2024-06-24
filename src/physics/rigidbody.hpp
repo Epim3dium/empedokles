@@ -15,10 +15,10 @@ class Rigidbody {
     float m_density = 1.f;
 public:
     float inertia() const {
-        return m_inertia;
+        return isStatic ? INFINITY : m_inertia;
     }
     float mass() const {
-        return m_mass;
+        return isStatic ? INFINITY : m_mass;
     }
     float generalizedInverseMass(vec2f radius, vec2f normal) const;
 

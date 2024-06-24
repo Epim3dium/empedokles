@@ -10,8 +10,11 @@ Rigidbody::Rigidbody(Transform* transform, Collider* collider, float density) {
     prev_pos = transform->position;
     prev_rot = transform->rotation;
 }
+#define SQ(x) ((x) * (x))
 float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
-    return 1.f / mass() + (cross(radius, normal) / inertia() * cross(radius, normal));
+    if(isStatic)
+        return 0.f;
+    return 1.f / mass() + (SQ(cross(radius, normal)) / inertia());
 }
 void Rigidbody::update() {
     m_mass = m_collider->area() * m_density;
