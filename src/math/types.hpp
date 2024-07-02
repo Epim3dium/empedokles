@@ -8,8 +8,6 @@
 
 #include "SFML/Graphics/RenderTarget.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
-#include "imgui.h"
-#include "imgui-SFML.h"
 #include "math/math_defs.hpp"
 
 #include "SFML/Graphics.hpp"
