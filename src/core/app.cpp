@@ -5,6 +5,7 @@
 #include "io/keyboard_movement_controller.hpp"
 #include "graphics/systems/point_light_system.hpp"
 #include "graphics/systems/simple_render_system.hpp"
+#include "graphics/systems/simple_2D_render_system.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -77,7 +78,7 @@ namespace emp {
         std::cout << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment << "\n";
         std::cout << "atom size: " << device.properties.limits.nonCoherentAtomSize << "\n";
 
-        SimpleRenderSystem simpleRenderSystem{
+        Simple2DColorRenderSystem simpleRenderSystem{
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout()};
@@ -158,12 +159,12 @@ namespace emp {
         // Pi = atan(1)*4
         bunny.transform.rotation = {0.0f, atan(1) * 4, atan(1) * 4};
 
-        model = Model::createModelFromFile(device, "assets/models/dragon.obj");
-        auto &dragon = gameObjectManager.createGameObject();
-        dragon.model = model;
-        dragon.transform.translation = {.5f, .2f, 0.f};
-        dragon.transform.scale = {1.f, 1.f, 1.f};
-        dragon.transform.rotation = {PI, -PI / 2, 0.0f};
+        // model = Model::createModelFromFile(device, "assets/models/dragon.obj");
+        // auto &dragon = gameObjectManager.createGameObject();
+        // dragon.model = model;
+        // dragon.transform.translation = {.5f, .2f, 0.f};
+        // dragon.transform.scale = {1.f, 1.f, 1.f};
+        // dragon.transform.rotation = {PI, -PI / 2, 0.0f};
 
         model = Model::createModelFromFile(device, "assets/models/quad.obj");
         std::shared_ptr<Texture> marbleTexture =
