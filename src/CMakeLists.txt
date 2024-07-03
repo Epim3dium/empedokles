@@ -10,6 +10,7 @@ set(SOURCE_FILES
     memory/pool_allocator.cpp
 
     core/transform.cpp
+    core/entity_manager.cpp
 
     physics/collider.cpp
     physics/rigidbody.cpp
@@ -46,6 +47,11 @@ set(HEADER_FILES
     
     core/app.hpp
     core/transform.hpp
+    core/entity.hpp
+    core/entity_manager.hpp
+    core/component.hpp
+    core/component_array.hpp
+    core/component_manager.hpp
 
     templates/set.hpp
     templates/stack_linked_list.hpp
