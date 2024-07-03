@@ -2,8 +2,9 @@
 #include "math/shapes/AABB.hpp"
 #include "physics/physics_system.hpp"
 namespace emp {
-std::vector<BroadPhaseSolver::CollidingPair>
-    SweepBroadPhase::findPotentialPairs(const std::vector<PhysicsManagerEntry>& objects) 
+template<class IterBegin, class IterEnd>
+std::vector<CollidingPair>
+    SweepBroadPhase::findPotentialPairs(IterBegin begin, IterEnd end) 
 {
     std::vector<CollidingPair> result;
     struct SwipeeInformation {
@@ -16,7 +17,8 @@ std::vector<BroadPhaseSolver::CollidingPair>
     };
     std::vector<SwipeeInformation> sweep_along_x;
     size_t index = 0;
-    for(auto obj : objects) {
+    for(auto itr = begin; itr != end; itr++) {
+        auto& obj = *itr;
         const auto& shape = obj.collider->constituentConvex(); 
         size_t sub_index = 0;
         for(const auto& convex : shape) {
