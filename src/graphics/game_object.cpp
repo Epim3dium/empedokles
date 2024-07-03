@@ -67,16 +67,6 @@ namespace emp {
         };
     }
 
-    GameObject &GameObjectManager::makePointLight(
-            float intensity, float radius, glm::vec3 color) {
-        auto &gameObj = createGameObject();
-        gameObj.color = color;
-        gameObj.transform.scale.x = radius;
-        gameObj.pointLight = std::make_unique<PointLightComponent>();
-        gameObj.pointLight->lightIntensity = intensity;
-        return gameObj;
-    }
-
     GameObjectManager::GameObjectManager(Device &device) {
         // including nonCoherentAtomSize allows us to flush a specific index at once
         int alignment = std::lcm(

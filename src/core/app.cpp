@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include "debug/debug.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
 #include "io/keyboard_movement_controller.hpp"
@@ -51,7 +52,17 @@ namespace emp {
 
     App::~App() = default;
 
-    void App::run() {
+    std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(DescriptorSetLayout& globalSetLayout, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
+        std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); i++) {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            DescriptorWriter(globalSetLayout, *globalPool)
+                    .writeBuffer(0, &bufferInfo)
+                    .build(globalDescriptorSets[i]);
+        }
+        return globalDescriptorSets;
+    }
+    std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalUBOBuffers() {
         std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for (auto &uboBuffer: uboBuffers) {
             uboBuffer = std::make_unique<Buffer>(
@@ -62,27 +73,21 @@ namespace emp {
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
             uboBuffer->map();
         }
+        return uboBuffers;
+    }
+    void App::run() {
+        auto uboBuffers = m_setupGlobalUBOBuffers();
 
         auto globalSetLayout = DescriptorSetLayout::Builder(device)
                         .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                         .build();
 
-        std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < globalDescriptorSets.size(); i++) {
-            auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            DescriptorWriter(*globalSetLayout, *globalPool)
-                    .writeBuffer(0, &bufferInfo)
-                    .build(globalDescriptorSets[i]);
-        }
+        auto globalDescriptorSets = m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers);
 
-        std::cout << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment << "\n";
-        std::cout << "atom size: " << device.properties.limits.nonCoherentAtomSize << "\n";
+        EMP_LOG_DEBUG << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment;
+        EMP_LOG_DEBUG << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
         Simple2DColorRenderSystem simpleRenderSystem{
-                device,
-                renderer.getSwapChainRenderPass(),
-                globalSetLayout->getDescriptorSetLayout()};
-        PointLightSystem pointLightSystem{
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout()};
@@ -90,6 +95,7 @@ namespace emp {
 
         auto &viewerObject = gameObjectManager.createGameObject();
         viewerObject.transform.translation.z = -2.5f;
+
         KeyboardMovementController cameraController{};
 
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -107,46 +113,42 @@ namespace emp {
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
             float aspect = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
+            //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
+            camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f, 0.1f, 100.f);
 
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
                 framePools[frameIndex]->resetPool();
-                FrameInfo frameInfo{
-                        frameIndex,
-                        frameTime,
-                        commandBuffer,
-                        camera,
-                        globalDescriptorSets[frameIndex],
-                        *framePools[frameIndex],
-                        gameObjectManager.gameObjects};
+                FrameInfo frameInfo{frameIndex,
+                                    frameTime,
+                                    commandBuffer,
+                                    camera,
+                                    globalDescriptorSets[frameIndex],
+                                    *framePools[frameIndex],
+                                    gameObjectManager.gameObjects};
 
-                // update
-                GlobalUbo ubo{};
-                ubo.projection = camera.getProjection();
-                ubo.view = camera.getView();
-                ubo.inverseView = camera.getInverseView();
-                pointLightSystem.update(frameInfo, ubo);
-                uboBuffers[frameIndex]->writeToBuffer(&ubo);
-                uboBuffers[frameIndex]->flush();
+                GlobalUbo ubo = m_updateUBO(frameInfo, *uboBuffers[frameIndex], camera);
 
-                // final step of update is updating the game objects buffer data
-                // The render functions MUST not change a game objects transform data
                 gameObjectManager.updateBuffer(frameIndex);
-
-                // render
-                renderer.beginSwapChainRenderPass(commandBuffer);
-
-                // order here matters
-                simpleRenderSystem.renderGameObjects(frameInfo);
-                pointLightSystem.render(frameInfo);
-
-                renderer.endSwapChainRenderPass(commandBuffer);
+                {
+                    renderer.beginSwapChainRenderPass(commandBuffer);
+                    simpleRenderSystem.renderGameObjects(frameInfo);
+                    renderer.endSwapChainRenderPass(commandBuffer);
+                }
                 renderer.endFrame();
             }
         }
 
         vkDeviceWaitIdle(device.device());
+    }
+    GlobalUbo App::m_updateUBO(FrameInfo frameInfo, Buffer& uboBuffer, Camera& camera) {
+        GlobalUbo ubo{};
+        ubo.projection = camera.getProjection();
+        ubo.view = camera.getView();
+        ubo.inverseView = camera.getInverseView();
+        uboBuffer.writeToBuffer(&ubo);
+        uboBuffer.flush();
+        return ubo;
     }
 
     void App::loadGameObjects() {
@@ -156,7 +158,6 @@ namespace emp {
         bunny.model = model;
         bunny.transform.translation = {-.5f, .5f, 0.f};
         bunny.transform.scale = {.5f, .5f, .5f};
-        // Pi = atan(1)*4
         bunny.transform.rotation = {0.0f, atan(1) * 4, atan(1) * 4};
 
         // model = Model::createModelFromFile(device, "assets/models/dragon.obj");
@@ -174,23 +175,6 @@ namespace emp {
         floor.diffuseMap = marbleTexture;
         floor.transform.translation = {0.f, .5f, 0.f};
         floor.transform.scale = {6.f, 1.f, 6.f};
-
-        std::vector<glm::vec3> lightColors{
-                {2.f, .2f, .2f},
-                {2.f, 2.f, .2f},
-                {.2f, 2.f, 2.f},
-                {2.f, 2.f, 2.f}
-        };
-
-        for (int i = 0; i < lightColors.size(); i++) {
-            auto &pointLight = gameObjectManager.makePointLight(1.0f);
-            pointLight.color = lightColors[i];
-            auto rotateLight = glm::rotate(
-                    glm::mat4(1.f),
-                    (i * glm::two_pi<float>()) / lightColors.size(),
-                    {0.f, -1.f, 0.f});
-            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-        }
     }
 
 }  // namespace emp

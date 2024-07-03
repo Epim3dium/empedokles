@@ -94,9 +94,6 @@ namespace emp {
             return gameObjects.at(gameObjectId);
         }
 
-        GameObject &makePointLight(
-                float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
-
         [[nodiscard]] VkDescriptorBufferInfo getBufferInfoForGameObject(
                 int frameIndex, GameObject::id_t gameObjectId) const {
             return uboBuffers[frameIndex]->descriptorInfoForIndex(gameObjectId);
