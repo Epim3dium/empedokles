@@ -45,6 +45,9 @@ namespace emp {
                 --m_size;
             }
 
+            bool hasData(Entity entity) const {
+                return m_entity_to_index_map[entity] != INVALID_INDEX;
+            }
             T& GetData(Entity entity)
             {
                 assert(m_entity_to_index_map[entity] != INVALID_INDEX && "Retrieving non-existent component.");

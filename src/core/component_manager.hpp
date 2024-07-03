@@ -25,6 +25,10 @@ public:
 
         return m_component_types.at(typeName);
     }
+    template <typename T>
+    bool hasComponent(Entity entity) const {
+        return GetComponentArray<T>()->hasData(entity);
+    }
 
     template <typename T>
     void addComponent(Entity entity, T component) {
@@ -59,6 +63,11 @@ private:
     ComponentType m_next_component_type{};
 	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> m_component_arrays{};
 
+	template<typename T>
+	const std::shared_ptr<ComponentArray<T>> GetComponentArray() const
+	{
+        return GetComponentArray<T>();
+	}
 	template<typename T>
 	std::shared_ptr<ComponentArray<T>> GetComponentArray()
 	{
