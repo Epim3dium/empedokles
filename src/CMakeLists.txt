@@ -52,6 +52,8 @@ set(HEADER_FILES
     core/component.hpp
     core/component_array.hpp
     core/component_manager.hpp
+    core/system_manager.hpp
+    core/coordinator.hpp
 
     templates/set.hpp
     templates/stack_linked_list.hpp
