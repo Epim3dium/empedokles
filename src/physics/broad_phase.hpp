@@ -1,7 +1,8 @@
 #ifndef EMP_BROADPHASE_HPP
 #define EMP_BROADPHASE_HPP
-#include "core/entity.hpp"
+#include <set>
 #include <vector>
+#include "core/entity.hpp"
 namespace emp {
 struct CollidingPair {
     Entity e1;
@@ -11,8 +12,7 @@ struct CollidingPair {
 };
 class SweepBroadPhase{
 public:
-    template<class IterBegin, class IterEnd>
-    std::vector<CollidingPair> findPotentialPairs(IterBegin begin, IterEnd end);
+    std::vector<CollidingPair> findPotentialPairs(std::set<Entity>::iterator begin, std::set<Entity>::iterator end);
 };
 };
 #endif
