@@ -80,5 +80,6 @@ private:
     std::unique_ptr<EntityManager> m_entity_manager;
     std::unique_ptr<SystemManager> m_system_manager;
 };
+extern Coordinator coordinator;
 }; // namespace emp
 #endif

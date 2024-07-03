@@ -1,14 +1,11 @@
 #ifndef EMP_SYSTEM_MANAGER_HPP
 #define EMP_SYSTEM_MANAGER_HPP
 #include "core/component.hpp"
+#include "core/system.hpp"
 #include "core/entity.hpp"
 #include <set>
 #include <unordered_map>
 namespace emp {
-class System {
-public:
-    std::set<Entity> entities;
-};
 class SystemManager {
 public:
     template <typename T>
