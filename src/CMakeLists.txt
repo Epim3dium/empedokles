@@ -12,6 +12,7 @@ set(SOURCE_FILES
     scene/transform.cpp
 
     core/entity_manager.cpp
+    core/coordinator.cpp
 
     physics/collider.cpp
     physics/rigidbody.cpp
