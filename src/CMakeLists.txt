@@ -9,7 +9,8 @@ set(SOURCE_FILES
     memory/linear_allocator.cpp
     memory/pool_allocator.cpp
 
-    core/transform.cpp
+    scene/transform.cpp
+
     core/entity_manager.cpp
 
     physics/collider.cpp
@@ -45,8 +46,8 @@ set(HEADER_FILES
     physics/physics_system.hpp
     physics/broad_phase.hpp
     
-    core/app.hpp
-    core/transform.hpp
+    scene/app.hpp
+    scene/transform.hpp
     core/entity.hpp
     core/entity_manager.hpp
     core/component.hpp
