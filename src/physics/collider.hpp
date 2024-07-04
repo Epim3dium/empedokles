@@ -5,11 +5,14 @@
 #include "scene/transform.hpp"
 #include <vector>
 namespace emp {
-class Collider;
+class ColliderSystem;
 
 
 struct Collider {
     typedef std::vector<vec2f> ConvexVertexCloud;
+private:
+    void m_updateNewTransform(const Transform& trans);
+public:
     //potentially concave
     std::vector<vec2f> model_outline;
     std::vector<ConvexVertexCloud> model_shape;
@@ -21,12 +24,13 @@ struct Collider {
     float inertia_dev_mass;
     Collider() {}
     Collider(std::vector<vec2f> shape, bool correctCOM = false);
+    friend ColliderSystem;
 };
 //system for updating transfomred collider shapes
 class ColliderSystem : public SystemOf<Transform, Collider> {
 public:
     void update();
-    void onEntityAdded(Entity entity) override;
+    void updateInstant(const Entity e);
 };
 };
 #endif

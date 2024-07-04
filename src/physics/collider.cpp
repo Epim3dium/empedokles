@@ -20,20 +20,29 @@ namespace emp {
     //     transformed_shape = model_shape;
     //     m_transform = trans;
     // }
+    void Collider::m_updateNewTransform(const Transform& transform) {
+        for(int i = 0; i < model_shape.size(); i++) {
+            auto& poly = model_shape[i];
+            for(int ii = 0; ii < poly.size(); ii++) {
+                transformed_shape[i][ii] = transform.globalTransform().transformPoint(poly[ii]);
+            }
+        }
+        for (int i = 0; i < model_outline.size(); i++) {
+            transformed_outline[i] = transform.globalTransform().transformPoint(model_outline[i]);
+        }
+    }
     void ColliderSystem::update() {
         for(auto entity : entities) {
             auto& transform = coordinator.getComponent<Transform>(entity);
             auto& collider = coordinator.getComponent<Collider>(entity);
-            for(int i = 0; i < collider.model_shape.size(); i++) {
-                auto& poly = collider.model_shape[i];
-                for(int ii = 0; ii < poly.size(); ii++) {
-                    collider.transformed_shape[i][ii] = transform.globalTransform().transformPoint(poly[ii]);
-                }
-            }
-            for (int i = 0; i < collider.model_outline.size(); i++) {
-                collider.transformed_outline[i] = transform.globalTransform().transformPoint(collider.model_outline[i]);
-            }
+            collider.m_updateNewTransform(transform);
         }
+    }
+    void ColliderSystem::updateInstant(const Entity entity) {
+        assert(entities.contains(entity) && "system must contain that entity");
+        auto& transform = coordinator.getComponent<Transform>(entity);
+        auto& collider = coordinator.getComponent<Collider>(entity);
+        collider.m_updateNewTransform(transform);
     }
     Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
         model_outline = shape;
@@ -50,11 +59,5 @@ namespace emp {
         auto triangles = triangulateAsVector(model_outline);
         model_shape = mergeToConvex(triangles);
         transformed_shape = model_shape;
-    }
-    void ColliderSystem::onEntityAdded(Entity entity) {
-        auto& transform = coordinator.getComponent<Transform>(entity);
-        auto& collider = coordinator.getComponent<Collider>(entity);
-
-        EMP_LOG(DEBUG2) << "added collider to ColliderSystem";
     }
 };
