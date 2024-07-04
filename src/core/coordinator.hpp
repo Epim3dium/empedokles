@@ -1,6 +1,7 @@
 #ifndef EMP_COORDINATOR_HPP
 #define EMP_COORDINATOR_HPP
 #include "component_manager.hpp"
+#include "debug/log.hpp"
 #include "entity_manager.hpp"
 #include "system_manager.hpp"
 namespace emp {
@@ -14,7 +15,9 @@ public:
     }
 
     // Entity methods
-    Entity createEntity() { return m_entity_manager->createEntity(); }
+    Entity createEntity() {
+        return m_entity_manager->createEntity(); 
+    }
 
     void destroyEntity(Entity entity) {
         m_entity_manager->destroyEntity(entity);
@@ -69,7 +72,7 @@ public:
         auto system = m_system_manager->registerSystem<SystemType>();
 
         Signature system_signature;
-        (system_signature.set(m_system_manager->registerSystem<ComponentTypes>()), ...);
+        (system_signature.set(m_component_manager->getComponentType<ComponentTypes>()), ...);
         m_setSystemSignature<SystemType>(system_signature);
         return system;
     }
