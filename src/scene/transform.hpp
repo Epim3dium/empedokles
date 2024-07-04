@@ -27,10 +27,12 @@ public:
     inline const sf::Transform& globalTransform() const {
         return m_global_transform;
     }
+    Transform() {}
     Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { }
     friend TransformSystem;
 };
 class TransformSystem : public SystemOf<Transform> {
+public:
     void update();
 };
 };
