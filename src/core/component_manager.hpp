@@ -27,8 +27,8 @@ public:
         return m_component_types.at(typeName);
     }
     template <typename T>
-    bool hasComponent(Entity entity) const {
-        return cgetComponentArray<T>().hasData(entity);
+    bool hasComponent(Entity entity) {
+        return getComponentArray<T>().hasData(entity);
     }
 
     template <typename T>
@@ -64,14 +64,6 @@ private:
     ComponentType m_next_component_type{};
 	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> m_component_arrays{};
 
-	template<typename T>
-	const ComponentArray<T>& cgetComponentArray() const
-	{
-		const char* typeName = typeid(T).name();
-		assert(m_component_types.find(typeName) != m_component_types.end() && "Component not registered before use.");
-
-		return *std::static_pointer_cast<ComponentArray<T>>(m_component_arrays.at(typeName));
-	}
 	template<typename T>
 	ComponentArray<T>& getComponentArray()
 	{
