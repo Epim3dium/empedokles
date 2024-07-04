@@ -4,6 +4,13 @@
 #include <array>
 #include <unordered_map>
 namespace emp {
+    template <typename T, size_t N>
+    constexpr auto make_array(T value) -> std::array<T, N> {
+        std::array<T, N> a{};
+        for (auto& x : a)
+            x = value;
+        return a;
+    }
     class IComponentArray {
         public:
             virtual ~IComponentArray() = default;
@@ -68,8 +75,8 @@ namespace emp {
             static constexpr size_t INVALID_INDEX = -1U;
             static constexpr Entity INVALID_ENTITY = -1U;
             std::array<T, MAX_ENTITIES> m_component_array;
-            std::array<size_t, MAX_ENTITIES> m_entity_to_index_map {INVALID_INDEX};
-            std::array<Entity, MAX_ENTITIES> m_index_to_entity_map {INVALID_ENTITY};
+            std::array<size_t, MAX_ENTITIES> m_entity_to_index_map = make_array<size_t, MAX_ENTITIES>(INVALID_INDEX);
+            std::array<Entity, MAX_ENTITIES> m_index_to_entity_map = make_array<Entity, MAX_ENTITIES>(INVALID_ENTITY);
             size_t m_size;
     };
 
