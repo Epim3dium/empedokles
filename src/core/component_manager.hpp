@@ -2,6 +2,7 @@
 #define EMP_COMPONENT_MANAGER_HPP
 #include "core/component.hpp"
 #include "core/component_array.hpp"
+#include "debug/log.hpp"
 #include <typeinfo>
 #include <unordered_map>
 namespace emp {
@@ -27,27 +28,27 @@ public:
     }
     template <typename T>
     bool hasComponent(Entity entity) const {
-        return GetComponentArray<T>()->hasData(entity);
+        return cgetComponentArray<T>().hasData(entity);
     }
 
     template <typename T>
     void addComponent(Entity entity, T component) {
-        GetComponentArray<T>()->InsertData(entity, component);
+        getComponentArray<T>().InsertData(entity, component);
     }
 
     template <typename T>
     void removeComponent(Entity entity) {
-        GetComponentArray<T>()->RemoveData(entity);
+        getComponentArray<T>().RemoveData(entity);
     }
 
     template <typename T>
     T& getComponent(Entity entity) {
         // Get a reference to a component from the array for an entity
-        return GetComponentArray<T>()->GetData(entity);
+        return getComponentArray<T>().GetData(entity);
     }
     template <typename T>
     const T& getComponent(Entity entity) const {
-        return GetComponentArray<T>()->GetData(entity);
+        return getComponentArray<T>().GetData(entity);
     }
 
     void EntityDestroyed(Entity entity) {
@@ -64,17 +65,20 @@ private:
 	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> m_component_arrays{};
 
 	template<typename T>
-	const std::shared_ptr<ComponentArray<T>> GetComponentArray() const
-	{
-        return GetComponentArray<T>();
-	}
-	template<typename T>
-	std::shared_ptr<ComponentArray<T>> GetComponentArray()
+	const ComponentArray<T>& cgetComponentArray() const
 	{
 		const char* typeName = typeid(T).name();
 		assert(m_component_types.find(typeName) != m_component_types.end() && "Component not registered before use.");
 
-		return std::static_pointer_cast<ComponentArray<T>>(m_component_arrays[typeName]);
+		return *std::static_pointer_cast<ComponentArray<T>>(m_component_arrays.at(typeName));
+	}
+	template<typename T>
+	ComponentArray<T>& getComponentArray()
+	{
+		const char* typeName = typeid(T).name();
+		assert(m_component_types.find(typeName) != m_component_types.end() && "Component not registered before use.");
+
+		return *std::static_pointer_cast<ComponentArray<T>>(m_component_arrays.at(typeName));
 	}
 };
 };
