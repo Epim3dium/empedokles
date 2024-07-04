@@ -34,7 +34,7 @@ class PhysicsSystem : public SystemOf<Transform, Collider, Rigidbody, Material> 
     PenetrationConstraint m_handleCollision(Entity b1, const int convexIdx1, Entity b2, const int convexIdx2, float delT, float compliance = 0.f);
     
     std::vector<CollidingPair> m_broadPhase();
-    std::vector<PenetrationConstraint> m_narrowPhase(const std::vector<CollidingPair>& pairs, float delT);
+    std::vector<PenetrationConstraint> m_narrowPhase(ColliderSystem& col_sys, const std::vector<CollidingPair>& pairs, float delT);
     //need to update colliders after
     void m_solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT);
     void m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime);
@@ -44,6 +44,7 @@ public:
     size_t substep_count = 8U;
     void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, 
             float delT);
+    void onEntityAdded(Entity entity) override;
 };
 };
 #endif

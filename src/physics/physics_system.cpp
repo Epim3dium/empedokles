@@ -155,11 +155,13 @@ namespace emp {
     std::vector<CollidingPair> PhysicsSystem::m_broadPhase() {
         return SweepBroadPhase().findPotentialPairs(entities.begin(), entities.end());
     }
-    std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(const std::vector<CollidingPair>& pairs, float delT) {
+    std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(ColliderSystem& col_sys,const std::vector<CollidingPair>& pairs, float delT) {
         std::vector<PenetrationConstraint> result;
-        for(const auto [b1, b2, s1i, s2i] : pairs) {
-            auto res = m_handleCollision(b1, s1i, b2, s2i, delT);
+        for(const auto [e1, e2, s1i, s2i] : pairs) {
+            auto res = m_handleCollision(e1, s1i, e2, s2i, delT);
             if(res.detected) {
+                col_sys.updateInstant(e1);
+                col_sys.updateInstant(e2);
                 result.push_back(res);
             }
         }
@@ -168,17 +170,19 @@ namespace emp {
     //need to update colliders after
     void PhysicsSystem::m_solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT) {
         for(const auto& constraint : constraints) {
-            auto& e1 = constraint.entity1;
-            auto& e2 = constraint.entity2;
-            auto& trans1 = coordinator.getComponent<Transform>(e1);
+            const auto e1 = constraint.entity1;
+            const auto e2 = constraint.entity2;
+            const auto& trans1 = coordinator.getComponent<Transform>(e1);
             auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
-            auto& col1 = coordinator.getComponent<Collider>(e1);
-            auto& mat1 = coordinator.getComponent<Material>(e1);
+            const auto& col1 = coordinator.getComponent<Collider>(e1);
+            const auto& mat1 = coordinator.getComponent<Material>(e1);
 
-            auto& trans2 = coordinator.getComponent<Transform>(e2);
+            const auto& trans2 = coordinator.getComponent<Transform>(e2);
             auto& rb2 = coordinator.getComponent<Rigidbody>(e2);
-            auto& col2 = coordinator.getComponent<Collider>(e2);
-            auto& mat2 = coordinator.getComponent<Material>(e2);
+            const auto& col2 = coordinator.getComponent<Collider>(e2);
+            const auto& mat2 = coordinator.getComponent<Material>(e2);
+
+            const auto rest = (mat1.restitution + mat2.restitution) * 0.5f;
 
             const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_at_col);
             const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_at_col);
@@ -198,7 +202,6 @@ namespace emp {
             const auto tangent_speed = length(tangent_vel);
 
             vec2f p = {0, 0};
-            constexpr float rest = 0.1f;
             auto restitution_speed = m_calcRestitution(rest, normal_speed, pre_solve_normal_speed, {}, delT);
             if(abs(restitution_speed) > 0.f){
                 const auto w1 = rb1.generalizedInverseMass(r1model, constraint.normal);
@@ -237,19 +240,19 @@ namespace emp {
         col_sys.update();
         rb_sys.integrate(deltaTime);
         auto potential_pairs = m_broadPhase();
-        auto penetrations = m_narrowPhase(potential_pairs, deltaTime);;
+        auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);;
         rb_sys.deriveVelocities(deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
     void PhysicsSystem::update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float delT) {
         EMP_DEBUGCALL(debug_contactpoints.clear();)
-        for(int i = 0; i < substep_count; i++) {
-            for(const auto e : entities){
-                auto& rb = coordinator.getComponent<Rigidbody>(e);
-                if(!rb.isStatic) {
-                    rb.force += vec2f(0, gravity) * rb.mass();
-                }
+        for(const auto e : entities){
+            auto& rb = coordinator.getComponent<Rigidbody>(e);
+            if(!rb.isStatic) {
+                rb.force += vec2f(0, gravity) * (float)substep_count * rb.mass();
             }
+        }
+        for(int i = 0; i < substep_count; i++) {
             m_step(trans_sys, col_sys, rb_sys, delT / (float)substep_count);
             for(const auto e : entities) {
                 auto& rb = coordinator.getComponent<Rigidbody>(e);
@@ -257,5 +260,14 @@ namespace emp {
                 rb.torque = 0.f;
             }
         }
+    }
+    void PhysicsSystem::onEntityAdded(Entity entity) {
+        EMP_LOG_DEBUG << "added entity: " << entity << " to physics system";
+        auto& rb = coordinator.getComponent<Rigidbody>(entity);
+        if(!rb.useAutomaticMass)
+            return;
+        auto& col = coordinator.getComponent<Collider>(entity);
+        rb.real_mass = col.area * rb.real_density;
+        rb.real_inertia = col.inertia_dev_mass * rb.real_density;
     }
 };
