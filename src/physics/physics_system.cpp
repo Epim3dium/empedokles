@@ -232,18 +232,16 @@ namespace emp {
             }
         }
     }
-    void PhysicsSystem::m_step(float deltaTime) {
-        // m_integrate(bodies, deltaTime);
-        // for(auto b : bodies) {
-        //     b.transform->update();
-        //     b.collider->update();
-        // }
+    void PhysicsSystem::m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime) {
+        rb_sys.integrate(deltaTime);
+        trans_sys.update();
+        col_sys.update();
         auto potential_pairs = m_broadPhase();
         auto penetrations = m_narrowPhase(potential_pairs, deltaTime);;
-        // m_deriveVelocities(deltaTime);
+        rb_sys.deriveVelocities(deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
-    void PhysicsSystem::update(float delT, float gravity, size_t substepCount) {
+    void PhysicsSystem::update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float delT, float gravity, size_t substepCount) {
         EMP_DEBUGCALL(debug_contactpoints.clear();)
         for(int i = 0; i < substepCount; i++) {
             for(const auto e : entities){
@@ -252,7 +250,7 @@ namespace emp {
                     rb.force += vec2f(0, gravity / (float)substepCount) * rb.mass();
                 }
             }
-            m_step(delT / (float)substepCount);
+            m_step(trans_sys, col_sys, rb_sys, delT / (float)substepCount);
             for(const auto e : entities) {
                 auto& rb = coordinator.getComponent<Rigidbody>(e);
                 rb.force = {0, 0};

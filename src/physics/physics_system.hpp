@@ -37,11 +37,12 @@ class PhysicsSystem : public SystemOf<Transform, Collider, Rigidbody, Material> 
     std::vector<PenetrationConstraint> m_narrowPhase(const std::vector<CollidingPair>& pairs, float delT);
     //need to update colliders after
     void m_solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT);
-    void m_step(float deltaTime);
+    void m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime);
 public:
     EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
 
-    void update(float delT, float gravity, size_t substepCount = 8U);
+    void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, 
+            float delT, float gravity, size_t substepCount = 8U);
 };
 };
 #endif
