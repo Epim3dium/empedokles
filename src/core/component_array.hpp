@@ -10,7 +10,7 @@ namespace emp {
             virtual void EntityDestroyed(Entity entity) = 0;
     };
     template<typename T>
-        class ComponentArray : public IComponentArray
+    class ComponentArray : public IComponentArray
     {
         public:
             void InsertData(Entity entity, T component)
@@ -64,17 +64,12 @@ namespace emp {
                     RemoveData(entity);
                 }
             }
-            ComponentArray() {
-                std::fill(m_entity_to_index_map.begin(), m_entity_to_index_map.end(), INVALID_INDEX);
-                std::fill(m_index_to_entity_map.begin(), m_index_to_entity_map.end(), INVALID_ENTITY);
-            }
-
         private:
             static constexpr size_t INVALID_INDEX = -1U;
             static constexpr Entity INVALID_ENTITY = -1U;
             std::array<T, MAX_ENTITIES> m_component_array;
-            std::array<size_t, MAX_ENTITIES> m_entity_to_index_map;
-            std::array<Entity, MAX_ENTITIES> m_index_to_entity_map;
+            std::array<size_t, MAX_ENTITIES> m_entity_to_index_map {INVALID_INDEX};
+            std::array<Entity, MAX_ENTITIES> m_index_to_entity_map {INVALID_ENTITY};
             size_t m_size;
     };
 
