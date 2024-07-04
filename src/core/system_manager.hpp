@@ -39,12 +39,19 @@ public:
             auto const& type = pair.first;
             auto const& system = pair.second;
             auto const& systemSignature = m_signatures[type];
+            const bool contained = system->entities.contains(entity);
 
             if ((entitySignature & systemSignature) == systemSignature) {
                 system->entities.insert(entity);
+                if(!contained) {
+                    system->onEntityAdded(entity);
+                }
             }
-            else {
+            else  {
                 system->entities.erase(entity);
+                if(contained) {
+                    system->onEntityRemoved(entity);
+                }
             }
         }
     }
