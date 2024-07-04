@@ -19,6 +19,8 @@ struct Collider {
 
     float area;
     float inertia_dev_mass;
+    Collider() {}
+    Collider(std::vector<vec2f> shape, bool correctCOM = false);
 };
 //system for updating transfomred collider shapes
 class ColliderSystem : public SystemOf<Transform, Collider> {

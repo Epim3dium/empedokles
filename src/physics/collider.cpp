@@ -35,24 +35,26 @@ namespace emp {
             }
         }
     }
-#define EMP_CORRECT_COM true
+    Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
+        model_outline = shape;
+        auto MIA = calculateMassInertiaArea(model_outline);
+        inertia_dev_mass = MIA.MMOI;
+        area = MIA.area;
+        if(correctCOM) {
+            for(auto& p : model_outline) {
+                p -= MIA.centroid;
+            }
+        }
+        transformed_outline = model_outline;
+
+        auto triangles = triangulateAsVector(model_outline);
+        model_shape = mergeToConvex(triangles);
+        transformed_shape = model_shape;
+    }
     void ColliderSystem::onEntityAdded(Entity entity) {
         auto& transform = coordinator.getComponent<Transform>(entity);
         auto& collider = coordinator.getComponent<Collider>(entity);
 
         EMP_LOG(DEBUG2) << "added collider to ColliderSystem";
-        auto MIA = calculateMassInertiaArea(collider.model_outline);
-        collider.inertia_dev_mass = MIA.MMOI;
-        collider.area = MIA.area;
-        if(EMP_CORRECT_COM) {
-            for(auto& p : collider.model_outline) {
-                p -= MIA.centroid;
-            }
-        }
-        collider.transformed_outline = collider.model_outline;
-
-        auto triangles = triangulateAsVector(collider.model_outline);
-        collider.model_shape = mergeToConvex(triangles);
-        collider.transformed_shape = collider.model_shape;
     }
 };
