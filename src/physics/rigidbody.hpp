@@ -32,7 +32,7 @@ public:
 
 private:
 };
-class RigidbodySystem : SystemOf<Transform, Rigidbody> {
+class RigidbodySystem : public SystemOf<Transform, Rigidbody> {
 public:
     void integrate(float delT);
     void deriveVelocities(float delT);
