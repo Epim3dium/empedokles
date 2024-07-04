@@ -12,6 +12,7 @@ float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
 void RigidbodySystem::updateMasses() {
     for(auto entity : entities) {
         auto& rigidobdy = coordinator.getComponent<Rigidbody>(entity);
+        coordinator.getComponent<Collider>(entity);
         if(rigidobdy.useAutomaticMass && coordinator.hasComponent<Collider>(entity)) {
             const auto& collider = coordinator.getComponent<Collider>(entity);
             rigidobdy.real_mass = collider.area * rigidobdy.real_density;
@@ -37,7 +38,7 @@ void RigidbodySystem::deriveVelocities(float delT) {
         auto& rigidbody = coordinator.getComponent<Rigidbody>(entity);
         auto& transform = coordinator.getComponent<Transform>(entity);
         if(rigidbody.isStatic)
-            return;
+            continue;
         rigidbody.vel_pre_solve = rigidbody.vel;
         rigidbody.vel = (transform.position - rigidbody.prev_pos) / delT;
         rigidbody.ang_vel_pre_solve = rigidbody.ang_vel;

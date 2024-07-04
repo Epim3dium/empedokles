@@ -20,10 +20,10 @@ namespace emp {
     float PhysicsSystem::m_applyPositionalCorrection(Entity& e1, Entity& e2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
         auto& trans1 = coordinator.getComponent<Transform>(e1);
         auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
-        auto& col1 = coordinator.getComponent<Collider>(e1);
+
         auto& trans2 = coordinator.getComponent<Transform>(e2);
         auto& rb2 = coordinator.getComponent<Rigidbody>(e2);
-        auto& col2 = coordinator.getComponent<Collider>(e2);
+
         const vec2f& pos1 = trans1.position;
         const vec2f& pos2 = trans2.position;
         const float& rot1 = trans1.rotation;
@@ -50,8 +50,8 @@ namespace emp {
             trans1.setRotationNow(rot1 + cross(r1, p) / inertia1);
         }
         if(!rb2.isStatic) {
-            trans2.setPositionNow(pos2 + p / mass2);
-            trans2.setRotationNow(rot2 + cross(r2, p) / inertia2);
+            trans2.setPositionNow(pos2 - p / mass2);
+            trans2.setRotationNow(rot2 - cross(r2, p) / inertia2);
         }
 
         return delta_lagrange;
@@ -88,8 +88,8 @@ namespace emp {
         const float sfriction = 0.5f * (mat1.static_friction + mat2.static_friction);
         const float dfriction = 0.5f * (mat1.dynamic_friction +mat2.dynamic_friction);
 
-        auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
-        auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
+        const auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
+        const auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
         auto intersection = intersectPolygonPolygon(intersectingShape1, intersectingShape2);
         result.detected = intersection.detected;
         if(!intersection.detected) {
@@ -233,24 +233,24 @@ namespace emp {
         }
     }
     void PhysicsSystem::m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime) {
-        rb_sys.integrate(deltaTime);
         trans_sys.update();
         col_sys.update();
+        rb_sys.integrate(deltaTime);
         auto potential_pairs = m_broadPhase();
         auto penetrations = m_narrowPhase(potential_pairs, deltaTime);;
         rb_sys.deriveVelocities(deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
-    void PhysicsSystem::update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float delT, float gravity, size_t substepCount) {
+    void PhysicsSystem::update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float delT) {
         EMP_DEBUGCALL(debug_contactpoints.clear();)
-        for(int i = 0; i < substepCount; i++) {
+        for(int i = 0; i < substep_count; i++) {
             for(const auto e : entities){
                 auto& rb = coordinator.getComponent<Rigidbody>(e);
                 if(!rb.isStatic) {
-                    rb.force += vec2f(0, gravity / (float)substepCount) * rb.mass();
+                    rb.force += vec2f(0, gravity) * rb.mass();
                 }
             }
-            m_step(trans_sys, col_sys, rb_sys, delT / (float)substepCount);
+            m_step(trans_sys, col_sys, rb_sys, delT / (float)substep_count);
             for(const auto e : entities) {
                 auto& rb = coordinator.getComponent<Rigidbody>(e);
                 rb.force = {0, 0};
