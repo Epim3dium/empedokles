@@ -10,19 +10,31 @@
 #include "physics/rigidbody.hpp"
 using namespace emp;
 
-class DrawingSystem : public SystemOf<Collider> {
+struct ColorComponent {
+    sf::Color fill_color;
+    sf::Color outline_color;
+};
+class DrawingSystem : public SystemOf<Collider, ColorComponent> {
 public:
     void draw(sf::RenderTarget& target) {
+        sf::CircleShape cs(5.f);
+        cs.setOrigin(5.f, 5.f);
+        cs.setFillColor(sf::Color::Red);
         for(const auto e : entities) {
-            auto& col = coordinator.getComponent<Collider>(e);
-            for(auto poly : col.transformed_shape) {
+            auto& collider = coordinator.getComponent<Collider>(e);
+            auto& color = coordinator.getComponent<ColorComponent>(e);
+            for(auto poly : collider.transformed_shape) {
                 auto prev = poly.back();
+                sf::Vertex verts[3];
+                verts[2].position = poly.front();
+                verts[0].color = color.fill_color;
+                verts[1].color = color.fill_color;
+                verts[2].color = color.fill_color;
                 for(auto p : poly) {
-                    sf::Vertex verts[2];
                     verts[0].position = prev;
                     verts[1].position = p;
                     prev = p;
-                    target.draw(verts, 2U, sf::Lines);
+                    target.draw(verts, 3U, sf::Triangles);
                 }
             }
         }
@@ -41,7 +53,6 @@ class Demo : public App {
     vec2f center = window_size  / 2.f;
     static constexpr float radius = 200;
     static constexpr float gravity = 500.f * 8.f;
-
     Entity createBody(std::vector<vec2f> point_cloud, float density = 1.f) {
         if(!isTriangulable(point_cloud)) {
             std::reverse(point_cloud.begin(), point_cloud.end());
@@ -50,10 +61,18 @@ class Demo : public App {
         EMP_LOG_DEBUG << "new entity: " << e;
         Transform trans(calculateMassInertiaArea(point_cloud).centroid);
         Collider col(point_cloud, true);
-        Rigidbody rb; rb.prev_pos = trans.position;
-        rb.useAutomaticMass = true;
+        Rigidbody rb; rb.prev_pos = trans.position; rb.useAutomaticMass = true;
         Material mat;
+        
+        float t = ((double) rand() / (RAND_MAX)) + 1;
+        float tt = ((double) rand() / (RAND_MAX)) + 1;
+        float ttt = ((double) rand() / (RAND_MAX)) + 1;
+        const unsigned char min_grey = 50;
+        const unsigned char max_grey = 200;
+        const unsigned char diff = max_grey - min_grey;
+        ColorComponent color; color.fill_color = sf::Color(min_grey + diff * t, min_grey + diff * tt, min_grey + diff * ttt);
 
+        coordinator.addComponent(e, color); 
         coordinator.addComponent(e, trans); 
         coordinator.addComponent(e, col); 
         coordinator.addComponent(e, rb); 
@@ -68,11 +87,16 @@ class Demo : public App {
         coordinator.registerComponent<Collider>();
         coordinator.registerComponent<Rigidbody>();
 
-        transform_sys = coordinator.registerSystem<TransformSystem, Transform>();
-        drawing_sys   = coordinator.registerSystem<DrawingSystem, Collider>();
-        rigidbody_sys = coordinator.registerSystem<RigidbodySystem, Transform, Rigidbody>();
-        collider_sys  = coordinator.registerSystem<ColliderSystem,  Transform, Collider>();
-        physics_sys   = coordinator.registerSystem<PhysicsSystem,   Transform, Collider, Rigidbody, Material>();
+        coordinator.registerComponent<ColorComponent>();
+
+
+        transform_sys = coordinator.registerSystem<TransformSystem>();
+        rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
+        collider_sys  = coordinator.registerSystem<ColliderSystem>();
+        physics_sys   = coordinator.registerSystem<PhysicsSystem>();
+
+        drawing_sys   = coordinator.registerSystem<DrawingSystem>();
+
         Entity platform = createBody({window_size, vec2f(10.f, window_size.y), vec2f(10.f, window_size.y - 50.f),
                                    vec2f(window_size.x, window_size.y - 50.f)}, INFINITY);
         coordinator.getComponent<Rigidbody>(platform).isStatic = true;
@@ -100,7 +124,6 @@ class Demo : public App {
             auto body = createBody(points, INFINITY);
             points.clear();
         }
-        rigidbody_sys->updateMasses();
         transform_sys->update();
         collider_sys->update();
         physics_sys->update(*transform_sys, *collider_sys, *rigidbody_sys, dt.asSeconds());
