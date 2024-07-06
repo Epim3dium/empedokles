@@ -67,17 +67,24 @@ public:
     }
 
     // System methods
-    template <typename SystemType, class ...ComponentTypes>
+    template <typename SystemType>
     std::shared_ptr<SystemType> registerSystem() {
         auto system = m_system_manager->registerSystem<SystemType>();
 
-        Signature system_signature;
-        (system_signature.set(m_component_manager->getComponentType<ComponentTypes>()), ...);
+        auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
         m_setSystemSignature<SystemType>(system_signature);
         return system;
     }
-
 private:
+    template<class OgSystemType, class ...ComponentType>
+    Signature m_getSignatureSystemOf(SystemOf<ComponentType...>& system) {
+        static_assert(std::derived_from<OgSystemType, SystemOf<ComponentType...>> == true && "registered system must be of type SystemOf<Components>");
+
+        Signature system_signature;
+        (system_signature.set(m_component_manager->getComponentType<ComponentType>()), ...);
+        return system_signature;
+    }
+
     template <typename T>
     void m_setSystemSignature(Signature signature) {
         m_system_manager->setSignature<T>(signature);
