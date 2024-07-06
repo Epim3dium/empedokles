@@ -85,8 +85,8 @@ namespace emp {
         
         if(rb1.isStatic && rb2.isStatic)
             return result;
-        const float sfriction = 0.5f * (mat1.static_friction + mat2.static_friction);
-        const float dfriction = 0.5f * (mat1.dynamic_friction +mat2.dynamic_friction);
+        const float sfriction = 0.5f * (mat1.static_friction  + mat2.static_friction);
+        const float dfriction = 0.5f * (mat1.dynamic_friction + mat2.dynamic_friction);
 
         const auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
         const auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
@@ -172,6 +172,7 @@ namespace emp {
         for(const auto& constraint : constraints) {
             const auto e1 = constraint.entity1;
             const auto e2 = constraint.entity2;
+
             const auto& trans1 = coordinator.getComponent<Transform>(e1);
             auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
             const auto& col1 = coordinator.getComponent<Collider>(e1);
@@ -236,9 +237,9 @@ namespace emp {
         }
     }
     void PhysicsSystem::m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime) {
+        rb_sys.integrate(deltaTime);
         trans_sys.update();
         col_sys.update();
-        rb_sys.integrate(deltaTime);
         auto potential_pairs = m_broadPhase();
         auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);;
         rb_sys.deriveVelocities(deltaTime);
