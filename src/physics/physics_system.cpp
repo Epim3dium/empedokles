@@ -112,10 +112,10 @@ namespace emp {
 
         result.normal = intersection.contact_normal;
         result.penetration = penetration;
-        result.pos1_at_col = pos1;
-        result.pos2_at_col = pos2;
-        result.rot1_at_col = rot1;
-        result.rot2_at_col = rot2;
+        result.pos1_pre_col = pos1;
+        result.pos2_pre_col = pos2;
+        result.rot1_pre_col = rot1;
+        result.rot2_pre_col = rot2;
 
         // result.vel1_pre_solve = b1.vel;
         // result.vel2_pre_solve = b2.vel;
@@ -185,8 +185,8 @@ namespace emp {
 
             const auto rest = (mat1.restitution + mat2.restitution) * 0.5f;
 
-            const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_at_col);
-            const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_at_col);
+            const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_pre_col);
+            const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_pre_col);
             const auto pre_solve_contact_vel1 = m_calcContactVel(rb1.vel_pre_solve, rb1.ang_vel_pre_solve, pre_r1model);
             const auto pre_solve_contact_vel2 = m_calcContactVel(rb2.vel_pre_solve, rb2.ang_vel_pre_solve, pre_r2model);
             const auto pre_solve_relative_vel = pre_solve_contact_vel1 - pre_solve_contact_vel2;

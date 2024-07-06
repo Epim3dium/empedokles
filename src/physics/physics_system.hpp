@@ -17,13 +17,13 @@ class PhysicsSystem : public SystemOf<Transform, Collider, Rigidbody, Material> 
         Entity entity2;
         vec2f normal;
         float penetration;
-        vec2f pos1_at_col;
-        vec2f pos2_at_col;
-        float rot1_at_col;
-        float rot2_at_col;
-        //not rotated not translated
+        vec2f pos1_pre_col;
+        vec2f pos2_pre_col;
+        float rot1_pre_col;
+        float rot2_pre_col;
+        //not rotated not translated (model space)
         vec2f radius1;
-        //not rotated not translated
+        //not rotated not translated (model space)
         vec2f radius2;
         float normal_lagrange;
     };
@@ -31,6 +31,7 @@ class PhysicsSystem : public SystemOf<Transform, Collider, Rigidbody, Material> 
     float m_calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt);
     float m_applyPositionalCorrection(Entity& b1, Entity& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance = 0.f);
     vec2f m_calcContactVel(vec2f vel, float ang_vel, vec2f r);
+
     PenetrationConstraint m_handleCollision(Entity b1, const int convexIdx1, Entity b2, const int convexIdx2, float delT, float compliance = 0.f);
     
     std::vector<CollidingPair> m_broadPhase();
