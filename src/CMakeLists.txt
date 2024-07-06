@@ -11,6 +11,8 @@ set(SOURCE_FILES
 
     scene/transform.cpp
 
+    scene/app.cpp
+
     core/entity_manager.cpp
     core/coordinator.cpp
 
