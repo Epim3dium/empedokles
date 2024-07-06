@@ -1,24 +1,20 @@
 #ifndef EMP_RIGIDBODY_HPP
 #define EMP_RIGIDBODY_HPP
-#include "core/transform.hpp"
 #include "math/math_defs.hpp"
-#include "physics/collider.hpp"
+#include "scene/transform.hpp"
 namespace emp {
 class Rigidbody;
-typedef ComponentSystem<Rigidbody> RigidbodySystem;
-typedef ComponentInstance<Rigidbody, RigidbodySystem> RigidbodyInstance;
 class Rigidbody {
-    float m_inertia = 1.f;
-    float m_mass = 1.f;
-    Collider* m_collider;
-    Transform* m_transform;
-    float m_density = 1.f;
 public:
+    float real_inertia = 1.f;
+    float real_mass = 1.f;
+    float real_density = 1.f;
+    bool useAutomaticMass = true;
     float inertia() const {
-        return isStatic ? INFINITY : m_inertia;
+        return isStatic ? INFINITY : real_inertia;
     }
     float mass() const {
-        return isStatic ? INFINITY : m_mass;
+        return isStatic ? INFINITY : real_mass;
     }
     float generalizedInverseMass(vec2f radius, vec2f normal) const;
 
@@ -34,15 +30,13 @@ public:
 
     bool isStatic = false;
 
+private:
+};
+class RigidbodySystem : public SystemOf<Transform, Rigidbody> {
+public:
     void integrate(float delT);
     void deriveVelocities(float delT);
-    void update();
-    Rigidbody(const Rigidbody&) = delete;
-    Rigidbody(Rigidbody&&) = delete;
-    Rigidbody& operator=(const Rigidbody&) = delete;
-private:
-    friend RigidbodySystem;
-    Rigidbody(Transform* transform, Collider* collider, float density = 1.f);
+    void updateMasses();
 };
 };
 #endif
