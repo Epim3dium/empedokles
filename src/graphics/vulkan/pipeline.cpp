@@ -206,8 +206,8 @@ namespace emp {
                 static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
         configInfo.dynamicStateInfo.flags = 0;
 
-        configInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
-        configInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+        configInfo.bindingDescriptions = ModelAsset::Vertex::getBindingDescriptions();
+        configInfo.attributeDescriptions = ModelAsset::Vertex::getAttributeDescriptions();
     }
 
     void Pipeline::enableAlphaBlending(PipelineConfigInfo &configInfo) {
