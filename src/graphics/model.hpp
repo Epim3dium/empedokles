@@ -36,7 +36,7 @@ namespace emp {
             std::vector<Vertex> vertices{};
             std::vector<uint32_t> indices{};
 
-            void loadModel(const std::string &filepath);
+            Builder& loadModel(const std::string &filepath);
         };
 
         ModelAsset(Device &device, const ModelAsset::Builder &builder);
@@ -67,7 +67,7 @@ namespace emp {
         static std::unordered_map<const char*, std::unique_ptr<ModelAsset>> m_model_table;
     public:
         const char* getID() const {return m_id; }
-        ModelAsset& texture() { 
+        ModelAsset& model() { 
             return *m_model_table.at(m_id); 
         }
         static void create(Device& device, const ModelAsset::Builder& builder, const char* id) {
@@ -75,6 +75,7 @@ namespace emp {
             assert(!m_model_table.contains(id) && "trying to override existing model id");
             m_model_table[id] = std::move(model);
         }
+        Model(){}
         Model(const char* model_id) : m_id(model_id) {
             assert(m_model_table.contains(m_id) && "model must be first created");
         }

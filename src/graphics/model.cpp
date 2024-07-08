@@ -33,6 +33,7 @@ namespace std {
 
 namespace emp {
 
+    std::unordered_map<const char*, std::unique_ptr<ModelAsset>> Model::m_model_table;
     ModelAsset::ModelAsset(Device &device, const ModelAsset::Builder &builder) : device{device} {
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
@@ -143,7 +144,7 @@ namespace emp {
         return attributeDescriptions;
     }
 
-    void ModelAsset::Builder::loadModel(const std::string &filepath) {
+    ModelAsset::Builder& ModelAsset::Builder::loadModel(const std::string &filepath) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -197,6 +198,7 @@ namespace emp {
                 indices.push_back(uniqueVertices[vertex]);
             }
         }
+        return *this;
     }
 
 }  // namespace emp
