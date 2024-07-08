@@ -116,7 +116,6 @@ namespace emp {
 
         auto viewerObject = coordinator.createEntity();
         coordinator.addComponent(viewerObject, Transform2D({0.f, 0.f}));
-        auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
         // viewerObject.transform.translation.z = -2.5f;
 
         KeyboardMovementController cameraController{};
@@ -134,12 +133,12 @@ namespace emp {
             cameraController.moveInPlaneXZ(frameTime, viewerObject);
 
             {
-                camera.setViewYXZ(vec3f(viewerTransform.position.x, viewerTransform.position.y, -2.5f), vec3f(0.f, 0.f, viewerTransform.rotation));
+                auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
+                camera.setViewDirection(vec3f(viewerTransform.position.x, viewerTransform.position.y, -2.5f), vec3f(0.f, 0.f, 1.f));
+                float aspect = renderer.getAspectRatio();
+                //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
+                camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f, 0.1f, 100.f);
             }
-
-            float aspect = renderer.getAspectRatio();
-            //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
-            camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f, 0.1f, 100.f);
 
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
@@ -181,6 +180,7 @@ namespace emp {
         auto bunny = coordinator.createEntity();
         coordinator.addComponent(bunny, Transform2D(vec2f(-.5f, .5f), atan(1)*4, {0.5f, 0.5f}));
         coordinator.addComponent(bunny, Model("bunny"));
+        EMP_LOG_DEBUG << "bunny created, id: " << bunny;
 
         Model::create(device, ModelAsset::Builder().loadModel("../assets/models/quad.obj"), "quad");
         // std::shared_ptr<TextureAsset> marbleTexture =
@@ -188,6 +188,7 @@ namespace emp {
         auto floor = coordinator.createEntity();
         coordinator.addComponent(floor, Transform2D(vec2f(0, .5f), 0.f, {6.f, 1.f}));
         coordinator.addComponent(floor, Model("quad"));
+        EMP_LOG_DEBUG << "floor created, id: " << floor;
     }
 
 }  // namespace emp
