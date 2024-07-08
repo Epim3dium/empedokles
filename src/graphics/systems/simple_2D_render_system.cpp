@@ -82,16 +82,11 @@ namespace emp {
             // writing descriptor set each frame can slow performance
             // would be more efficient to implement some sort of caching
             auto buffer_info = model_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
-            VkDescriptorImageInfo image_info;
             VkDescriptorSet entity_desc_set;
 
-            DescriptorWriter desc_writer(*renderSystemLayout, frameInfo.frameDescriptorPool);
-            desc_writer.writeBuffer(0, &buffer_info);
-            if(coordinator.hasComponent<Texture>(e)) {
-                image_info = coordinator.getComponent<Texture>(e).texture().getImageInfo();
-                desc_writer.writeImage(1, &image_info);
-            }
-            desc_writer.build(entity_desc_set);
+            DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
+                .writeBuffer(0, &buffer_info)
+                .build(entity_desc_set);
 
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
@@ -103,6 +98,7 @@ namespace emp {
                     0,
                     nullptr);
 
+            EMP_LOG_DEBUG << "model drawn\tentity: " << e << "\tmodel: " << model.getID();
             model.model().bind(frameInfo.commandBuffer);
             model.model().draw(frameInfo.commandBuffer);
         }
