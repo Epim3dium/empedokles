@@ -30,7 +30,7 @@ namespace emp {
         // order of declarations matters
         std::unique_ptr<DescriptorPool> globalPool;
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
-        GameObjectManager gameObjectManager;
+        TexturedModelsManager gameObjectManager;
 
         std::vector<VkDescriptorSet> m_setupGlobalUBODescriptorSets(DescriptorSetLayout& globalSetLayout, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
         std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers();

@@ -152,17 +152,17 @@ namespace emp {
     }
 
     void App::loadGameObjects() {
-        std::shared_ptr<Model> model =
-                Model::createModelFromFile(device, "assets/models/bunny.obj");
+        std::shared_ptr<ModelAsset> model =
+                ModelAsset::createModelFromFile(device, "assets/models/bunny.obj");
         auto &bunny = gameObjectManager.createGameObject();
         bunny.model = model;
         bunny.transform.translation = {-.5f, .5f, 0.f};
         bunny.transform.scale = {.5f, .5f, .5f};
         bunny.transform.rotation = {0.0f, atan(1) * 4, atan(1) * 4};
 
-        model = Model::createModelFromFile(device, "assets/models/quad.obj");
-        std::shared_ptr<Texture> marbleTexture =
-                Texture::createTextureFromFile(device, "../assets/textures/floor.png");
+        model = ModelAsset::createModelFromFile(device, "assets/models/quad.obj");
+        std::shared_ptr<TextureAsset> marbleTexture =
+                TextureAsset::createTextureFromFile(device, "../assets/textures/floor.png");
         auto &floor = gameObjectManager.createGameObject();
         floor.model = model;
         floor.diffuseMap = marbleTexture;
