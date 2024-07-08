@@ -67,9 +67,9 @@ public:
     }
 
     // System methods
-    template <typename SystemType>
-    std::shared_ptr<SystemType> registerSystem() {
-        auto system = m_system_manager->registerSystem<SystemType>();
+    template <typename SystemType, class ...InitalizerValues>
+    std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
+        auto system = m_system_manager->registerSystem<SystemType>(inits...);
 
         auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
         m_setSystemSignature<SystemType>(system_signature);

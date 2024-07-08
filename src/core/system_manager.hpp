@@ -8,12 +8,12 @@
 namespace emp {
 class SystemManager {
 public:
-    template <typename T>
-    std::shared_ptr<T> registerSystem() {
+    template <typename T, class ...InitializerValues>
+    std::shared_ptr<T> registerSystem(InitializerValues... inits) {
         const char* typeName = typeid(T).name();
         assert(m_systems.find(typeName) == m_systems.end() && "Registering system more than once.");
 
-        auto system = std::make_shared<T>();
+        auto system = std::make_shared<T>(inits...);
         m_systems.insert({typeName, system});
         return system;
     }
