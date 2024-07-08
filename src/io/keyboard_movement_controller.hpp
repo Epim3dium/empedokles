@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/game_object.hpp"
+#include "graphics/model_system.hpp"
 #include "window.hpp"
 
 namespace emp {
@@ -31,7 +31,7 @@ namespace emp {
         };
 
         void update(GLFWwindow* window);
-        void moveInPlaneXZ(float dt, GameObject &gameObject) const;
+        void moveInPlaneXZ(float dt, Entity gameObject) const;
 
         KeyMappings mapping{};
         float moveSpeed{3.f};

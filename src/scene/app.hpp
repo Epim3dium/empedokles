@@ -4,11 +4,12 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/vulkan/descriptors.hpp"
 #include "graphics/vulkan/device.hpp"
-#include "graphics/game_object.hpp"
+#include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 
 #include "io/window.hpp"
 #include "math/math_defs.hpp"
+#include "physics/physics_system.hpp"
 #include <iostream>
 #include <unordered_map>
 namespace emp {
@@ -30,10 +31,16 @@ namespace emp {
         // order of declarations matters
         std::unique_ptr<DescriptorPool> globalPool;
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
-        TexturedModelsManager gameObjectManager;
+
+        std::shared_ptr<TexturedModelsSystem> models_sys;
+        std::shared_ptr<PhysicsSystem> physics_sys;
+        std::shared_ptr<RigidbodySystem> rigidbody_sys;
+        std::shared_ptr<ColliderSystem> collider_sys;
+        std::shared_ptr<TransformSystem> transform_sys;
 
         std::vector<VkDescriptorSet> m_setupGlobalUBODescriptorSets(DescriptorSetLayout& globalSetLayout, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
         std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers();
+        void setupECS();
 
         GlobalUbo m_updateUBO(FrameInfo frameinfo, Buffer& uboBuffer, Camera& camera);
         void loadGameObjects();

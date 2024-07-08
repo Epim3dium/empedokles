@@ -3,7 +3,7 @@
 #include "graphics/camera.hpp"
 #include "graphics/vulkan/device.hpp"
 #include "graphics/frame_info.hpp"
-#include "graphics/game_object.hpp"
+#include "graphics/model_system.hpp"
 #include "graphics/vulkan/pipeline.hpp"
 #include "graphics/vulkan/descriptors.hpp"
 
@@ -23,7 +23,7 @@ namespace emp {
 
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
-        void renderGameObjects(FrameInfo &frameInfo);
+        void render(FrameInfo &frameInfo, TexturedModelsSystem& model_sys);
 
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);

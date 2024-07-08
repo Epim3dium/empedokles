@@ -1,7 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
-#include "game_object.hpp"
+#include "model_system.hpp"
 #include "vulkan/descriptors.hpp"
 
 // lib
@@ -31,7 +31,7 @@ namespace emp {
         VkCommandBuffer commandBuffer;
         Camera &camera;
         VkDescriptorSet globalDescriptorSet;
-        DescriptorPool &frameDescriptorPool;  // pool of descriptors that is cleared each frame
-        GameObject::Map &gameObjects;
+        DescriptorPool& frameDescriptorPool;  // pool of descriptors that is cleared each frame
+        std::set<Entity>& gameObjects;
     };
 }  // namespace emp

@@ -1,12 +1,15 @@
 #include "app.hpp"
 
+#include "core/coordinator.hpp"
 #include "debug/debug.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
 #include "io/keyboard_movement_controller.hpp"
-#include "graphics/systems/point_light_system.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "graphics/systems/simple_2D_render_system.hpp"
+#include "physics/collider.hpp"
+#include "physics/material.hpp"
+#include "physics/rigidbody.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -27,7 +30,6 @@ namespace emp {
         window{WIDTH, HEIGHT, "Vulkan MacOS M1"},
         device{window},
         renderer{window, device},
-        gameObjectManager{device},
         globalPool{}
     {
         globalPool =
@@ -47,7 +49,6 @@ namespace emp {
             framePool = framePoolBuilder.build();
         }
 
-        loadGameObjects();
     }
 
     App::~App() = default;
@@ -75,7 +76,27 @@ namespace emp {
         }
         return uboBuffers;
     }
+    void App::setupECS() {
+        coordinator.init();
+        coordinator.registerComponent<Transform2D>();
+
+        coordinator.registerComponent<Material>();
+        coordinator.registerComponent<Collider>();
+        coordinator.registerComponent<Rigidbody>();
+
+        coordinator.registerComponent<Model>();
+        coordinator.registerComponent<Texture>();
+
+
+        transform_sys = coordinator.registerSystem<TransformSystem>();
+        rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
+        collider_sys  = coordinator.registerSystem<ColliderSystem>();
+        physics_sys   = coordinator.registerSystem<PhysicsSystem>();
+        models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
+    }
     void App::run() {
+        setupECS();
+        loadGameObjects();
         auto uboBuffers = m_setupGlobalUBOBuffers();
 
         auto globalSetLayout = DescriptorSetLayout::Builder(device)
@@ -93,8 +114,10 @@ namespace emp {
                 globalSetLayout->getDescriptorSetLayout()};
         Camera camera{};
 
-        auto &viewerObject = gameObjectManager.createGameObject();
-        viewerObject.transform.translation.z = -2.5f;
+        auto viewerObject = coordinator.createEntity();
+        coordinator.addComponent(viewerObject, Transform2D({0.f, 0.f}));
+        auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
+        // viewerObject.transform.translation.z = -2.5f;
 
         KeyboardMovementController cameraController{};
 
@@ -110,7 +133,9 @@ namespace emp {
             cameraController.update(window.getGLFWwindow());
             cameraController.moveInPlaneXZ(frameTime, viewerObject);
 
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+            {
+                camera.setViewYXZ(vec3f(viewerTransform.position.x, viewerTransform.position.y, -2.5f), vec3f(0.f, 0.f, viewerTransform.rotation));
+            }
 
             float aspect = renderer.getAspectRatio();
             //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
@@ -125,14 +150,14 @@ namespace emp {
                                     camera,
                                     globalDescriptorSets[frameIndex],
                                     *framePools[frameIndex],
-                                    gameObjectManager.gameObjects};
+                                    models_sys->entities};
 
                 GlobalUbo ubo = m_updateUBO(frameInfo, *uboBuffers[frameIndex], camera);
 
-                gameObjectManager.updateBuffer(frameIndex);
+                models_sys->updateBuffer(frameIndex);
                 {
                     renderer.beginSwapChainRenderPass(commandBuffer);
-                    simpleRenderSystem.renderGameObjects(frameInfo);
+                    simpleRenderSystem.render(frameInfo, *models_sys);
                     renderer.endSwapChainRenderPass(commandBuffer);
                 }
                 renderer.endFrame();
@@ -152,22 +177,17 @@ namespace emp {
     }
 
     void App::loadGameObjects() {
-        std::shared_ptr<ModelAsset> model =
-                ModelAsset::createModelFromFile(device, "assets/models/bunny.obj");
-        auto &bunny = gameObjectManager.createGameObject();
-        bunny.model = model;
-        bunny.transform.translation = {-.5f, .5f, 0.f};
-        bunny.transform.scale = {.5f, .5f, .5f};
-        bunny.transform.rotation = {0.0f, atan(1) * 4, atan(1) * 4};
+        Model::create(device, ModelAsset::Builder().loadModel("../assets/models/bunny.obj"), "bunny");
+        auto bunny = coordinator.createEntity();
+        coordinator.addComponent(bunny, Transform2D(vec2f(-.5f, .5f), atan(1)*4, {0.5f, 0.5f}));
+        coordinator.addComponent(bunny, Model("bunny"));
 
-        model = ModelAsset::createModelFromFile(device, "assets/models/quad.obj");
-        std::shared_ptr<TextureAsset> marbleTexture =
-                TextureAsset::createTextureFromFile(device, "../assets/textures/floor.png");
-        auto &floor = gameObjectManager.createGameObject();
-        floor.model = model;
-        floor.diffuseMap = marbleTexture;
-        floor.transform.translation = {0.f, .5f, 0.f};
-        floor.transform.scale = {6.f, 1.f, 6.f};
+        Model::create(device, ModelAsset::Builder().loadModel("../assets/models/quad.obj"), "quad");
+        // std::shared_ptr<TextureAsset> marbleTexture =
+        //         TextureAsset::createTextureFromFile(device, "../assets/textures/floor.png");
+        auto floor = coordinator.createEntity();
+        coordinator.addComponent(floor, Transform2D(vec2f(0, .5f), 0.f, {6.f, 1.f}));
+        coordinator.addComponent(floor, Model("quad"));
     }
 
 }  // namespace emp

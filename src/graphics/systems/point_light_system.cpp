@@ -92,7 +92,7 @@ namespace emp {
 
     void PointLightSystem::render(FrameInfo &frameInfo) {
         // sort lights
-        std::map<float, GameObject::id_t> sorted;
+        std::map<float, GameObjectBackup::id_t> sorted;
         for (auto &kv: frameInfo.gameObjects) {
             auto &obj = kv.second;
             if (obj.pointLight == nullptr) continue;

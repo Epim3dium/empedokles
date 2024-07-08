@@ -1,4 +1,5 @@
 #include "simple_render_system.hpp"
+#include "core/coordinator.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -73,7 +74,7 @@ namespace emp {
                 pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo) {
+    void SimpleRenderSystem::render(FrameInfo &frameInfo, TexturedModelsSystem& model_sys) {
         pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -86,20 +87,24 @@ namespace emp {
                 0,
                 nullptr);
 
-        for (auto &kv: frameInfo.gameObjects) {
-            auto &obj = kv.second;
+        for (auto e: frameInfo.gameObjects) {
 
-            if (obj.model == nullptr) continue;
+            if (!coordinator.hasComponent<Model>(e)) continue;
+            auto& model = coordinator.getComponent<Model>(e);
 
             // writing descriptor set each frame can slow performance
             // would be more efficient to implement some sort of caching
-            auto bufferInfo = obj.getBufferInfo(frameInfo.frameIndex);
-            auto imageInfo = obj.diffuseMap->getImageInfo();
-            VkDescriptorSet gameObjectDescriptorSet;
-            DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
-                    .writeBuffer(0, &bufferInfo)
-                    .writeImage(1, &imageInfo)
-                    .build(gameObjectDescriptorSet);
+            auto buffer_info = model_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
+            VkDescriptorImageInfo image_info;
+            VkDescriptorSet entity_desc_set;
+
+            DescriptorWriter desc_writer(*renderSystemLayout, frameInfo.frameDescriptorPool);
+            desc_writer.writeBuffer(0, &buffer_info);
+            if(coordinator.hasComponent<Texture>(e)) {
+                image_info = coordinator.getComponent<Texture>(e).texture().getImageInfo();
+                desc_writer.writeImage(1, &image_info);
+            }
+            desc_writer.build(entity_desc_set);
 
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
@@ -107,12 +112,12 @@ namespace emp {
                     pipelineLayout,
                     1,  // starting set (0 is the globalDescriptorSet, 1 is the set specific to this system)
                     1,  // set count
-                    &gameObjectDescriptorSet,
+                    &entity_desc_set,
                     0,
                     nullptr);
 
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
+            model.model().bind(frameInfo.commandBuffer);
+            model.model().draw(frameInfo.commandBuffer);
         }
     }
 

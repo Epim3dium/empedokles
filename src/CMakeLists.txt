@@ -32,7 +32,7 @@ set(SOURCE_FILES
     graphics/vulkan/swap_chain.cpp
 
     graphics/camera.cpp
-    graphics/game_object.cpp
+    graphics/model_system.cpp
     graphics/model.cpp
     graphics/renderer.cpp
     graphics/texture.cpp
@@ -97,7 +97,7 @@ set(HEADER_FILES
 
     graphics/camera.hpp
     graphics/frame_info.hpp
-    graphics/game_object.hpp
+    graphics/model_system.hpp
     graphics/model.hpp
     graphics/renderer.hpp
     graphics/texture.hpp
