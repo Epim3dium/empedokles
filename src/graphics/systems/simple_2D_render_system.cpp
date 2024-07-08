@@ -98,7 +98,6 @@ namespace emp {
                     0,
                     nullptr);
 
-            EMP_LOG_DEBUG << "model drawn\tentity: " << e << "\tmodel: " << model.getID();
             model.model().bind(frameInfo.commandBuffer);
             model.model().draw(frameInfo.commandBuffer);
         }

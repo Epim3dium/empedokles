@@ -134,11 +134,12 @@ namespace emp {
 
             {
                 auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
-                camera.setViewDirection(vec3f(viewerTransform.position.x, viewerTransform.position.y, -2.5f), vec3f(0.f, 0.f, 1.f));
+                camera.setViewYXZ(vec3f(viewerTransform.position.x, viewerTransform.position.y, -2.5f), vec3f(0.f, 0.f, viewerTransform.rotation));
                 float aspect = renderer.getAspectRatio();
                 //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
                 camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f, 0.1f, 100.f);
             }
+            transform_sys->update();
 
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
@@ -178,17 +179,9 @@ namespace emp {
     void App::loadGameObjects() {
         Model::create(device, ModelAsset::Builder().loadModel("../assets/models/bunny.obj"), "bunny");
         auto bunny = coordinator.createEntity();
-        coordinator.addComponent(bunny, Transform2D(vec2f(-.5f, .5f), atan(1)*4, {0.5f, 0.5f}));
+        coordinator.addComponent(bunny, Transform2D(vec2f(0.f, 0.f)));
         coordinator.addComponent(bunny, Model("bunny"));
         EMP_LOG_DEBUG << "bunny created, id: " << bunny;
-
-        Model::create(device, ModelAsset::Builder().loadModel("../assets/models/quad.obj"), "quad");
-        // std::shared_ptr<TextureAsset> marbleTexture =
-        //         TextureAsset::createTextureFromFile(device, "../assets/textures/floor.png");
-        auto floor = coordinator.createEntity();
-        coordinator.addComponent(floor, Transform2D(vec2f(0, .5f), 0.f, {6.f, 1.f}));
-        coordinator.addComponent(floor, Model("quad"));
-        EMP_LOG_DEBUG << "floor created, id: " << floor;
     }
 
 }  // namespace emp
