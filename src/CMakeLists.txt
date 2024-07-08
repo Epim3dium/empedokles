@@ -21,7 +21,7 @@ set(SOURCE_FILES
     physics/physics_system.cpp
     physics/broad_phase.cpp
 
-    graphics/systems/point_light_system.cpp
+    # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
     graphics/systems/simple_2D_render_system.cpp
 
@@ -85,7 +85,7 @@ set(HEADER_FILES
     debug/log.hpp
     debug/debug.hpp
 
-    graphics/systems/point_light_system.hpp
+    # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
     graphics/systems/simple_2D_render_system.hpp
 
