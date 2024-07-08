@@ -11,7 +11,7 @@ class ColliderSystem;
 struct Collider {
     typedef std::vector<vec2f> ConvexVertexCloud;
 private:
-    void m_updateNewTransform(const Transform& trans);
+    void m_updateNewTransform(const Transform2D& trans);
 public:
     //potentially concave
     std::vector<vec2f> model_outline;
@@ -27,7 +27,7 @@ public:
     friend ColliderSystem;
 };
 //system for updating transfomred collider shapes
-class ColliderSystem : public SystemOf<Transform, Collider> {
+class ColliderSystem : public SystemOf<Transform2D, Collider> {
 public:
     void update();
     void updateInstant(const Entity e);

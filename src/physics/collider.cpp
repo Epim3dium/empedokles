@@ -20,27 +20,27 @@ namespace emp {
     //     transformed_shape = model_shape;
     //     m_transform = trans;
     // }
-    void Collider::m_updateNewTransform(const Transform& transform) {
+    void Collider::m_updateNewTransform(const Transform2D& transform) {
         for(int i = 0; i < model_shape.size(); i++) {
             auto& poly = model_shape[i];
             for(int ii = 0; ii < poly.size(); ii++) {
-                transformed_shape[i][ii] = transform.globalTransform().transformPoint(poly[ii]);
+                transformed_shape[i][ii] = transformPoint(transform.global(), poly[ii]);
             }
         }
         for (int i = 0; i < model_outline.size(); i++) {
-            transformed_outline[i] = transform.globalTransform().transformPoint(model_outline[i]);
+            transformed_outline[i] = transformPoint(transform.global(), model_outline[i]);
         }
     }
     void ColliderSystem::update() {
         for(auto entity : entities) {
-            auto& transform = coordinator.getComponent<Transform>(entity);
+            auto& transform = coordinator.getComponent<Transform2D>(entity);
             auto& collider = coordinator.getComponent<Collider>(entity);
             collider.m_updateNewTransform(transform);
         }
     }
     void ColliderSystem::updateInstant(const Entity entity) {
         assert(entities.contains(entity) && "system must contain that entity");
-        auto& transform = coordinator.getComponent<Transform>(entity);
+        auto& transform = coordinator.getComponent<Transform2D>(entity);
         auto& collider = coordinator.getComponent<Collider>(entity);
         collider.m_updateNewTransform(transform);
     }

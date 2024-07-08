@@ -16,7 +16,6 @@ namespace emp {
     public:
         static constexpr int WIDTH = 800;
         static constexpr int HEIGHT = 600;
-        static constexpr float PI = 3.1415926;
 
         App();
         ~App();

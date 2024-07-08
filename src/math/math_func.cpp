@@ -3,15 +3,18 @@
 #include <algorithm>
 
 namespace emp {
+vec2f transformPoint(const TransformMatrix& mat, vec2f point) {
+    return mat * glm::vec4(point.x, point.y, 0.f, 1.f);
+}
 bool nearlyEqual(float a, float b, float dt) {
     return abs(a - b) < dt;
 }
 bool nearlyEqual(vec2f a, vec2f b, float dt) {
     return nearlyEqual(a.x, b.x, dt) && nearlyEqual(a.y, b.y, dt);
 }
-void sort_clockwise(std::vector<sf::Vector2f>::iterator begin,
-                         std::vector<sf::Vector2f>::iterator end) {
-    std::sort(begin, end, [](sf::Vector2f a, sf::Vector2f b) {
+void sort_clockwise(std::vector<vec2f>::iterator begin,
+                         std::vector<vec2f>::iterator end) {
+    std::sort(begin, end, [](vec2f a, vec2f b) {
         auto anga = std::atan2(a.x, a.y);
         if (anga > EMP_PI) {
             anga -= 2.f * EMP_PI;
@@ -45,16 +48,16 @@ float qlen(vec2f v) {
 float angle(vec2f a, vec2f b) {
     return atan2(cross(a,b), dot(a,b));
 }
-sf::Vector2f rotate(sf::Vector2f vec, float angle) {
+vec2f rotate(vec2f vec, float angle) {
     return { 
         cosf(angle) * vec.x - sinf(angle) * vec.y, 
         sinf(angle) * vec.x + cosf(angle) * vec.y, 
     };
 }
-float length(sf::Vector2f v) {
+float length(vec2f v) {
     return sqrt(v.x * v.x + v.y * v.y);
 }
-float dot(sf::Vector2f a, sf::Vector2f b) {
+float dot(vec2f a, vec2f b) {
     return  a.x * b.x + a.y * b.y;
 }
 vec2f normal(vec2f v) {

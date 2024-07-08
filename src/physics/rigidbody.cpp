@@ -23,7 +23,7 @@ void RigidbodySystem::updateMasses() {
 void RigidbodySystem::integrate(float delT) {
     for(auto entity : entities) {
         auto& rigidbody = coordinator.getComponent<Rigidbody>(entity);
-        auto& transform = coordinator.getComponent<Transform>(entity);
+        auto& transform = coordinator.getComponent<Transform2D>(entity);
         rigidbody.prev_pos = transform.position;
         rigidbody.vel += delT * rigidbody.force / rigidbody.mass();
         transform.position += rigidbody.vel * delT;
@@ -36,7 +36,7 @@ void RigidbodySystem::integrate(float delT) {
 void RigidbodySystem::deriveVelocities(float delT) {
     for(auto entity : entities) {
         auto& rigidbody = coordinator.getComponent<Rigidbody>(entity);
-        auto& transform = coordinator.getComponent<Transform>(entity);
+        auto& transform = coordinator.getComponent<Transform2D>(entity);
         if(rigidbody.isStatic)
             continue;
         rigidbody.vel_pre_solve = rigidbody.vel;

@@ -4,7 +4,6 @@
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderTarget.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
-#include "SFML/System/Vector3.hpp"
 #include "math/math_defs.hpp"
 
 #include <cmath>
@@ -57,7 +56,7 @@ struct AABB {
         min = c - t / 2.f;
         max = c + t / 2.f;
     }
-    void expandToContain(sf::Vector2f point) {
+    void expandToContain(vec2f point) {
         min.x = std::fmin(min.x, point.x);
         min.y = std::fmin(min.y, point.y);
         max.x = std::fmax(max.x, point.x);

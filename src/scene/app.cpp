@@ -160,13 +160,6 @@ namespace emp {
         bunny.transform.scale = {.5f, .5f, .5f};
         bunny.transform.rotation = {0.0f, atan(1) * 4, atan(1) * 4};
 
-        // model = Model::createModelFromFile(device, "assets/models/dragon.obj");
-        // auto &dragon = gameObjectManager.createGameObject();
-        // dragon.model = model;
-        // dragon.transform.translation = {.5f, .2f, 0.f};
-        // dragon.transform.scale = {1.f, 1.f, 1.f};
-        // dragon.transform.rotation = {PI, -PI / 2, 0.0f};
-
         model = Model::createModelFromFile(device, "assets/models/quad.obj");
         std::shared_ptr<Texture> marbleTexture =
                 Texture::createTextureFromFile(device, "../assets/textures/floor.png");
