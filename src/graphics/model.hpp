@@ -2,6 +2,7 @@
 
 #include "vulkan/buffer.hpp"
 #include "vulkan/device.hpp"
+#include <unordered_map>
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -14,7 +15,7 @@
 #include <vector>
 
 namespace emp {
-    class Model {
+    class ModelAsset {
     public:
         struct Vertex {
             glm::vec3 position{};
@@ -38,12 +39,12 @@ namespace emp {
             void loadModel(const std::string &filepath);
         };
 
-        Model(Device &device, const Model::Builder &builder);
-        ~Model();
-        Model(const Model &) = delete;
-        Model &operator=(const Model &) = delete;
+        ModelAsset(Device &device, const ModelAsset::Builder &builder);
+        ~ModelAsset();
+        ModelAsset(const ModelAsset &) = delete;
+        ModelAsset &operator=(const ModelAsset &) = delete;
 
-        static std::unique_ptr<Model> createModelFromFile(
+        static std::unique_ptr<ModelAsset> createModelFromFile(
                 Device &device, const std::string &filepath);
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer) const;
@@ -59,5 +60,23 @@ namespace emp {
         bool hasIndexBuffer = false;
         std::unique_ptr<Buffer> indexBuffer;
         uint32_t indexCount{};
+    };
+    class Model {
+    private:
+        const char* m_id;
+        static std::unordered_map<const char*, std::unique_ptr<ModelAsset>> m_model_table;
+    public:
+        const char* getID() const {return m_id; }
+        ModelAsset& texture() { 
+            return *m_model_table.at(m_id); 
+        }
+        static void create(Device& device, const ModelAsset::Builder& builder, const char* id) {
+            auto model = std::make_unique<ModelAsset>(device, builder);
+            assert(!m_model_table.contains(id) && "trying to override existing model id");
+            m_model_table[id] = std::move(model);
+        }
+        Model(const char* model_id) : m_id(model_id) {
+            assert(m_model_table.contains(m_id) && "model must be first created");
+        }
     };
 }  // namespace emp

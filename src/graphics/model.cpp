@@ -22,8 +22,8 @@
 
 namespace std {
     template<>
-    struct hash<emp::Model::Vertex> {
-        size_t operator()(emp::Model::Vertex const &vertex) const {
+    struct hash<emp::ModelAsset::Vertex> {
+        size_t operator()(emp::ModelAsset::Vertex const &vertex) const {
             size_t seed = 0;
             emp::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
             return seed;
@@ -33,21 +33,21 @@ namespace std {
 
 namespace emp {
 
-    Model::Model(Device &device, const Model::Builder &builder) : device{device} {
+    ModelAsset::ModelAsset(Device &device, const ModelAsset::Builder &builder) : device{device} {
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
     }
 
-    Model::~Model() = default;
+    ModelAsset::~ModelAsset() = default;
 
-    std::unique_ptr<Model> Model::createModelFromFile(
+    std::unique_ptr<ModelAsset> ModelAsset::createModelFromFile(
             Device &device, const std::string &filepath) {
         Builder builder{};
         builder.loadModel(ENGINE_DIR + filepath);
-        return std::make_unique<Model>(device, builder);
+        return std::make_unique<ModelAsset>(device, builder);
     }
 
-    void Model::createVertexBuffers(const std::vector<Vertex> &vertices) {
+    void ModelAsset::createVertexBuffers(const std::vector<Vertex> &vertices) {
         vertexCount = static_cast<uint32_t>(vertices.size());
         assert(vertexCount >= 3 && "Vertex count must be at least 3");
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -74,7 +74,7 @@ namespace emp {
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
 
-    void Model::createIndexBuffers(const std::vector<uint32_t> &indices) {
+    void ModelAsset::createIndexBuffers(const std::vector<uint32_t> &indices) {
         indexCount = static_cast<uint32_t>(indices.size());
         hasIndexBuffer = indexCount > 0;
 
@@ -106,7 +106,7 @@ namespace emp {
         device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
     }
 
-    void Model::draw(VkCommandBuffer commandBuffer) const {
+    void ModelAsset::draw(VkCommandBuffer commandBuffer) const {
         if (hasIndexBuffer) {
             vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
         } else {
@@ -114,7 +114,7 @@ namespace emp {
         }
     }
 
-    void Model::bind(VkCommandBuffer commandBuffer) {
+    void ModelAsset::bind(VkCommandBuffer commandBuffer) {
         VkBuffer buffers[] = {vertexBuffer->getBuffer()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
@@ -124,7 +124,7 @@ namespace emp {
         }
     }
 
-    std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions() {
+    std::vector<VkVertexInputBindingDescription> ModelAsset::Vertex::getBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;
         bindingDescriptions[0].stride = sizeof(Vertex);
@@ -132,7 +132,7 @@ namespace emp {
         return bindingDescriptions;
     }
 
-    std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> ModelAsset::Vertex::getAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
         attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)});
@@ -143,7 +143,7 @@ namespace emp {
         return attributeDescriptions;
     }
 
-    void Model::Builder::loadModel(const std::string &filepath) {
+    void ModelAsset::Builder::loadModel(const std::string &filepath) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;

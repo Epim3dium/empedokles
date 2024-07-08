@@ -12,14 +12,14 @@
 #include <stdexcept>
 
 namespace emp {
-    Texture::Texture(Device &device, const std::string &textureFilepath) : mDevice{device} {
+    TextureAsset::TextureAsset(Device &device, const std::string &textureFilepath) : mDevice{device} {
         createTextureImage(textureFilepath);
         createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
         createTextureSampler();
         updateDescriptor();
     }
 
-    Texture::Texture(
+    TextureAsset::TextureAsset(
             Device &device,
             VkFormat format,
             VkExtent3D extent,
@@ -104,25 +104,25 @@ namespace emp {
         }
     }
 
-    Texture::~Texture() {
+    TextureAsset::~TextureAsset() {
         vkDestroySampler(mDevice.device(), mTextureSampler, nullptr);
         vkDestroyImageView(mDevice.device(), mTextureImageView, nullptr);
         vkDestroyImage(mDevice.device(), mTextureImage, nullptr);
         vkFreeMemory(mDevice.device(), mTextureImageMemory, nullptr);
     }
 
-    std::unique_ptr<Texture> Texture::createTextureFromFile(
+    std::unique_ptr<TextureAsset> TextureAsset::createTextureFromFile(
             Device &device, const std::string &filepath) {
-        return std::make_unique<Texture>(device, filepath);
+        return std::make_unique<TextureAsset>(device, filepath);
     }
 
-    void Texture::updateDescriptor() {
+    void TextureAsset::updateDescriptor() {
         mDescriptor.sampler = mTextureSampler;
         mDescriptor.imageView = mTextureImageView;
         mDescriptor.imageLayout = mTextureLayout;
     }
 
-    void Texture::createTextureImage(const std::string &filepath) {
+    void TextureAsset::createTextureImage(const std::string &filepath) {
         int texWidth, texHeight, texChannels;
         // stbi_set_flip_vertically_on_load(1);  // todo determine why texture coordinates are flipped
         stbi_uc *pixels =
@@ -201,7 +201,7 @@ namespace emp {
         mTextureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
 
-    void Texture::createTextureImageView(VkImageViewType viewType) {
+    void TextureAsset::createTextureImageView(VkImageViewType viewType) {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = mTextureImage;
@@ -218,7 +218,7 @@ namespace emp {
         }
     }
 
-    void Texture::createTextureSampler() {
+    void TextureAsset::createTextureSampler() {
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -247,7 +247,7 @@ namespace emp {
         }
     }
 
-    void Texture::transitionLayout(
+    void TextureAsset::transitionLayout(
             VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout) {
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
