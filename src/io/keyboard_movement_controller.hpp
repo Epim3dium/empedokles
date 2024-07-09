@@ -31,7 +31,12 @@ namespace emp {
         };
 
         void update(GLFWwindow* window);
-        void moveInPlaneXZ(float dt, Entity gameObject) const;
+        vec2f movementInPlane2D() const;
+        struct XZMovement {
+            vec3f pos_diff{};
+            vec3f rot_diff{};
+        };
+        XZMovement movementInPlaneXZ() const;
 
         KeyMappings mapping{};
         float moveSpeed{3.f};

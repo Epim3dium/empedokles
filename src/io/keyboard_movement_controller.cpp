@@ -28,11 +28,7 @@ namespace emp {
             }
         }
     }
-    void KeyboardMovementController::moveInPlaneXZ(float dt, Entity entity) const {
-        if(!coordinator.hasComponent<Transform2D>(entity)) {
-            EMP_LOG(WARNING) << "tried to attach movement controller to transformless entity";
-            return;
-        }
+    KeyboardMovementController::XZMovement KeyboardMovementController::movementInPlaneXZ() const {
 
         glm::vec3 rotate{0};
         if (keys.at(mapping.lookRight).held) rotate.y += 1.f;
@@ -46,10 +42,13 @@ namespace emp {
         // entity.transform.rotation.x = glm::clamp(entity.transform.rotation.x, -1.5f, 1.5f);
         // entity.transform.rotation.y = glm::mod(entity.transform.rotation.y, glm::two_pi<float>());
 
+        glm::vec3 rot_delta(lookSpeed * glm::normalize(rotate));
+
         float yaw = 0.f /* entity.transform.rotation.y */;
         const glm::vec3 forwardDir{sin(yaw), 0.f, cos(yaw)};
         const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
         const glm::vec3 upDir{0.f, -1.f, 0.f};
+
 
         glm::vec3 moveDir{0.f};
         if (keys.at(mapping.moveForward).held)  moveDir += forwardDir;
@@ -59,10 +58,19 @@ namespace emp {
         if (keys.at(mapping.moveUp).held)       moveDir += upDir;
         if (keys.at(mapping.moveDown).held)     moveDir -= upDir;
 
-        if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-            auto& transform = coordinator.getComponent<Transform2D>(entity);
-            auto delta = moveSpeed * dt * glm::normalize(moveDir);
-            transform.position += vec2f{delta.x, delta.y};
-        }
+        auto delta = moveSpeed * glm::normalize(moveDir);
+        return {delta, rot_delta}; 
+    }
+    vec2f KeyboardMovementController::movementInPlane2D() const {
+        glm::vec3 moveDir{0.f};
+        vec3f upDir{0.f, -1.f, 0.f};
+        vec3f rightDir{-1.f, 0.f, 0.f};
+        if (keys.at(mapping.moveRight).held)    moveDir += rightDir;
+        if (keys.at(mapping.moveLeft).held)     moveDir -= rightDir;
+        if (keys.at(mapping.moveUp).held)       moveDir += upDir;
+        if (keys.at(mapping.moveDown).held)     moveDir -= upDir;
+        if(moveDir == glm::vec3(0.f))
+            return moveDir;
+        return moveSpeed * glm::normalize(moveDir);
     }
 }  // namespace emp

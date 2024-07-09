@@ -12,6 +12,7 @@ set(SOURCE_FILES
     scene/transform.cpp
 
     scene/app.cpp
+    scene/app2D.cpp
 
     core/entity_manager.cpp
     core/coordinator.cpp
@@ -69,6 +70,7 @@ set(HEADER_FILES
     physics/broad_phase.hpp
     
     scene/app.hpp
+    scene/app2D.hpp
     scene/transform.hpp
     core/entity.hpp
     core/entity_manager.hpp

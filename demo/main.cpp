@@ -1,13 +1,4 @@
-#include "SFML/Graphics/CircleShape.hpp"
-#include "SFML/Graphics/RenderWindow.hpp"
-#include "core/coordinator.hpp"
-#include "debug/log.hpp"
-#include "math/geometry_func.hpp"
-#include "scene/app.hpp"
-#include "scene/transform.hpp"
-#include "physics/material.hpp"
-#include "physics/physics_system.hpp"
-#include "physics/rigidbody.hpp"
+#include "scene/app2D.hpp"
 using namespace emp;
 // class TempApp {
 //     sf::Clock deltaClock;
@@ -246,7 +237,7 @@ using namespace emp;
 int main()
 {
     {
-        App demo;
+        App2D demo;
         demo.run();
     }
     return 0;
