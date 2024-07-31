@@ -1,7 +1,6 @@
 #include "app2D.hpp"
 
 #include "core/coordinator.hpp"
-#include "graphics/systems/simple_render_system.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
 #include "io/keyboard_movement_controller.hpp"
@@ -105,7 +104,7 @@ namespace emp {
         EMP_LOG_DEBUG << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment;
         EMP_LOG_DEBUG << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
-        SimpleRenderSystem simpleRenderSystem{
+        Simple2DColorRenderSystem simpleRenderSystem{
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout()};
@@ -115,11 +114,11 @@ namespace emp {
         coordinator.addComponent(viewerObject, Transform2D({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
-        KeyboardMovementController cameraController{};
-        cameraController.mapping.moveUp = GLFW_KEY_W;
-        cameraController.mapping.moveDown = GLFW_KEY_S;
-        cameraController.mapping.moveLeft = GLFW_KEY_D;
-        cameraController.mapping.moveRight = GLFW_KEY_A;
+        KeyboardMovementController camera_controller{};
+        camera_controller.mapping.move_up = GLFW_KEY_W;
+        camera_controller.mapping.move_down = GLFW_KEY_S;
+        camera_controller.mapping.move_left = GLFW_KEY_D;
+        camera_controller.mapping.move_right = GLFW_KEY_A;
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (!window.shouldClose()) {
@@ -130,9 +129,9 @@ namespace emp {
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            cameraController.update(window.getGLFWwindow());
+            camera_controller.update(window.getGLFWwindow());
             auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
-            viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
+            viewerTransform.position += camera_controller.movementInPlane2D() * frameTime;
 
             {
                 auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
