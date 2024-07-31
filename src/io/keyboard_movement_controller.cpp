@@ -31,10 +31,10 @@ namespace emp {
     KeyboardMovementController::XZMovement KeyboardMovementController::movementInPlaneXZ() const {
 
         glm::vec3 rotate{0};
-        if (keys.at(mapping.lookRight).held) rotate.y += 1.f;
-        if (keys.at(mapping.lookLeft).held)  rotate.y -= 1.f;
-        if (keys.at(mapping.lookUp).held)    rotate.x += 1.f;
-        if (keys.at(mapping.lookDown).held)  rotate.x -= 1.f;
+        if (keys.at(mapping.look_right).held) rotate.y += 1.f;
+        if (keys.at(mapping.look_left).held)  rotate.y -= 1.f;
+        if (keys.at(mapping.look_up).held)    rotate.x += 1.f;
+        if (keys.at(mapping.look_down).held)  rotate.x -= 1.f;
 
         // if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
         //     entity.transform.rotation += lookSpeed * dt * glm::normalize(rotate);
@@ -51,12 +51,12 @@ namespace emp {
 
 
         glm::vec3 moveDir{0.f};
-        if (keys.at(mapping.moveForward).held)  moveDir += forwardDir;
-        if (keys.at(mapping.moveBackward).held) moveDir -= forwardDir;
-        if (keys.at(mapping.moveRight).held)    moveDir += rightDir;
-        if (keys.at(mapping.moveLeft).held)     moveDir -= rightDir;
-        if (keys.at(mapping.moveUp).held)       moveDir += upDir;
-        if (keys.at(mapping.moveDown).held)     moveDir -= upDir;
+        if (keys.at(mapping.move_forward).held)  moveDir += forwardDir;
+        if (keys.at(mapping.move_backward).held) moveDir -= forwardDir;
+        if (keys.at(mapping.move_right).held)    moveDir += rightDir;
+        if (keys.at(mapping.move_left).held)     moveDir -= rightDir;
+        if (keys.at(mapping.move_up).held)       moveDir += upDir;
+        if (keys.at(mapping.move_down).held)     moveDir -= upDir;
 
         auto delta = moveSpeed * glm::normalize(moveDir);
         return {delta, rot_delta}; 
@@ -65,10 +65,10 @@ namespace emp {
         glm::vec3 moveDir{0.f};
         vec3f upDir{0.f, -1.f, 0.f};
         vec3f rightDir{-1.f, 0.f, 0.f};
-        if (keys.at(mapping.moveRight).held)    moveDir += rightDir;
-        if (keys.at(mapping.moveLeft).held)     moveDir -= rightDir;
-        if (keys.at(mapping.moveUp).held)       moveDir += upDir;
-        if (keys.at(mapping.moveDown).held)     moveDir -= upDir;
+        if (keys.at(mapping.move_right).held)    moveDir += rightDir;
+        if (keys.at(mapping.move_left).held)     moveDir -= rightDir;
+        if (keys.at(mapping.move_up).held)       moveDir += upDir;
+        if (keys.at(mapping.move_down).held)     moveDir -= upDir;
         if(moveDir == glm::vec3(0.f))
             return moveDir;
         return moveSpeed * glm::normalize(moveDir);

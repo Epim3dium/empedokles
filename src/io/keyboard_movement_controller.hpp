@@ -18,16 +18,16 @@ namespace emp {
             return keys;
         }
         struct KeyMappings {
-            int moveLeft = GLFW_KEY_A;
-            int moveRight = GLFW_KEY_D;
-            int moveForward = GLFW_KEY_W;
-            int moveBackward = GLFW_KEY_S;
-            int moveUp = GLFW_KEY_E;
-            int moveDown = GLFW_KEY_Q;
-            int lookLeft = GLFW_KEY_LEFT;
-            int lookRight = GLFW_KEY_RIGHT;
-            int lookUp = GLFW_KEY_UP;
-            int lookDown = GLFW_KEY_DOWN;
+            int move_left = GLFW_KEY_A;
+            int move_right = GLFW_KEY_D;
+            int move_forward = GLFW_KEY_W;
+            int move_backward = GLFW_KEY_S;
+            int move_up = GLFW_KEY_E;
+            int move_down = GLFW_KEY_Q;
+            int look_left = GLFW_KEY_LEFT;
+            int look_right = GLFW_KEY_RIGHT;
+            int look_up = GLFW_KEY_UP;
+            int look_down = GLFW_KEY_DOWN;
         };
 
         void update(GLFWwindow* window);
