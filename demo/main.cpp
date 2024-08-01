@@ -1,4 +1,4 @@
-#include "scene/app2D.hpp"
+#include "scene/app.hpp"
 using namespace emp;
 // class TempApp {
 //     sf::Clock deltaClock;
@@ -237,7 +237,7 @@ using namespace emp;
 int main()
 {
     {
-        App2D demo;
+        App demo;
         demo.run();
     }
     return 0;

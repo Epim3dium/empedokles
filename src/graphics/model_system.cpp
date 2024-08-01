@@ -13,7 +13,7 @@ namespace emp {
         for (auto &uboBuffer: uboBuffers) {
             uboBuffer = std::make_unique<Buffer>(
                     device,
-                    sizeof(EntityBufferData),
+                    sizeof(TexturedModelInfo),
                     MAX_ENTITIES,
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -30,8 +30,9 @@ namespace emp {
         for (auto e : entities) {
             // auto &obj = kv.second;
             const auto& transform = coordinator.getComponent<Transform2D>(e);
-            EntityBufferData data{};
+            TexturedModelInfo data{};
             data.modelMatrix = transform.global();
+            data.hasTexture[0][0] = coordinator.hasComponent<Texture>(e);
             uboBuffers[frameIndex]->writeToIndex(&data, e);
         }
         uboBuffers[frameIndex]->flush();

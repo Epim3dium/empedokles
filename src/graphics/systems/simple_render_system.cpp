@@ -103,6 +103,9 @@ namespace emp {
             if(coordinator.hasComponent<Texture>(e)) {
                 image_info = coordinator.getComponent<Texture>(e).texture().getImageInfo();
                 desc_writer.writeImage(1, &image_info);
+            }else {
+                image_info = Texture("default").texture().getImageInfo();
+                desc_writer.writeImage(1, &image_info);
             }
             desc_writer.build(entity_desc_set);
 

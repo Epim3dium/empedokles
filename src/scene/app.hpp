@@ -43,7 +43,7 @@ namespace emp {
         void setupECS();
 
         GlobalUbo m_updateUBO(FrameInfo frameinfo, Buffer& uboBuffer, Camera& camera);
-        void loadGameObjects();
+        void loadAssets();
     };
 }  
 #endif

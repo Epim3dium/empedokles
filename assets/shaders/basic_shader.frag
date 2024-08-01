@@ -21,6 +21,12 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
+layout(set = 1, binding = 0) uniform TexturedModelInfo{
+    mat4 modelMatrix;
+    mat4 normalMatrix;
+    mat4 hasTexture;
+} gameObject;
+
 layout (set = 1, binding = 1) uniform sampler2D diffuseMap;
 
 
@@ -50,8 +56,13 @@ void main() {
         blinnTerm = pow(blinnTerm, 512.0); // higher values -> sharper highlight
         specularLight += intensity * blinnTerm;
     }
+    if(ubo.numLights == 0) {
+        diffuseLight = vec3(1, 1, 1);
+    }
 
-    // vec3 color = fragColor;
-    vec3 color = texture(diffuseMap, fragUv).xyz;
+    vec3 color = fragColor;
+    if(gameObject.hasTexture[0][0] == 1.0) {
+        color = texture(diffuseMap, fragUv).xyz;
+    }
     outColor = vec4(diffuseLight * color + specularLight * fragColor, 1.0);
 }

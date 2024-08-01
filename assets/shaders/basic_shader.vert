@@ -24,9 +24,10 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
-layout(set = 1, binding = 0) uniform GameObjectBufferData {
+layout(set = 1, binding = 0) uniform TexturedModelInfo {
     mat4 modelMatrix;
     mat4 normalMatrix;
+    mat4 hasTexture;
 } gameObject;
 
 

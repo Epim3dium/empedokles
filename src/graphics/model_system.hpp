@@ -14,8 +14,10 @@
 
 namespace emp {
 
-    struct EntityBufferData {
+    struct TexturedModelInfo {
         glm::mat4 modelMatrix{1.f};
+        glm::mat4 normalMatrix{1.f};
+        glm::mat4 hasTexture;
     };
 
     class TexturedModelsSystem : public SystemOf<Transform2D, Model> {
