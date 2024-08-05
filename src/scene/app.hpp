@@ -1,6 +1,7 @@
 #ifndef EMP_APP_HPP
 #define EMP_APP_HPP
 #include "graphics/camera.hpp"
+#include "graphics/debug_shape_system.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/vulkan/descriptors.hpp"
 #include "graphics/vulkan/device.hpp"
@@ -32,6 +33,7 @@ namespace emp {
         std::unique_ptr<DescriptorPool> globalPool;
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
 
+        std::shared_ptr<DebugShapeSystem> debugShape_sys;
         std::shared_ptr<TexturedModelsSystem> models_sys;
         std::shared_ptr<PhysicsSystem> physics_sys;
         std::shared_ptr<RigidbodySystem> rigidbody_sys;

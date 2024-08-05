@@ -20,16 +20,6 @@
 #define ENGINE_DIR "../"
 #endif
 
-namespace std {
-    template<>
-    struct hash<emp::ModelAsset::Vertex> {
-        size_t operator()(emp::ModelAsset::Vertex const &vertex) const {
-            size_t seed = 0;
-            emp::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
-            return seed;
-        }
-    };
-}  // namespace std
 
 namespace emp {
 

@@ -5,6 +5,7 @@
 #include "graphics/camera.hpp"
 #include "io/keyboard_movement_controller.hpp"
 #include "graphics/systems/simple_render_system.hpp"
+#include "graphics/systems/debug_shape_render_system.hpp"
 #include "physics/collider.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
@@ -82,12 +83,14 @@ namespace emp {
 
         coordinator.registerComponent<Model>();
         coordinator.registerComponent<Texture>();
+        coordinator.registerComponent<DebugShape>();
 
 
         transform_sys = coordinator.registerSystem<TransformSystem>();
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
         collider_sys  = coordinator.registerSystem<ColliderSystem>();
         physics_sys   = coordinator.registerSystem<PhysicsSystem>();
+        debugShape_sys = coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
         models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
     }
     void App::run() {
@@ -110,6 +113,12 @@ namespace emp {
                 globalSetLayout->getDescriptorSetLayout(),
                 "assets/shaders/basic_shader.vert.spv",
                 "assets/shaders/basic_shader.frag.spv"};
+        DebugShapeRenderSystem debugShapeRenderSystem{
+                device,
+                renderer.getSwapChainRenderPass(),
+                globalSetLayout->getDescriptorSetLayout(),
+                "assets/shaders/debug_shape.vert.spv",
+                "assets/shaders/debug_shape.frag.spv"};
         Camera camera{};
 
         auto viewerObject = coordinator.createEntity();
@@ -153,14 +162,16 @@ namespace emp {
                                     camera,
                                     globalDescriptorSets[frameIndex],
                                     *framePools[frameIndex],
-                                    models_sys->entities};
+                                    debugShape_sys->entities};
 
                 GlobalUbo ubo = m_updateUBO(frameInfo, *uboBuffers[frameIndex], camera);
 
-                models_sys->updateBuffer(frameIndex);
+                // models_sys->updateBuffer(frameIndex);
+                debugShape_sys->updateBuffer(frameIndex);
                 {
                     renderer.beginSwapChainRenderPass(commandBuffer);
-                    simpleRenderSystem.render(frameInfo, *models_sys);
+                    // simpleRenderSystem.render(frameInfo, *models_sys);
+                    debugShapeRenderSystem.render(frameInfo, *debugShape_sys);
                     renderer.endSwapChainRenderPass(commandBuffer);
                 }
                 renderer.endFrame();
@@ -183,8 +194,13 @@ namespace emp {
         Texture::create(device, "../assets/textures/star.jpg", "default");
         Model::create(device, ModelAsset::Builder().loadModel("../assets/models/bunny.obj"), "bunny");
         auto bunny = coordinator.createEntity();
-        coordinator.addComponent(bunny, Transform(vec2f(0.f, 0.f), 0.f, {0.5f, 0.5f}));
+        coordinator.addComponent(bunny, Transform(vec2f(0.f, 0.5f), 0.f, {0.5f, 0.5f}));
         coordinator.addComponent(bunny, Model("bunny"));
+        auto triangle = coordinator.createEntity();
+        coordinator.addComponent(triangle, Transform(vec2f(0.f, 0.0f), 0.f, {1.0f, 1.0f}));
+        auto shape = DebugShape(device, {vec2f(-0.25f, 0.f), vec2f(0.f, 0.25f), vec2f(0.25f, 0.f), vec2f(0.f, -0.25f)});
+        shape.fill_color = glm::vec4(1, 0, 0, 1);
+        coordinator.addComponent(triangle, shape);
         // coordinator.addComponent(bunny, Texture("default"));
         EMP_LOG_DEBUG << "bunny created, id: " << bunny;
     }

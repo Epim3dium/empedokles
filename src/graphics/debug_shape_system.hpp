@@ -1,5 +1,6 @@
 #pragma once
 
+#include "graphics/debug_shape.hpp"
 #include "model.hpp"
 #include "scene/transform.hpp"
 #include "texture.hpp"
@@ -20,7 +21,7 @@ namespace emp {
         glm::vec4 outline_color;
     };
 
-    class DebugShapeSystem : public System<Transform, Model> {
+    class DebugShapeSystem : public System<Transform, DebugShape> {
     public:
         DebugShapeSystem(Device &device);
 
@@ -31,8 +32,6 @@ namespace emp {
 
         void updateBuffer(int frameIndex);
         std::vector<std::unique_ptr<Buffer>> uboBuffers{SwapChain::MAX_FRAMES_IN_FLIGHT};
-    private:
-        std::shared_ptr<TextureAsset> textureDefault;
     };
 
 }  
