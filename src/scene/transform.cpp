@@ -29,7 +29,7 @@ namespace emp {
     }
     void TransformSystem::update() {
         for(auto entity : entities) {
-            auto& trans = coordinator.getComponent<Transform>(entity);
+            auto& trans = getComponent<Transform>(entity);
             trans.m_updateLocalTransform();
             trans.m_global_transform = trans.m_local_transform;
         }

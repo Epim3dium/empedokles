@@ -53,8 +53,11 @@ public:
     }
 
     template <typename T>
-    T& getComponent(Entity entity) {
-        return m_component_manager->getComponent<T>(entity);
+    T* findComponent(Entity entity) {
+        if(!hasComponent<T>(entity)) {
+            return nullptr;
+        }
+        return &m_component_manager->getComponent<T>(entity);
     }
 
     template <typename T>

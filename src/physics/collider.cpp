@@ -33,15 +33,15 @@ namespace emp {
     }
     void ColliderSystem::update() {
         for(auto entity : entities) {
-            auto& transform = coordinator.getComponent<Transform>(entity);
-            auto& collider = coordinator.getComponent<Collider>(entity);
+            auto& transform = getComponent<Transform>(entity);
+            auto& collider = getComponent<Collider>(entity);
             collider.m_updateNewTransform(transform);
         }
     }
     void ColliderSystem::updateInstant(const Entity entity) {
         assert(entities.contains(entity) && "system must contain that entity");
-        auto& transform = coordinator.getComponent<Transform>(entity);
-        auto& collider = coordinator.getComponent<Collider>(entity);
+        auto& transform = getComponent<Transform>(entity);
+        auto& collider = getComponent<Collider>(entity);
         collider.m_updateNewTransform(transform);
     }
     Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {

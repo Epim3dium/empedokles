@@ -1,7 +1,6 @@
 #include "app.hpp"
 
 #include "core/coordinator.hpp"
-#include "debug/debug.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
 #include "io/keyboard_movement_controller.hpp"
@@ -17,11 +16,9 @@
 #include <glm/gtc/constants.hpp>
 
 // std
-#include <array>
 #include <cassert>
 #include <chrono>
 #include <iostream>
-#include <stdexcept>
 
 namespace emp {
 
@@ -133,11 +130,11 @@ namespace emp {
             currentTime = newTime;
 
             cameraController.update(window.getGLFWwindow());
-            auto& viewerTransform = coordinator.getComponent<Transform>(viewerObject);
+            assert(coordinator.hasComponent<Transform>(viewerObject));
+            auto& viewerTransform = *coordinator.findComponent<Transform>(viewerObject);
             viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
 
             {
-                auto& viewerTransform = coordinator.getComponent<Transform>(viewerObject);
                 camera.setView(viewerTransform.position, viewerTransform.rotation);
                 float aspect = renderer.getAspectRatio();
                 //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);

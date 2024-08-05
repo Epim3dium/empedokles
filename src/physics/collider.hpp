@@ -27,7 +27,7 @@ public:
     friend ColliderSystem;
 };
 //system for updating transfomred collider shapes
-class ColliderSystem : public SystemOf<Transform, Collider> {
+class ColliderSystem : public System<Transform, Collider> {
 public:
     void update();
     void updateInstant(const Entity e);

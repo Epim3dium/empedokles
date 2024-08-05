@@ -21,7 +21,11 @@ namespace emp {
     size_t index = 0;
     for(auto itr = begin; itr != end; itr++) {
         const Entity entity = *itr;
-        const auto& shape = coordinator.getComponent<Collider>(entity).transformed_shape;
+
+        const auto shape_ptr = coordinator.findComponent<Collider>(entity);
+        assert(shape_ptr != nullptr);
+        const auto& shape = shape_ptr->transformed_shape;
+
         size_t sub_index = 0;
         for(const auto& convex : shape) {
             AABB aabb = AABB::Expandable();

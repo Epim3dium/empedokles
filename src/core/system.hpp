@@ -1,24 +1,24 @@
 #ifndef EMP_SYSTEM_HPP
 #define EMP_SYSTEM_HPP
+#include "system_base.hpp"
+#include "coordinator.hpp"
 
-#include "core/entity.hpp"
-#include <set>
 namespace emp {
-    class System {
+    template<typename ...Components>
+    class System : public SystemOf<Components...> {
     public:
-        std::set<Entity> entities;
-        virtual void onEntityRemoved(Entity entity) {}
-        virtual void onEntityAdded(Entity entity) {}
+        template<class T>
+        T& getComponent(Entity entity) {
+            static_assert((std::is_same<T,Components>::value || ...), "must get component contained in this system");
+            return *coordinator.findComponent<T>(entity);
+        }
+        template<class T>
+        const T& getComponent(Entity entity) const {
+            static_assert((std::is_same<T,Components>::value || ...), "must get component contained in this system");
+            return *coordinator.findComponent<T>(entity);
+        }
 
-        System(const System &) = delete;
-        System &operator=(const System &) = delete;
-        System(System &&) = delete;
-        System &operator=(System &&) = delete;
-        System(){}
     };
-
-    template<class ...ComponentTypes>
-    class SystemOf : public System {};
 };
 
 #endif

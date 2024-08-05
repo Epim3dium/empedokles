@@ -75,6 +75,7 @@ set(HEADER_FILES
     core/component_array.hpp
     core/component_manager.hpp
     core/system_manager.hpp
+    core/system_base.hpp
     core/system.hpp
     core/coordinator.hpp
 

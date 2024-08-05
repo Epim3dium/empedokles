@@ -31,7 +31,7 @@ public:
     Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { }
     friend TransformSystem;
 };
-class TransformSystem : public SystemOf<Transform> {
+class TransformSystem : public System<Transform> {
 public:
     void update();
 };

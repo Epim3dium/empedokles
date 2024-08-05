@@ -1,7 +1,7 @@
 #ifndef EMP_SYSTEM_MANAGER_HPP
 #define EMP_SYSTEM_MANAGER_HPP
 #include "core/component.hpp"
-#include "core/system.hpp"
+#include "core/system_base.hpp"
 #include "core/entity.hpp"
 #include <set>
 #include <unordered_map>
@@ -58,7 +58,7 @@ public:
 
 private:
     std::unordered_map<const char*, Signature> m_signatures{};
-    std::unordered_map<const char*, std::shared_ptr<System>> m_systems{};
+    std::unordered_map<const char*, std::shared_ptr<SystemBase>> m_systems{};
 };
 }; // namespace emp
 #endif
