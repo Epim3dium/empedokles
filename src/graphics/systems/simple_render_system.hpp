@@ -14,27 +14,20 @@
 namespace emp {
     class SimpleRenderSystem {
     public:
-        SimpleRenderSystem(
-                Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-
+        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, const char* frag_filename, const char* vert_filename);
         ~SimpleRenderSystem();
-
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
-
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
         void render(FrameInfo &frameInfo, TexturedModelsSystem& model_sys);
-
     private:
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-
-        void createPipeline(VkRenderPass renderPass);
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, size_t push_constant_struct_size = 4);
+        void createPipeline(VkRenderPass renderPass, const char* frag_filename, const char* vert_filename);
 
         Device &device;
-
         std::unique_ptr<Pipeline> pipeline;
-        VkPipelineLayout pipelineLayout{};
+        VkPipelineLayout pipeline_layout{};
 
-        std::unique_ptr<DescriptorSetLayout> renderSystemLayout;
+        std::unique_ptr<DescriptorSetLayout> render_system_layout;
     };
 }  // namespace emp

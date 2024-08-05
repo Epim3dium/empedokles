@@ -107,7 +107,9 @@ namespace emp {
         SimpleRenderSystem simpleRenderSystem{
                 device,
                 renderer.getSwapChainRenderPass(),
-                globalSetLayout->getDescriptorSetLayout()};
+                globalSetLayout->getDescriptorSetLayout(),
+                "assets/shaders/basic_shader.vert.spv",
+                "assets/shaders/basic_shader.frag.spv"};
         Camera camera{};
 
         auto viewerObject = coordinator.createEntity();
