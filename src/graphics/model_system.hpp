@@ -20,7 +20,7 @@ namespace emp {
         glm::mat4 hasTexture;
     };
 
-    class TexturedModelsSystem : public SystemOf<Transform2D, Model> {
+    class TexturedModelsSystem : public SystemOf<Transform, Model> {
     public:
         TexturedModelsSystem(Device &device);
 

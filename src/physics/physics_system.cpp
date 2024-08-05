@@ -18,10 +18,10 @@ namespace emp {
         return fmin(-(coef * abs(normal_impulse)), (tangent_speed / generalized_inv_mass_sum));
     }
     float PhysicsSystem::m_applyPositionalCorrection(Entity& e1, Entity& e2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
-        auto& trans1 = coordinator.getComponent<Transform2D>(e1);
+        auto& trans1 = coordinator.getComponent<Transform>(e1);
         auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
 
-        auto& trans2 = coordinator.getComponent<Transform2D>(e2);
+        auto& trans2 = coordinator.getComponent<Transform>(e2);
         auto& rb2 = coordinator.getComponent<Rigidbody>(e2);
 
         const vec2f& pos1 = trans1.position;
@@ -64,12 +64,12 @@ namespace emp {
         result.entity1 = e1;
         result.entity2 = e2;
 
-        auto& trans1 = coordinator.getComponent<Transform2D>(e1);
+        auto& trans1 = coordinator.getComponent<Transform>(e1);
         auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
         auto& col1 = coordinator.getComponent<Collider>(e1);
         auto& mat1 = coordinator.getComponent<Material>(e1);
 
-        auto& trans2 = coordinator.getComponent<Transform2D>(e2);
+        auto& trans2 = coordinator.getComponent<Transform>(e2);
         auto& rb2 = coordinator.getComponent<Rigidbody>(e2);
         auto& col2 = coordinator.getComponent<Collider>(e2);
         auto& mat2 = coordinator.getComponent<Material>(e2);
@@ -173,12 +173,12 @@ namespace emp {
             const auto e1 = constraint.entity1;
             const auto e2 = constraint.entity2;
 
-            const auto& trans1 = coordinator.getComponent<Transform2D>(e1);
+            const auto& trans1 = coordinator.getComponent<Transform>(e1);
             auto& rb1 = coordinator.getComponent<Rigidbody>(e1);
             const auto& col1 = coordinator.getComponent<Collider>(e1);
             const auto& mat1 = coordinator.getComponent<Material>(e1);
 
-            const auto& trans2 = coordinator.getComponent<Transform2D>(e2);
+            const auto& trans2 = coordinator.getComponent<Transform>(e2);
             auto& rb2 = coordinator.getComponent<Rigidbody>(e2);
             const auto& col2 = coordinator.getComponent<Collider>(e2);
             const auto& mat2 = coordinator.getComponent<Material>(e2);

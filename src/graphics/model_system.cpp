@@ -29,7 +29,7 @@ namespace emp {
         // buffer for this frame
         for (auto e : entities) {
             // auto &obj = kv.second;
-            const auto& transform = coordinator.getComponent<Transform2D>(e);
+            const auto& transform = coordinator.getComponent<Transform>(e);
             TexturedModelInfo data{};
             data.modelMatrix = transform.global();
             data.hasTexture[0][0] = coordinator.hasComponent<Texture>(e);

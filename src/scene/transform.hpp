@@ -7,7 +7,7 @@
 
 namespace emp {
 class TransformSystem;
-class Transform2D {
+class Transform {
     TransformMatrix m_local_transform;
     TransformMatrix m_global_transform;
 
@@ -27,11 +27,11 @@ public:
     inline const TransformMatrix& global() const {
         return m_global_transform;
     }
-    Transform2D() {}
-    Transform2D(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { }
+    Transform() {}
+    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { }
     friend TransformSystem;
 };
-class TransformSystem : public SystemOf<Transform2D> {
+class TransformSystem : public SystemOf<Transform> {
 public:
     void update();
 };

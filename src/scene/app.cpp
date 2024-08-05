@@ -77,7 +77,7 @@ namespace emp {
     }
     void App::setupECS() {
         coordinator.init();
-        coordinator.registerComponent<Transform2D>();
+        coordinator.registerComponent<Transform>();
 
         coordinator.registerComponent<Material>();
         coordinator.registerComponent<Collider>();
@@ -111,10 +111,10 @@ namespace emp {
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout()};
-        Camera2D camera{};
+        Camera camera{};
 
         auto viewerObject = coordinator.createEntity();
-        coordinator.addComponent(viewerObject, Transform2D({0.f, 0.f}));
+        coordinator.addComponent(viewerObject, Transform({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
         KeyboardMovementController cameraController{};
@@ -133,11 +133,11 @@ namespace emp {
             currentTime = newTime;
 
             cameraController.update(window.getGLFWwindow());
-            auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
+            auto& viewerTransform = coordinator.getComponent<Transform>(viewerObject);
             viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
 
             {
-                auto& viewerTransform = coordinator.getComponent<Transform2D>(viewerObject);
+                auto& viewerTransform = coordinator.getComponent<Transform>(viewerObject);
                 camera.setView(viewerTransform.position, viewerTransform.rotation);
                 float aspect = renderer.getAspectRatio();
                 //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
@@ -184,7 +184,7 @@ namespace emp {
         Texture::create(device, "../assets/textures/star.jpg", "default");
         Model::create(device, ModelAsset::Builder().loadModel("../assets/models/bunny.obj"), "bunny");
         auto bunny = coordinator.createEntity();
-        coordinator.addComponent(bunny, Transform2D(vec2f(0.f, 0.f), 0.f, {0.5f, 0.5f}));
+        coordinator.addComponent(bunny, Transform(vec2f(0.f, 0.f), 0.f, {0.5f, 0.5f}));
         coordinator.addComponent(bunny, Model("bunny"));
         // coordinator.addComponent(bunny, Texture("default"));
         EMP_LOG_DEBUG << "bunny created, id: " << bunny;

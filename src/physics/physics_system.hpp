@@ -10,7 +10,7 @@
 
 #include <memory>
 namespace emp {
-class PhysicsSystem : public SystemOf<Transform2D, Collider, Rigidbody, Material> {
+class PhysicsSystem : public SystemOf<Transform, Collider, Rigidbody, Material> {
     struct PenetrationConstraint {
         bool detected = false;
         Entity entity1;

@@ -1,4 +1,5 @@
 #pragma once
+#include "scene/scene_defs.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -30,17 +31,16 @@ namespace emp {
         [[nodiscard]] const glm::mat4 &getInverseView() const { return inverseViewMatrix; }
 
         [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(inverseViewMatrix[3]); }
+#if IS_SCENE_2D
+        void setOrthographicProjection(
+                float left, float right, float top, float bottom);
+
+        void setView(glm::vec2 position, float rotation);
+#endif
 
     protected:
         glm::mat4 projectionMatrix{1.f};
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
-    };
-    class Camera2D : public Camera {
-    public:
-        void setOrthographicProjection(
-                float left, float right, float top, float bottom);
-
-        void setView(glm::vec2 position, float rotation);
     };
 }  // namespace emp

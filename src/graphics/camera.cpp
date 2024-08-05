@@ -9,7 +9,8 @@
 #include <limits>
 
 namespace emp {
-void Camera2D::setOrthographicProjection(float left, float right, float top, float bottom) {
+#if IS_SCENE_2D
+void Camera::setOrthographicProjection(float left, float right, float top, float bottom) {
     constexpr float near = 0.1f;
     constexpr float far = 10.f;
     projectionMatrix = glm::mat4{1.0f};
@@ -20,7 +21,7 @@ void Camera2D::setOrthographicProjection(float left, float right, float top, flo
     projectionMatrix[3][1] = -(bottom + top) / (bottom - top);
     projectionMatrix[3][2] = -near / (far - near);
 }
-void Camera2D::setView(glm::vec2 pos, float rotation) {
+void Camera::setView(glm::vec2 pos, float rotation) {
     glm::vec3 position(pos.x, pos.y, -1.f);
     const float c3 = glm::cos(rotation);
     const float s3 = glm::sin(rotation);
@@ -60,6 +61,7 @@ void Camera2D::setView(glm::vec2 pos, float rotation) {
     inverseViewMatrix[3][2] = position.z;
 }
 
+#endif 
 
 void Camera::setOrthographicProjection(float left, float right, float top, float bottom, float near, float far) {
     projectionMatrix = glm::mat4{1.0f};
