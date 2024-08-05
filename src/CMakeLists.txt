@@ -23,6 +23,7 @@ set(SOURCE_FILES
 
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
+    graphics/systems/debug_shape_render_system.cpp
 
     graphics/vulkan/buffer.cpp
     graphics/vulkan/descriptors.cpp
@@ -32,6 +33,9 @@ set(SOURCE_FILES
 
     graphics/camera.cpp
     graphics/model_system.cpp
+    graphics/debug_shape.cpp
+    graphics/debug_shape_system.cpp
+    graphics/vertex.cpp
     graphics/model.cpp
     graphics/renderer.cpp
     graphics/texture.cpp
@@ -87,6 +91,7 @@ set(HEADER_FILES
 
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
+    graphics/systems/debug_shape_render_system.hpp
 
     graphics/vulkan/buffer.hpp
     graphics/vulkan/descriptors.hpp
@@ -97,6 +102,9 @@ set(HEADER_FILES
     graphics/camera.hpp
     graphics/frame_info.hpp
     graphics/model_system.hpp
+    graphics/debug_shape.hpp
+    graphics/debug_shape_system.hpp
+    graphics/vertex.hpp
     graphics/model.hpp
     graphics/renderer.hpp
     graphics/texture.hpp
