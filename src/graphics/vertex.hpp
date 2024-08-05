@@ -1,6 +1,14 @@
 #pragma once
-#include "math/math_defs.hpp"
-#include "vulkan/vulkan_core.h"
+
+#include "graphics/utils.hpp"
+#include "vulkan/buffer.hpp"
+#include "vulkan/device.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
+// std
+#include <memory>
 #include <vector>
 namespace emp {
     struct Vertex {
@@ -18,3 +26,13 @@ namespace emp {
         }
     };
 };
+namespace std {
+    template<>
+    struct hash<emp::Vertex> {
+        size_t operator()(emp::Vertex const &vertex) const {
+            size_t seed = 0;
+            emp::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            return seed;
+        }
+    };
+}  // namespace std

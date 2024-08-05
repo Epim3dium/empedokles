@@ -1,4 +1,8 @@
 #include "vertex.hpp"
+#include <cassert>
+#include <cstring>
+#include <unordered_map>
+
 namespace emp {
     std::vector<VkVertexInputBindingDescription> Vertex::getBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
