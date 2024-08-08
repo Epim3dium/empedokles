@@ -90,23 +90,32 @@ namespace emp {
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
         collider_sys  = coordinator.registerSystem<ColliderSystem>();
         physics_sys   = coordinator.registerSystem<PhysicsSystem>();
+
+        EMP_LOG(DEBUG2) << "ECS render systems...";
         debugShape_sys = coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
         models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
     }
     void App::run() {
+        EMP_LOG(LogLevel::DEBUG) << "start running ...";
+        EMP_LOG(LogLevel::DEBUG) << "ECS...";
         setupECS();
+        EMP_LOG(LogLevel::DEBUG) << "assets...";
         loadAssets();
+        EMP_LOG(LogLevel::DEBUG) << "ubo buffers...";
         auto uboBuffers = m_setupGlobalUBOBuffers();
 
+        EMP_LOG(LogLevel::DEBUG) << "global set layout...";
         auto globalSetLayout = DescriptorSetLayout::Builder(device)
                         .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                         .build();
 
+        EMP_LOG(LogLevel::DEBUG) << "gloabl descriptor sets...";
         auto globalDescriptorSets = m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers);
 
-        EMP_LOG_DEBUG << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment;
-        EMP_LOG_DEBUG << "atom size: " << device.properties.limits.nonCoherentAtomSize;
+        EMP_LOG(DEBUG3) << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment;
+        EMP_LOG(DEBUG3) << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
+        EMP_LOG(LogLevel::DEBUG) << "render systems...";
         SimpleRenderSystem simpleRenderSystem{
                 device,
                 renderer.getSwapChainRenderPass(),
@@ -178,8 +187,13 @@ namespace emp {
             }
         }
 
+        EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
+        coordinator.destroy();
+        EMP_LOG(LogLevel::DEBUG) << "destroying models...";
         Model::destroyAll();
+        EMP_LOG(LogLevel::DEBUG) << "destroying textures...";
         Texture::destroyAll();
+
         vkDeviceWaitIdle(device.device());
     }
     GlobalUbo App::m_updateUBO(FrameInfo frameInfo, Buffer& uboBuffer, Camera& camera) {
@@ -193,18 +207,17 @@ namespace emp {
     }
 
     void App::loadAssets() {
-        Texture::create(device, "../assets/textures/star.jpg", "default");
         Model::create(device, ModelAsset::Builder().loadModel("../assets/models/colored_cube.obj"), "cube");
         auto cube = coordinator.createEntity();
         coordinator.addComponent(cube, Transform(vec2f(0.f, 0.5f), 0.f, {0.5f, 0.5f}));
-        coordinator.addComponent(cube, Model("cube"));
+        // coordinator.addComponent(cube, Model("cube"));
         auto triangle = coordinator.createEntity();
         coordinator.addComponent(triangle, Transform(vec2f(0.f, 0.0f), 0.f, {1.0f, 1.0f}));
         auto shape = DebugShape(device, {vec2f(-0.25f, 0.f), vec2f(0.f, 0.25f), vec2f(0.25f, 0.f), vec2f(0.f, -0.25f)});
         shape.fill_color = glm::vec4(1, 0, 0, 1);
         coordinator.addComponent(triangle, shape);
         // coordinator.addComponent(cube, Texture("default"));
-        EMP_LOG_DEBUG << "cube created, id: " << cube;
+        EMP_LOG(LogLevel::DEBUG) << "cube created, id: " << cube;
     }
 
 

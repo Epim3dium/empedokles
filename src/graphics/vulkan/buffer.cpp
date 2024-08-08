@@ -3,6 +3,7 @@
  */
 
 #include "buffer.hpp"
+#include "debug/log.hpp"
 
 // std
 #include <cassert>
@@ -37,16 +38,19 @@ namespace emp {
               instanceSize{instanceSize},
               instanceCount{instanceCount},
               usageFlags{usageFlags},
-              memoryPropertyFlags{memoryPropertyFlags} {
+              memoryPropertyFlags{memoryPropertyFlags} 
+    {
         alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
         bufferSize = alignmentSize * instanceCount;
         device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
+        EMP_LOG(LogLevel::DEBUG3) << "AV" << "\t@S " << memory;
     }
 
     Buffer::~Buffer() {
         unmap();
         vkDestroyBuffer(device.device(), buffer, nullptr);
         vkFreeMemory(device.device(), memory, nullptr);
+        EMP_LOG(LogLevel::DEBUG3) << "DV" << "\t@S " << memory;
     }
 
 /**

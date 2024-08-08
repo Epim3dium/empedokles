@@ -78,6 +78,11 @@ public:
         m_setSystemSignature<SystemType>(system_signature);
         return system;
     }
+    void destroy() {
+        delete m_component_manager.release();
+        delete m_entity_manager.release();
+        delete m_system_manager.release();
+    }
 private:
     template<class OgSystemType, class ...ComponentType>
     Signature m_getSignatureSystemOf(SystemOf<ComponentType...>& system) {
