@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include "scene_defs.hpp"
 #include "core/coordinator.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
@@ -24,7 +25,7 @@
 namespace emp {
 
     App::App():
-        window{WIDTH, HEIGHT, "Vulkan MacOS M1"},
+        window{width, height, "Vulkan MacOS M1"},
         device{window},
         renderer{window, device},
         globalPool{}
@@ -85,7 +86,6 @@ namespace emp {
         coordinator.registerComponent<Texture>();
         coordinator.registerComponent<DebugShape>();
 
-
         transform_sys = coordinator.registerSystem<TransformSystem>();
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
         collider_sys  = coordinator.registerSystem<ColliderSystem>();
@@ -94,24 +94,25 @@ namespace emp {
         EMP_LOG(DEBUG2) << "ECS render systems...";
         debugShape_sys = coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
         models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
+
+        for(const auto& func : to_register) {
+            func();
+        }
     }
     void App::run() {
         EMP_LOG(LogLevel::DEBUG) << "start running ...";
         EMP_LOG(LogLevel::DEBUG) << "ECS...";
         setupECS();
+
         EMP_LOG(LogLevel::DEBUG) << "assets...";
         loadAssets();
+
         EMP_LOG(LogLevel::DEBUG) << "ubo buffers...";
         auto uboBuffers = m_setupGlobalUBOBuffers();
-
-        EMP_LOG(LogLevel::DEBUG) << "global set layout...";
         auto globalSetLayout = DescriptorSetLayout::Builder(device)
                         .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                         .build();
-
-        EMP_LOG(LogLevel::DEBUG) << "gloabl descriptor sets...";
-        auto globalDescriptorSets = m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers);
-
+        auto global_descriptor_sets = m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers);
         EMP_LOG(DEBUG3) << "Alignment: " << device.properties.limits.minUniformBufferOffsetAlignment;
         EMP_LOG(DEBUG3) << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
@@ -150,38 +151,52 @@ namespace emp {
             currentTime = newTime;
 
             cameraController.update(window.getGLFWwindow());
-            assert(coordinator.hasComponent<Transform>(viewerObject));
-            auto& viewerTransform = *coordinator.findComponent<Transform>(viewerObject);
-            viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
 
             {
+                assert(coordinator.hasComponent<Transform>(viewerObject));
+
+                auto& viewerTransform = *coordinator.getComponent<Transform>(viewerObject);
+                viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
+
                 camera.setView(viewerTransform.position, viewerTransform.rotation);
                 float aspect = renderer.getAspectRatio();
-                //camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
-                camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f);
-            }
-            transform_sys->update();
 
-            if (auto commandBuffer = renderer.beginFrame()) {
+#if EMP_SCENE_2D
+                camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f);
+#else
+                camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
+#endif
+            }
+            coordinator.getSystem<TransformSystem>()->update();
+            for(auto& func : on_updates) {
+                func(frameTime, window, device);
+            }
+
+            if (auto command_buffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
                 framePools[frameIndex]->resetPool();
-                FrameInfo frameInfo{frameIndex,
+                FrameInfo frame_info{frameIndex,
                                     frameTime,
-                                    commandBuffer,
+                                    command_buffer,
                                     camera,
-                                    globalDescriptorSets[frameIndex],
+                                    global_descriptor_sets[frameIndex],
                                     *framePools[frameIndex],
                                     debugShape_sys->entities};
 
-                GlobalUbo ubo = m_updateUBO(frameInfo, *uboBuffers[frameIndex], camera);
+                GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frameIndex], camera);
 
                 // models_sys->updateBuffer(frameIndex);
                 debugShape_sys->updateBuffer(frameIndex);
                 {
-                    renderer.beginSwapChainRenderPass(commandBuffer);
+                    renderer.beginSwapChainRenderPass(command_buffer);
                     // simpleRenderSystem.render(frameInfo, *models_sys);
-                    debugShapeRenderSystem.render(frameInfo, *debugShape_sys);
-                    renderer.endSwapChainRenderPass(commandBuffer);
+                    debugShapeRenderSystem.render(frame_info, *debugShape_sys);
+
+                    for(auto& func : on_renders) {
+                        func(device, frame_info);
+                    }
+
+                    renderer.endSwapChainRenderPass(command_buffer);
                 }
                 renderer.endFrame();
             }

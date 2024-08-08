@@ -16,16 +16,34 @@
 namespace emp {
     class App {
     public:
-        static constexpr int WIDTH = 800;
-        static constexpr int HEIGHT = 600;
+
+        typedef std::function<void(float, Window&, Device&)> onUpdateFunc;
+        typedef std::function<void(Device&, const FrameInfo&)> onRenderFunc;
+        App& add(onUpdateFunc);
+        App& add(onRenderFunc);
+        template<class T, class ...InitVals>
+        App& addSystem(InitVals... args) {
+            to_register.push_back([&]() { coordinator.registerSystem<T>(args...); });
+        }
+        template <class T>
+        App& addComponent(){
+            to_register.push_front([]() { coordinator.registerComponent<T>(); });
+        }
 
         App();
         ~App();
         App(const App &) = delete;
         App &operator=(const App &) = delete;
+
         void run();
 
     private:
+        std::vector<onUpdateFunc> on_updates;
+        std::vector<onRenderFunc> on_renders;
+        std::deque<std::function<void(void)>> to_register;
+        static constexpr int width = 800;
+        static constexpr int height = 600;
+
         Window window;
         Device device;
         Renderer renderer;

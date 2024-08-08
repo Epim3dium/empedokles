@@ -238,7 +238,9 @@ int main()
 {
     {
         App demo;
-        demo.run();
+        demo.addComponent<Transform>()
+            .addSystem<TransformSystem>()
+            .run();
     }
     return 0;
 }
