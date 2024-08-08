@@ -31,8 +31,6 @@ namespace emp {
 
         void updateBuffer(int frameIndex);
         std::vector<std::unique_ptr<Buffer>> uboBuffers{SwapChain::MAX_FRAMES_IN_FLIGHT};
-    private:
-        std::shared_ptr<TextureAsset> textureDefault;
     };
 
 }  

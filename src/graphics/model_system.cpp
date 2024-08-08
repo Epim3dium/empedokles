@@ -21,7 +21,7 @@ namespace emp {
             uboBuffer->map();
         }
 
-        textureDefault = TextureAsset::createTextureFromFile(device, "../assets/textures/star.jpg");
+        Texture::create(device, "../assets/textures/star.jpg", "default");
     }
 
     void TexturedModelsSystem::updateBuffer(int frameIndex) {
