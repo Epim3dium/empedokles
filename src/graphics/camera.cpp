@@ -9,7 +9,7 @@
 #include <limits>
 
 namespace emp {
-#if IS_SCENE_2D
+#if EMP_SCENE_2D
 void Camera::setOrthographicProjection(float left, float right, float top, float bottom) {
     constexpr float near = 0.1f;
     constexpr float far = 10.f;

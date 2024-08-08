@@ -31,7 +31,7 @@ namespace emp {
         [[nodiscard]] const glm::mat4 &getInverseView() const { return inverseViewMatrix; }
 
         [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(inverseViewMatrix[3]); }
-#if IS_SCENE_2D
+#if EMP_SCENE_2D
         void setOrthographicProjection(
                 float left, float right, float top, float bottom);
 
