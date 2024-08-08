@@ -53,7 +53,7 @@ public:
     }
 
     template <typename T>
-    T* findComponent(Entity entity) {
+    T* getComponent(Entity entity) {
         if(!hasComponent<T>(entity)) {
             return nullptr;
         }
@@ -77,6 +77,10 @@ public:
         auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
         m_setSystemSignature<SystemType>(system_signature);
         return system;
+    }
+    template <typename SystemType>
+    SystemType* getSystem() {
+        return m_system_manager->getSystem<SystemType>();
     }
     void destroy() {
         delete m_component_manager.release();

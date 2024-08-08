@@ -10,12 +10,12 @@ namespace emp {
         template<class T>
         T& getComponent(Entity entity) {
             static_assert((std::is_same<T,Components>::value || ...), "must get component contained in this system");
-            return *coordinator.findComponent<T>(entity);
+            return *coordinator.getComponent<T>(entity);
         }
         template<class T>
         const T& getComponent(Entity entity) const {
             static_assert((std::is_same<T,Components>::value || ...), "must get component contained in this system");
-            return *coordinator.findComponent<T>(entity);
+            return *coordinator.getComponent<T>(entity);
         }
 
     };

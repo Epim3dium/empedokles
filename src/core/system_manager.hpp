@@ -17,6 +17,11 @@ public:
         m_systems.insert({typeName, system});
         return system;
     }
+    template <typename T>
+    T* getSystem() {
+        const char* type_name = typeid(T).name();
+        return m_systems.contains(type_name) ? dynamic_cast<T*>(m_systems.at(type_name).get()) : nullptr;
+    }
 
     template <typename T>
     void setSignature(Signature signature) {
