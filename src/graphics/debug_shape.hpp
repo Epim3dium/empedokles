@@ -15,10 +15,16 @@ namespace emp {
 
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer) const;
+
+        const std::vector<vec2f>& outline() const { return m_outline; }
     private:
+        std::vector<vec2f> m_outline;
         void createVertexBuffers(const std::vector<vec2f> &vertices, Device& device);
+        void createIndexBuffers(const std::vector<uint32_t> &indices, Device& device);
 
         std::shared_ptr<Buffer> vertexBuffer{};
+        std::shared_ptr<Buffer> indexBuffer{};
         uint32_t vertexCount{};
+        uint32_t indexCount{};
     };
 };
