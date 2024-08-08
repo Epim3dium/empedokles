@@ -22,7 +22,7 @@ namespace emp {
     for(auto itr = begin; itr != end; itr++) {
         const Entity entity = *itr;
 
-        const auto shape_ptr = coordinator.findComponent<Collider>(entity);
+        const auto shape_ptr = coordinator.getComponent<Collider>(entity);
         assert(shape_ptr != nullptr);
         const auto& shape = shape_ptr->transformed_shape;
 

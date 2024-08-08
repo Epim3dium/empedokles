@@ -28,6 +28,7 @@ namespace emp {
             int look_right = GLFW_KEY_RIGHT;
             int look_up = GLFW_KEY_UP;
             int look_down = GLFW_KEY_DOWN;
+            int jump = GLFW_KEY_SPACE;
         };
 
         void update(GLFWwindow* window);

@@ -85,7 +85,7 @@ namespace emp {
 
         for (auto e: frameInfo.gameObjects) {
 
-            auto shape = coordinator.findComponent<DebugShape>(e);
+            auto shape = coordinator.getComponent<DebugShape>(e);
             if (shape == nullptr) continue;
 
             // writing descriptor set each frame can slow performance

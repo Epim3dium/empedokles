@@ -83,7 +83,7 @@ namespace emp {
 
         for (auto e: frameInfo.gameObjects) {
 
-            auto model = coordinator.findComponent<Model>(e);
+            auto model = coordinator.getComponent<Model>(e);
             if (model == nullptr) continue;
 
             // writing descriptor set each frame can slow performance
@@ -95,7 +95,7 @@ namespace emp {
             DescriptorWriter desc_writer(*render_system_layout, frameInfo.frameDescriptorPool);
             desc_writer.writeBuffer(0, &buffer_info);
 
-            auto texture = coordinator.findComponent<Texture>(e);
+            auto texture = coordinator.getComponent<Texture>(e);
             if(texture != nullptr) {
                 image_info = texture->texture().getImageInfo();
                 desc_writer.writeImage(1, &image_info);

@@ -12,7 +12,7 @@ float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
 void RigidbodySystem::updateMasses() {
     for(auto entity : entities) {
         auto& rigidobdy = getComponent<Rigidbody>(entity);
-        const auto collider = coordinator.findComponent<Collider>(entity);
+        const auto collider = coordinator.getComponent<Collider>(entity);
         if(rigidobdy.useAutomaticMass && collider != nullptr) {
             rigidobdy.real_mass = collider->area * rigidobdy.real_density;
             rigidobdy.real_inertia = collider->inertia_dev_mass * rigidobdy.real_density;
