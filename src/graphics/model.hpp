@@ -53,6 +53,7 @@ namespace emp {
         const char* m_id;
         static std::unordered_map<const char*, std::unique_ptr<ModelAsset>> m_model_table;
     public:
+        static void destroyAll() { m_model_table.clear(); }
         const char* getID() const {return m_id; }
         ModelAsset& model() { 
             return *m_model_table.at(m_id); 

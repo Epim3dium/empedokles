@@ -178,6 +178,8 @@ namespace emp {
             }
         }
 
+        Model::destroyAll();
+        Texture::destroyAll();
         vkDeviceWaitIdle(device.device());
     }
     GlobalUbo App::m_updateUBO(FrameInfo frameInfo, Buffer& uboBuffer, Camera& camera) {
