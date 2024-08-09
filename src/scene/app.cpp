@@ -51,6 +51,26 @@ namespace emp {
 
     App::~App() = default;
 
+    App& App::addBehaviour(onSetup func) {
+        on_setups.push_back(func);
+        return *this;
+    }
+    App& App::addBehaviour(onUpdateFunc func) {
+        on_updates.push_back(func);
+        return *this;
+    }
+    App& App::addBehaviour(onRenderFunc func) {
+        on_renders.push_back(func);
+        return *this;
+    }
+    App& App::addAssetModel(std::string filename, const char* identificator) {
+        models_to_load.push_back({filename, identificator});
+        return *this;
+    }
+    App& App::addAssetTexture(std::string filename, const char* identificator) {
+        textures_to_load.push_back({filename, identificator});
+        return *this;
+    }
     std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(DescriptorSetLayout& globalSetLayout, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
@@ -86,7 +106,9 @@ namespace emp {
         coordinator.registerComponent<Texture>();
         coordinator.registerComponent<DebugShape>();
 
+        EMP_LOG_DEBUG << "sys";
         transform_sys = coordinator.registerSystem<TransformSystem>();
+        EMP_LOG_DEBUG << ".sys";
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
         collider_sys  = coordinator.registerSystem<ColliderSystem>();
         physics_sys   = coordinator.registerSystem<PhysicsSystem>();
@@ -98,6 +120,7 @@ namespace emp {
         for(const auto& func : to_register) {
             func();
         }
+        to_register.clear();
     }
     void App::run() {
         EMP_LOG(LogLevel::DEBUG) << "start running ...";
@@ -141,6 +164,11 @@ namespace emp {
         cameraController.mapping.move_left = GLFW_KEY_D;
         cameraController.mapping.move_right = GLFW_KEY_A;
 
+        for(auto func : on_setups) {
+            func(window, device);
+        }
+        on_setups.clear();
+
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (!window.shouldClose()) {
             glfwPollEvents();
@@ -169,7 +197,7 @@ namespace emp {
             }
             coordinator.getSystem<TransformSystem>()->update();
             for(auto& func : on_updates) {
-                func(frameTime, window, device);
+                func(frameTime, window);
             }
 
             if (auto command_buffer = renderer.beginFrame()) {
@@ -222,17 +250,16 @@ namespace emp {
     }
 
     void App::loadAssets() {
-        Model::create(device, ModelAsset::Builder().loadModel("../assets/models/colored_cube.obj"), "cube");
-        auto cube = coordinator.createEntity();
-        coordinator.addComponent(cube, Transform(vec2f(0.f, 0.5f), 0.f, {0.5f, 0.5f}));
-        // coordinator.addComponent(cube, Model("cube"));
-        auto triangle = coordinator.createEntity();
-        coordinator.addComponent(triangle, Transform(vec2f(0.f, 0.0f), 0.f, {1.0f, 1.0f}));
-        auto shape = DebugShape(device, {vec2f(-0.25f, 0.f), vec2f(0.f, 0.25f), vec2f(0.25f, 0.f), vec2f(0.f, -0.25f)});
-        shape.fill_color = glm::vec4(1, 0, 0, 1);
-        coordinator.addComponent(triangle, shape);
-        // coordinator.addComponent(cube, Texture("default"));
-        EMP_LOG(LogLevel::DEBUG) << "cube created, id: " << cube;
+        for(auto tex : textures_to_load) {
+            Texture::create(device, tex.filename, tex.id);
+            EMP_LOG(LogLevel::DEBUG) << "loaded texture: " << tex.id;
+        }
+        textures_to_load.clear();
+        for(auto model : models_to_load) {
+            Model::create(device, ModelAsset::Builder().loadModel(model.filename), model.id);
+            EMP_LOG(LogLevel::DEBUG) << "loaded model: " << model.id;
+        }
+        models_to_load.clear();
     }
 
 

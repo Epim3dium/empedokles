@@ -8,6 +8,7 @@
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 
+#include "io/keyboard_movement_controller.hpp"
 #include "io/window.hpp"
 #include "math/math_defs.hpp"
 #include "physics/physics_system.hpp"
@@ -17,17 +18,26 @@ namespace emp {
     class App {
     public:
 
-        typedef std::function<void(float, Window&, Device&)> onUpdateFunc;
+        typedef std::function<void(const float, Window&)> onUpdateFunc;
         typedef std::function<void(Device&, const FrameInfo&)> onRenderFunc;
-        App& add(onUpdateFunc);
-        App& add(onRenderFunc);
+        typedef std::function<void(Window&, Device&)> onSetup;
+
+        App& addBehaviour(onSetup);
+        App& addBehaviour(onUpdateFunc);
+        App& addBehaviour(onRenderFunc);
+
+        App& addAssetModel(std::string filename, const char* identificator);
+        App& addAssetTexture(std::string filename, const char* identificator);
+
         template<class T, class ...InitVals>
         App& addSystem(InitVals... args) {
             to_register.push_back([&]() { coordinator.registerSystem<T>(args...); });
+            return *this;
         }
         template <class T>
         App& addComponent(){
             to_register.push_front([]() { coordinator.registerComponent<T>(); });
+            return *this;
         }
 
         App();
@@ -38,8 +48,17 @@ namespace emp {
         void run();
 
     private:
+        std::vector<onSetup> on_setups;
         std::vector<onUpdateFunc> on_updates;
         std::vector<onRenderFunc> on_renders;
+
+        struct AssetInfo {
+            std::string filename;
+            const char* id;
+        };
+        std::vector<AssetInfo> models_to_load;
+        std::vector<AssetInfo> textures_to_load;
+
         std::deque<std::function<void(void)>> to_register;
         static constexpr int width = 800;
         static constexpr int height = 600;
