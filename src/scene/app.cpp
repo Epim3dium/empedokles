@@ -51,7 +51,7 @@ namespace emp {
 
     App::~App() = default;
 
-    App& App::addBehaviour(onSetup func) {
+    App& App::addBehaviour(onSetupFunc func) {
         on_setups.push_back(func);
         return *this;
     }
@@ -106,9 +106,7 @@ namespace emp {
         coordinator.registerComponent<Texture>();
         coordinator.registerComponent<DebugShape>();
 
-        EMP_LOG_DEBUG << "sys";
         transform_sys = coordinator.registerSystem<TransformSystem>();
-        EMP_LOG_DEBUG << ".sys";
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
         collider_sys  = coordinator.registerSystem<ColliderSystem>();
         physics_sys   = coordinator.registerSystem<PhysicsSystem>();

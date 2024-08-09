@@ -20,9 +20,9 @@ namespace emp {
 
         typedef std::function<void(const float, Window&)> onUpdateFunc;
         typedef std::function<void(Device&, const FrameInfo&)> onRenderFunc;
-        typedef std::function<void(Window&, Device&)> onSetup;
+        typedef std::function<void(Window&, Device&)> onSetupFunc;
 
-        App& addBehaviour(onSetup);
+        App& addBehaviour(onSetupFunc);
         App& addBehaviour(onUpdateFunc);
         App& addBehaviour(onRenderFunc);
 
@@ -48,7 +48,7 @@ namespace emp {
         void run();
 
     private:
-        std::vector<onSetup> on_setups;
+        std::vector<onSetupFunc> on_setups;
         std::vector<onUpdateFunc> on_updates;
         std::vector<onRenderFunc> on_renders;
 
