@@ -72,6 +72,8 @@ set(HEADER_FILES
     physics/broad_phase.hpp
     
     scene/app.hpp
+    scene/hierarchy.hpp
+    scene/scene_defs.hpp
     scene/transform.hpp
     core/entity.hpp
     core/entity_manager.hpp
@@ -83,6 +85,7 @@ set(HEADER_FILES
     core/system.hpp
     core/coordinator.hpp
 
+    templates/observer.hpp
     templates/set.hpp
     templates/stack_linked_list.hpp
 
