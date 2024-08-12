@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_KEYBOARD_MOVEMENT_CONTROLLER_HPP
+#define EMP_KEYBOARD_MOVEMENT_CONTROLLER_HPP
 
 #include "graphics/model_system.hpp"
 #include "window.hpp"
@@ -44,3 +45,5 @@ namespace emp {
         float lookSpeed{1.5f};
     };
 }  // namespace emp
+
+#endif

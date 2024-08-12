@@ -13,7 +13,6 @@
 #include "math/math_defs.hpp"
 #include "physics/physics_system.hpp"
 #include <iostream>
-#include <unordered_map>
 namespace emp {
     class App {
     public:

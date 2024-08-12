@@ -1,7 +1,8 @@
+#ifndef EMP_BUFFER_HPP
+#define EMP_BUFFER_HPP
 /*
  * https://github.com/SaschaWillems/Vulkan/blob/master/base/VulkanBuffer.h
  */
-#pragma once
 
 #include "device.hpp"
 
@@ -62,3 +63,4 @@ namespace emp {
     };
 
 }  // namespace emp
+#endif

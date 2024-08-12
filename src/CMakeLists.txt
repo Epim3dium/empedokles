@@ -119,8 +119,8 @@ set(HEADER_FILES
 include_directories(.)
 include_directories(external/tinyobjloader)
 include_directories(external/stbimage)
-add_library(empedokles
+add_library(empedokles SHARED
     ${SOURCE_FILES} ${HEADER_FILES}
 )
-target_compile_options(empedokles PRIVATE -glldb)
+target_compile_options(empedokles PUBLIC -glldb)
 

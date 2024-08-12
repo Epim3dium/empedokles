@@ -1,4 +1,6 @@
-#pragma once
+#ifndef EMP_CAMERA_HPP
+#define EMP_CAMERA_HPP
+
 #include "scene/scene_defs.hpp"
 
 // libs
@@ -44,3 +46,4 @@ namespace emp {
         glm::mat4 inverseViewMatrix{1.f};
     };
 }  // namespace emp
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_MODEL_SYSTEM_HPP
+#define EMP_MODEL_SYSTEM_HPP
 
 #include "model.hpp"
 #include "scene/transform.hpp"
@@ -34,3 +35,4 @@ namespace emp {
     };
 
 }  
+#endif

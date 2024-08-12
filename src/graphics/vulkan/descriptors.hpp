@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_DESCRIPTORS_HPP
+#define EMP_DESCRIPTORS_HPP
 
 #include "device.hpp"
 
@@ -113,3 +114,5 @@ namespace emp {
     };
 
 }  // namespace emp
+
+#endif

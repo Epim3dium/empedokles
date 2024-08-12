@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_WINDOW_HPP
+#define EMP_WINDOW_HPP
 
 #define GLFW_INCLUDE_VULKAN
 
@@ -43,3 +44,5 @@ namespace emp {
         GLFWwindow *window{};
     };
 }  // namespace emp
+
+#endif

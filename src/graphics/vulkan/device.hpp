@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_DEVICE_HPP
+#define EMP_DEVICE_HPP
 
 #include "io/window.hpp"
 
@@ -143,3 +144,5 @@ namespace emp {
     };
 
 }  // namespace emp
+
+#endif

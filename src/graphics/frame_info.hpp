@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_FRAME_INFO_HPP
+#define EMP_FRAME_INFO_HPP
 
 #include "camera.hpp"
 #include "model_system.hpp"
@@ -35,3 +36,5 @@ namespace emp {
         std::set<Entity>& gameObjects;
     };
 }  // namespace emp
+
+#endif

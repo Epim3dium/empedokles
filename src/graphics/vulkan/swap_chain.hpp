@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_SWAP_CHAIN_HPP
+#define EMP_SWAP_CHAIN_HPP
 
 #include "graphics/vulkan/device.hpp"
 
@@ -109,3 +110,5 @@ namespace emp {
     };
 
 }  // namespace emp
+
+#endif

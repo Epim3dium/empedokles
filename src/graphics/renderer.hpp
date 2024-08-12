@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_RENDERER_HPP
+#define EMP_RENDERER_HPP
 
 #include "vulkan/device.hpp"
 #include "vulkan/swap_chain.hpp"
@@ -61,3 +62,5 @@ namespace emp {
         bool isFrameStarted{false};
     };
 }  // namespace emp
+
+#endif

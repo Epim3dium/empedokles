@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_VERTEX_HPP
+#define EMP_VERTEX_HPP
 
 #include "graphics/utils.hpp"
 #include "vulkan/buffer.hpp"
@@ -36,3 +37,5 @@ namespace std {
         }
     };
 }  // namespace std
+
+#endif

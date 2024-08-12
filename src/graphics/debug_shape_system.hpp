@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_DEBUGSHAPE_SYS
+#define EMP_DEBUGSHAPE_SYS
 
 #include "graphics/debug_shape.hpp"
 #include "model.hpp"
@@ -35,3 +36,4 @@ namespace emp {
     };
 
 }  
+#endif

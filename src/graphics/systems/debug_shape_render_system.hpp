@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_DEBUG_SHAPE_RENDER_SYSTEM_HPP
+#define EMP_DEBUG_SHAPE_RENDER_SYSTEM_HPP
 
 #include "graphics/camera.hpp"
 #include "graphics/debug_shape_system.hpp"
@@ -32,3 +33,4 @@ namespace emp {
         std::unique_ptr<DescriptorSetLayout> render_system_layout;
     };
 }  // namespace emp
+#endif

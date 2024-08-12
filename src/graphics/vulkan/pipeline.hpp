@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_PIPELINE_HPP
+#define EMP_PIPELINE_HPP
 
 #include "graphics/vulkan/device.hpp"
 
@@ -64,3 +65,5 @@ namespace emp {
         VkShaderModule fragShaderModule{};
     };
 }  // namespace emp
+
+#endif

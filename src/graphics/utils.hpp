@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_UTILS_HPP
+#define EMP_UTILS_HPP
 
 #include <functional>
 
@@ -12,3 +13,4 @@ namespace emp {
     };
 
 }  // namespace emp
+#endif

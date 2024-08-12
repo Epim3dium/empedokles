@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_POINT_LIGHT_SYSTEM_HPP
+#define EMP_POINT_LIGHT_SYSTEM_HPP
 
 #include "graphics/camera.hpp"
 #include "graphics/vulkan/device.hpp"
@@ -37,3 +38,4 @@ namespace emp {
         VkPipelineLayout pipelineLayout{};
     };
 }  // namespace emp
+#endif

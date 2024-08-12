@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_TEXTURE_HPP
+#define EMP_TEXTURE_HPP
 
 #include "vulkan/device.hpp"
 
@@ -95,3 +96,5 @@ namespace emp {
     };
 
 } 
+
+#endif

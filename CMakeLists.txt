@@ -12,8 +12,7 @@ if(POLICY CMP0079 )
   cmake_policy(SET CMP0079 NEW)
 endif()
 
-add_subdirectory(src)
-# add_subdirectory(test)
 add_subdirectory(demo)
+add_subdirectory(src)
 
 include(cmake/Install.cmake)

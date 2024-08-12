@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_MODEL_HPP
+#define EMP_MODEL_HPP
 
 #include "vulkan/buffer.hpp"
 #include "vulkan/device.hpp"
@@ -69,3 +70,5 @@ namespace emp {
         }
     };
 }  // namespace emp
+
+#endif

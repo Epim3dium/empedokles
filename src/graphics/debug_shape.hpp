@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_DEBUG_SHAPE_HPP
+#define EMP_DEBUG_SHAPE_HPP
 #include "vulkan/buffer.hpp"
 #include "vulkan/device.hpp"
 #include <unordered_map>
@@ -28,3 +29,4 @@ namespace emp {
         uint32_t indexCount{};
     };
 };
+#endif

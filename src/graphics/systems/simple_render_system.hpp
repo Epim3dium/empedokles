@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EMP_SIMPLE_RENDER_SYSTEM_HPP
+#define EMP_SIMPLE_RENDER_SYSTEM_HPP
 
 #include "graphics/camera.hpp"
 #include "graphics/vulkan/device.hpp"
@@ -31,3 +32,4 @@ namespace emp {
         std::unique_ptr<DescriptorSetLayout> render_system_layout;
     };
 }  // namespace emp
+#endif
