@@ -64,6 +64,9 @@ namespace emp {
             assert(!m_model_table.contains(id) && "trying to override existing model id");
             m_model_table[id] = std::move(model);
         }
+        static bool isLoaded(const char* id) {
+            return m_model_table.contains(id);
+        }
         Model(){}
         Model(const char* model_id) : m_id(model_id) {
             assert(m_model_table.contains(m_id) && "model must be first created");

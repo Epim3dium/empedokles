@@ -89,6 +89,9 @@ namespace emp {
             assert(!m_tex_table.contains(id) && "trying to override existing texture id");
             m_tex_table[id] = std::move(tex);
         }
+        static bool isLoaded(const char* id) {
+            return m_tex_table.contains(id);
+        }
         Texture(){}
         Texture(const char* model_id) : m_id(model_id) {
             assert(m_tex_table.contains(m_id) && "texture must be first created");
