@@ -61,6 +61,9 @@ namespace emp {
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+        //!!!!
+        pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipeline_layout;
         pipeline = std::make_unique<Pipeline>(

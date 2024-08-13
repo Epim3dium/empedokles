@@ -8,35 +8,22 @@
 
 
 namespace emp {
-    DebugShape::DebugShape(Device &device, std::vector<vec2f> verts) : m_outline(verts) {
-
-        auto triangles = triangulateAsVector(verts);
-        std::unordered_map<vec2f, size_t> indicies_map;
-
-        std::vector<vec2f> verticies;
-        std::vector<uint32_t> indicies;
-        for(const auto& triangle : triangles) {
-            for(auto point : triangle) {
-                if(!indicies_map.contains(point)) {
-                    indicies_map.insert({point, verticies.size()});
-                    assert(indicies_map.contains(point));
-                    verticies.push_back(point);
-                }
-                indicies.push_back(indicies_map.at(point));
-            }
+    DebugShape::DebugShape(Device &device, std::vector<vec2f> verticies, bool isClosed) : m_outline(verticies) {
+        if(isClosed) {
+            verticies.push_back(verticies.front());
         }
         createVertexBuffers(verticies, device);
-        createIndexBuffers(indicies, device);
+        //createIndexBuffers(indicies, device);
     }
     DebugShape::~DebugShape() = default;
     void DebugShape::bind(VkCommandBuffer commandBuffer) {
         VkBuffer buffers[] = {vertexBuffer->getBuffer()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        // vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
     }
     void DebugShape::draw(VkCommandBuffer commandBuffer) const {
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+        // vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
         vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
     }
     

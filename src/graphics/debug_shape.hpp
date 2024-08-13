@@ -11,7 +11,7 @@ namespace emp {
         glm::vec4 fill_color;
         glm::vec4 outline_color;
         DebugShape() {}
-        DebugShape(Device &device, std::vector<vec2f> verticies);
+        DebugShape(Device &device, std::vector<vec2f> verticies, bool isClosed = true);
         ~DebugShape();
 
         void bind(VkCommandBuffer commandBuffer);
