@@ -24,7 +24,9 @@
 
 namespace emp {
 
-    App::App():
+    App::App(std::vector<AssetInfo> models_to_load, std::vector<AssetInfo> textures_to_load):
+        m_models_to_load(models_to_load),
+        m_textures_to_load(textures_to_load),
         window{width, height, "Vulkan MacOS M1"},
         device{window},
         renderer{window, device},
@@ -51,26 +53,6 @@ namespace emp {
 
     App::~App() = default;
 
-    App& App::addBehaviour(onSetupFunc func) {
-        on_setups.push_back(func);
-        return *this;
-    }
-    App& App::addBehaviour(onUpdateFunc func) {
-        on_updates.push_back(func);
-        return *this;
-    }
-    App& App::addBehaviour(onRenderFunc func) {
-        on_renders.push_back(func);
-        return *this;
-    }
-    App& App::addAssetModel(std::string filename, const char* identificator) {
-        models_to_load.push_back({filename, identificator});
-        return *this;
-    }
-    App& App::addAssetTexture(std::string filename, const char* identificator) {
-        textures_to_load.push_back({filename, identificator});
-        return *this;
-    }
     std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(DescriptorSetLayout& globalSetLayout, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
@@ -114,11 +96,6 @@ namespace emp {
         EMP_LOG(DEBUG2) << "ECS render systems...";
         debugShape_sys = coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
         models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
-
-        for(const auto& func : to_register) {
-            func();
-        }
-        to_register.clear();
     }
     void App::run() {
         EMP_LOG(LogLevel::DEBUG) << "start running ...";
@@ -127,6 +104,8 @@ namespace emp {
 
         EMP_LOG(LogLevel::DEBUG) << "assets...";
         loadAssets();
+        EMP_LOG(LogLevel::DEBUG) << "users onSetup...";
+        onSetup(window, device);
 
         EMP_LOG(LogLevel::DEBUG) << "ubo buffers...";
         auto uboBuffers = m_setupGlobalUBOBuffers();
@@ -162,10 +141,6 @@ namespace emp {
         cameraController.mapping.move_left = GLFW_KEY_D;
         cameraController.mapping.move_right = GLFW_KEY_A;
 
-        for(auto func : on_setups) {
-            func(window, device);
-        }
-        on_setups.clear();
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (!window.shouldClose()) {
@@ -194,9 +169,7 @@ namespace emp {
 #endif
             }
             coordinator.getSystem<TransformSystem>()->update();
-            for(auto& func : on_updates) {
-                func(frameTime, window);
-            }
+            onUpdate(frameTime, window);
 
             if (auto command_buffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
@@ -218,9 +191,7 @@ namespace emp {
                     // simpleRenderSystem.render(frameInfo, *models_sys);
                     debugShapeRenderSystem.render(frame_info, *debugShape_sys);
 
-                    for(auto& func : on_renders) {
-                        func(device, frame_info);
-                    }
+                    onRender(device, frame_info);
 
                     renderer.endSwapChainRenderPass(command_buffer);
                 }
@@ -248,16 +219,16 @@ namespace emp {
     }
 
     void App::loadAssets() {
-        for(auto tex : textures_to_load) {
+        for(auto tex : m_textures_to_load) {
             Texture::create(device, tex.filename, tex.id);
             EMP_LOG(LogLevel::DEBUG) << "loaded texture: " << tex.id;
         }
-        textures_to_load.clear();
-        for(auto model : models_to_load) {
+        m_textures_to_load.clear();
+        for(auto model : m_models_to_load) {
             Model::create(device, ModelAsset::Builder().loadModel(model.filename), model.id);
             EMP_LOG(LogLevel::DEBUG) << "loaded model: " << model.id;
         }
-        models_to_load.clear();
+        m_models_to_load.clear();
     }
 
 
