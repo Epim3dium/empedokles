@@ -81,7 +81,7 @@ namespace emp {
                 0,
                 nullptr);
 
-        for (auto e: frameInfo.gameObjects) {
+        for (auto e: model_sys.entities) {
 
             auto model = coordinator.getComponent<Model>(e);
             if (model == nullptr) continue;

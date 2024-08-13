@@ -83,7 +83,7 @@ namespace emp {
                 0,
                 nullptr);
 
-        for (auto e: frameInfo.gameObjects) {
+        for (auto e: model_sys.entities){
 
             auto shape = coordinator.getComponent<DebugShape>(e);
             if (shape == nullptr) continue;

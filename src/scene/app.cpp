@@ -179,8 +179,8 @@ namespace emp {
                                     command_buffer,
                                     camera,
                                     global_descriptor_sets[frameIndex],
-                                    *framePools[frameIndex],
-                                    debugShape_sys->entities};
+                                    *framePools[frameIndex]};
+                                    
 
                 GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frameIndex], camera);
 

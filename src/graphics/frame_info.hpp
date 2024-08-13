@@ -33,7 +33,6 @@ namespace emp {
         Camera &camera;
         VkDescriptorSet globalDescriptorSet;
         DescriptorPool& frameDescriptorPool;  // pool of descriptors that is cleared each frame
-        std::set<Entity>& gameObjects;
     };
 }  // namespace emp
 
