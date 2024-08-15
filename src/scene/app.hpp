@@ -8,7 +8,7 @@
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 
-#include "io/keyboard_movement_controller.hpp"
+#include "io/keyboard_controller.hpp"
 #include "io/window.hpp"
 #include "math/math_defs.hpp"
 #include "physics/physics_system.hpp"
@@ -44,8 +44,11 @@ namespace emp {
         std::unique_ptr<DescriptorPool> globalPool;
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
 
+        std::shared_ptr<KeyboardControllerSystem> keyboard_sys;
+
         std::shared_ptr<DebugShapeSystem> debugShape_sys;
         std::shared_ptr<TexturedModelsSystem> models_sys;
+
         std::shared_ptr<PhysicsSystem> physics_sys;
         std::shared_ptr<RigidbodySystem> rigidbody_sys;
         std::shared_ptr<ColliderSystem> collider_sys;

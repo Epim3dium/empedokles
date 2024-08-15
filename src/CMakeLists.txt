@@ -40,7 +40,7 @@ set(SOURCE_FILES
     graphics/renderer.cpp
     graphics/texture.cpp
 
-    io/keyboard_movement_controller.cpp
+    io/keyboard_controller.cpp
     io/window.cpp
 )
 set(HEADER_FILES
@@ -113,7 +113,7 @@ set(HEADER_FILES
     graphics/texture.hpp
     graphics/utils.hpp
 
-    io/keyboard_movement_controller.hpp
+    io/keyboard_controller.hpp
     io/window.hpp
 
     external/tinyobjloader/tiny_obj_loader.h

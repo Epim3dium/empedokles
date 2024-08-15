@@ -4,7 +4,7 @@
 #include "core/coordinator.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "graphics/camera.hpp"
-#include "io/keyboard_movement_controller.hpp"
+#include "io/keyboard_controller.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "graphics/systems/debug_shape_render_system.hpp"
 #include "physics/collider.hpp"
@@ -32,11 +32,10 @@ namespace emp {
         renderer{window, device},
         globalPool{}
     {
-        globalPool =
-            DescriptorPool::Builder(device)
-            .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
-            .build();
+        globalPool = DescriptorPool::Builder(device)
+                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .build();
 
         // build frame descriptor pools
         framePools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -78,6 +77,7 @@ namespace emp {
     }
     void App::setupECS() {
         coordinator.init();
+        coordinator.registerComponent<KeyboardController>();
         coordinator.registerComponent<Transform>();
 
         coordinator.registerComponent<Material>();
@@ -87,6 +87,8 @@ namespace emp {
         coordinator.registerComponent<Model>();
         coordinator.registerComponent<Texture>();
         coordinator.registerComponent<DebugShape>();
+
+        keyboard_sys = coordinator.registerSystem<KeyboardControllerSystem>();
 
         transform_sys = coordinator.registerSystem<TransformSystem>();
         rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
@@ -135,11 +137,14 @@ namespace emp {
         coordinator.addComponent(viewerObject, Transform({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
-        KeyboardMovementController cameraController{};
-        cameraController.mapping.move_up = GLFW_KEY_W;
-        cameraController.mapping.move_down = GLFW_KEY_S;
-        cameraController.mapping.move_left = GLFW_KEY_D;
-        cameraController.mapping.move_right = GLFW_KEY_A;
+        {
+            KeyboardController cameraController{};
+            cameraController.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
+            cameraController.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
+            cameraController.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
+            cameraController.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
+            coordinator.addComponent(viewerObject, cameraController);
+        }
 
 
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -151,13 +156,13 @@ namespace emp {
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            cameraController.update(window.getGLFWwindow());
-
+            keyboard_sys->update(window.getGLFWwindow());
             {
                 assert(coordinator.hasComponent<Transform>(viewerObject));
 
                 auto& viewerTransform = *coordinator.getComponent<Transform>(viewerObject);
-                viewerTransform.position += cameraController.movementInPlane2D() * frameTime;
+                auto& controller = *coordinator.getComponent<KeyboardController>(viewerObject);
+                viewerTransform.position += controller.movementInPlane2D() * frameTime * 2.f;
 
                 camera.setView(viewerTransform.position, viewerTransform.rotation);
                 float aspect = renderer.getAspectRatio();
