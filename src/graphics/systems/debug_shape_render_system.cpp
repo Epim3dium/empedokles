@@ -111,8 +111,8 @@ namespace emp {
                     0,
                     nullptr);
 
-            shape->bind(frameInfo.commandBuffer);
-            shape->draw(frameInfo.commandBuffer);
+            shape->model().bind(frameInfo.commandBuffer);
+            shape->model().draw(frameInfo.commandBuffer);
         }
     }
 

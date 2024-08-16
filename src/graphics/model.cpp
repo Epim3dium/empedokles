@@ -24,9 +24,9 @@
 namespace emp {
 
     std::unordered_map<const char*, std::unique_ptr<ModelAsset>> Model::m_model_table;
-    ModelAsset::ModelAsset(Device &device, const ModelAsset::Builder &builder) : device{device} {
-        createVertexBuffers(builder.vertices);
-        createIndexBuffers(builder.indices);
+    ModelAsset::ModelAsset(Device &device, const ModelAsset::Builder &builder) : device(device) {
+        createVertexBuffers(builder.vertices, device);
+        createIndexBuffers(builder.indices, device);
     }
 
     ModelAsset::~ModelAsset() = default;
@@ -38,7 +38,7 @@ namespace emp {
         return std::make_unique<ModelAsset>(device, builder);
     }
 
-    void ModelAsset::createVertexBuffers(const std::vector<Vertex> &vertices) {
+    void ModelAsset::createVertexBuffers(const std::vector<Vertex> &vertices, Device& device) {
         vertexCount = static_cast<uint32_t>(vertices.size());
         assert(vertexCount >= 3 && "Vertex count must be at least 3");
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -65,7 +65,7 @@ namespace emp {
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
 
-    void ModelAsset::createIndexBuffers(const std::vector<uint32_t> &indices) {
+    void ModelAsset::createIndexBuffers(const std::vector<uint32_t> &indices, Device& device) {
         indexCount = static_cast<uint32_t>(indices.size());
         hasIndexBuffer = indexCount > 0;
 

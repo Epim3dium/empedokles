@@ -37,10 +37,9 @@ namespace emp {
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer) const;
     private:
-        void createVertexBuffers(const std::vector<Vertex> &vertices);
-        void createIndexBuffers(const std::vector<uint32_t> &indices);
-
-        Device &device;
+        Device& device;
+        void createVertexBuffers(const std::vector<Vertex> &vertices, Device& device);
+        void createIndexBuffers(const std::vector<uint32_t> &indices, Device& device);
 
         std::unique_ptr<Buffer> vertexBuffer;
         uint32_t vertexCount{};
