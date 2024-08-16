@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 namespace emp {
-    std::unordered_map<const char*, std::unique_ptr<TextureAsset>> Texture::m_tex_table;
+    std::unordered_map<std::string, std::unique_ptr<TextureAsset>> Texture::m_tex_table;
     TextureAsset::TextureAsset(Device &device, const std::string &textureFilepath) : mDevice{device} {
         createTextureImage(textureFilepath);
         createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);

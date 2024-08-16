@@ -75,25 +75,25 @@ namespace emp {
     };
     class Texture {
     private:
-        const char* m_id;
-        static std::unordered_map<const char*, std::unique_ptr<TextureAsset>> m_tex_table;
+        std::string m_id;
+        static std::unordered_map<std::string, std::unique_ptr<TextureAsset>> m_tex_table;
     public:
         static void destroyAll() { m_tex_table.clear(); }
         TextureAsset& texture() {
             assert(m_tex_table.contains(m_id) && "texture must be created before use");
             return *m_tex_table.at(m_id);
         }
-        const char* getID() const {return m_id; }
-        static void create(Device &device, const std::string &filepath, const char* id) {
+        std::string getID() const {return m_id; }
+        static void create(Device &device, const std::string &filepath, std::string id) {
             auto tex = TextureAsset::createTextureFromFile(device, filepath);
             assert(!m_tex_table.contains(id) && "trying to override existing texture id");
             m_tex_table[id] = std::move(tex);
         }
-        static bool isLoaded(const char* id) {
+        static bool isLoaded(std::string id) {
             return m_tex_table.contains(id);
         }
         Texture(){}
-        Texture(const char* model_id) : m_id(model_id) {
+        Texture(std::string model_id) : m_id(model_id) {
             assert(m_tex_table.contains(m_id) && "texture must be first created");
         }
     };

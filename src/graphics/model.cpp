@@ -23,7 +23,7 @@
 
 namespace emp {
 
-    std::unordered_map<const char*, std::unique_ptr<ModelAsset>> Model::m_model_table;
+    std::unordered_map<std::string, std::unique_ptr<ModelAsset>> Model::m_model_table;
     ModelAsset::ModelAsset(Device &device, const ModelAsset::Builder &builder) : device(device) {
         createVertexBuffers(builder.vertices, device);
         createIndexBuffers(builder.indices, device);

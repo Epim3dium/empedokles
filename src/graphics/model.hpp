@@ -50,24 +50,24 @@ namespace emp {
     };
     class Model {
     private:
-        const char* m_id;
-        static std::unordered_map<const char*, std::unique_ptr<ModelAsset>> m_model_table;
+        std::string m_id;
+        static std::unordered_map<std::string, std::unique_ptr<ModelAsset>> m_model_table;
     public:
         static void destroyAll() { m_model_table.clear(); }
-        const char* getID() const {return m_id; }
+        std::string getID() const {return m_id; }
         ModelAsset& model() { 
             return *m_model_table.at(m_id); 
         }
-        static void create(Device& device, const ModelAsset::Builder& builder, const char* id) {
+        static void create(Device& device, const ModelAsset::Builder& builder, std::string id) {
             auto model = std::make_unique<ModelAsset>(device, builder);
             assert(!m_model_table.contains(id) && "trying to override existing model id");
             m_model_table[id] = std::move(model);
         }
-        static bool isLoaded(const char* id) {
+        static bool isLoaded(std::string id) {
             return m_model_table.contains(id);
         }
         Model(){}
-        Model(const char* model_id) : m_id(model_id) {
+        Model(std::string model_id) : m_id(model_id) {
             assert(m_model_table.contains(m_id) && "model must be first created");
         }
     };
