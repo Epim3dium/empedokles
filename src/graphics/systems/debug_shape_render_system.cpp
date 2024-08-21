@@ -24,7 +24,8 @@ namespace emp {
     }
 
     DebugShapeRenderSystem::~DebugShapeRenderSystem() {
-        vkDestroyPipelineLayout(device.device(), pipeline_layout, nullptr);
+        vkDestroyPipelineLayout(device.device(), outline_pipeline_layout, nullptr);
+        vkDestroyPipelineLayout(device.device(), fill_pipeline_layout, nullptr);
     }
 
     void DebugShapeRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, size_t push_const_size) {
@@ -51,40 +52,45 @@ namespace emp {
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutInfo.pushConstantRangeCount = push_const_size ? 1 : 0;
         pipelineLayoutInfo.pPushConstantRanges = push_const_size ? &pushConstantRange : nullptr;
-        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &outline_pipeline_layout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout!");
+        }
+        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &fill_pipeline_layout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
 
     void DebugShapeRenderSystem::createPipeline(VkRenderPass renderPass, const char* vert_filename, const char* frag_filename) {
-        assert(pipeline_layout != nullptr && "Cannot create pipeline before pipeline layout");
+        assert(outline_pipeline_layout != nullptr && "Cannot create pipeline before pipeline layout");
+        assert(fill_pipeline_layout != nullptr && "Cannot create pipeline before pipeline layout");
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        //!!!!
-        pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-
         pipelineConfig.renderPass = renderPass;
-        pipelineConfig.pipelineLayout = pipeline_layout;
-        pipeline = std::make_unique<Pipeline>(
+
+        pipelineConfig.pipelineLayout = fill_pipeline_layout;
+        fill_pipeline = std::make_unique<Pipeline>(
                 device,
                 vert_filename,
                 frag_filename,
                 pipelineConfig);
+
+        //!!!!
+        pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        pipelineConfig.pipelineLayout = outline_pipeline_layout;
+        outline_pipeline = std::make_unique<Pipeline>(
+                device,
+                vert_filename,
+                frag_filename,
+                pipelineConfig);
+
     }
 
     void DebugShapeRenderSystem::render(FrameInfo &frameInfo, DebugShapeSystem& model_sys) {
-        pipeline->bind(frameInfo.commandBuffer);
+        outline_pipeline->bind(frameInfo.commandBuffer);
 
-        vkCmdBindDescriptorSets(
-                frameInfo.commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipeline_layout,
-                0,
-                1,
-                &frameInfo.globalDescriptorSet,
-                0,
-                nullptr);
+        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline_layout, 0, 1,
+                                &frameInfo.globalDescriptorSet, 0, nullptr);
 
         for (auto e: model_sys.entities){
 
@@ -104,7 +110,7 @@ namespace emp {
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
                     VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline_layout,
+                    outline_pipeline_layout,
                     1,  // starting set (0 is the globalDescriptorSet, 1 is the set specific to this system)
                     1,  // set count
                     &entity_desc_set,

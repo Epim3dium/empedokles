@@ -11,7 +11,7 @@
 
 
 namespace emp {
-    DebugShape::DebugShape(Device &device, std::vector<vec2f> verticies, bool isClosed) : m_outline(verticies), m_id("__DebugShape_" + std::to_string(getNextID())) {
+    DebugShape::DebugShape(Device &device, std::vector<vec2f> verticies, glm::vec4 fill, glm::vec4 outline, bool isClosed) : m_outline(verticies), fill_color(fill), outline_color(outline) {
         if(isClosed) {
             verticies.push_back(verticies.front());
         }
@@ -21,10 +21,8 @@ namespace emp {
             vert.position = glm::vec3(v, 0.f);
             builder.vertices.push_back(vert);
         }
-        Model::create(device, builder, m_id.c_str());
+        m_model = std::make_shared<ModelAsset>(device, builder);
     }
     DebugShape::~DebugShape() = default;
-
-    uint32_t DebugShape::s_current_id = 0; 
 };
 

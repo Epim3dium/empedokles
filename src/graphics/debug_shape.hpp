@@ -12,20 +12,16 @@ namespace emp {
         glm::vec4 fill_color;
         glm::vec4 outline_color;
         DebugShape() {}
-        DebugShape(Device &device, std::vector<vec2f> verticies, bool isClosed = true);
+        DebugShape(Device &device, std::vector<vec2f> verticies, glm::vec4 fill = glm::vec4(1), glm::vec4 outline = glm::vec4(1), bool isClosed = true);
         ~DebugShape();
 
         const std::vector<vec2f>& outline() const { return m_outline; }
         ModelAsset& model() {
-            return Model(m_id.c_str()).model();
+            return *m_model;
         }
     private:
-        std::string m_id;
-        static uint32_t getNextID() {
-            return s_current_id++;
-        }
-        static uint32_t s_current_id; 
         std::vector<vec2f> m_outline;
+        std::shared_ptr<ModelAsset> m_model;
     };
 };
 #endif

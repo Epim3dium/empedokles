@@ -27,8 +27,11 @@ namespace emp {
         void createPipeline(VkRenderPass renderPass, const char* frag_filename, const char* vert_filename);
 
         Device &device;
-        std::unique_ptr<Pipeline> pipeline;
-        VkPipelineLayout pipeline_layout{};
+        std::unique_ptr<Pipeline> outline_pipeline;
+        VkPipelineLayout outline_pipeline_layout{};
+
+        std::unique_ptr<Pipeline> fill_pipeline;
+        VkPipelineLayout fill_pipeline_layout{};
 
         std::unique_ptr<DescriptorSetLayout> render_system_layout;
     };
