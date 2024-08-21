@@ -156,6 +156,11 @@ namespace emp {
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
+            physics_sys->update(*transform_sys, *collider_sys, *rigidbody_sys, frameTime);
+            transform_sys->update();
+            rigidbody_sys->updateMasses();
+            collider_sys->update();
+            EMP_LOG_DEBUG << 1.0 / frameTime;
             keyboard_sys->update(window.getGLFWwindow());
             {
                 assert(coordinator.hasComponent<Transform>(viewerObject));
@@ -173,7 +178,6 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
-            coordinator.getSystem<TransformSystem>()->update();
             onUpdate(frameTime, window);
 
             if (auto command_buffer = renderer.beginFrame()) {

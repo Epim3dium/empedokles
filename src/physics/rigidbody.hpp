@@ -6,6 +6,8 @@ namespace emp {
 class Rigidbody;
 class Rigidbody {
 public:
+    bool isStatic = false;
+
     float real_inertia = 1.f;
     float real_mass = 1.f;
     float real_density = 1.f;
@@ -27,10 +29,6 @@ public:
     float ang_vel_pre_solve = 0.f;
     float ang_vel = 0.f;
     float torque = 0.f;
-
-    bool isStatic = false;
-
-private:
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {
 public:
