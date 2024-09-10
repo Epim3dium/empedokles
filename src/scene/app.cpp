@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include "scene/register_scene_types.hpp"
 #include "scene_defs.hpp"
 #include "core/coordinator.hpp"
 #include "graphics/vulkan/buffer.hpp"
@@ -38,13 +39,13 @@ namespace emp {
                          .build();
 
         // build frame descriptor pools
-        framePools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        frame_pools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         auto framePoolBuilder = DescriptorPool::Builder(device)
             .setMaxSets(1000)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
             .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-        for (auto &framePool: framePools) {
+        for (auto &framePool: frame_pools) {
             framePool = framePoolBuilder.build();
         }
 
@@ -77,27 +78,8 @@ namespace emp {
     }
     void App::setupECS() {
         coordinator.init();
-        coordinator.registerComponent<KeyboardController>();
-        coordinator.registerComponent<Transform>();
-
-        coordinator.registerComponent<Material>();
-        coordinator.registerComponent<Collider>();
-        coordinator.registerComponent<Rigidbody>();
-
-        coordinator.registerComponent<Model>();
-        coordinator.registerComponent<Texture>();
-        coordinator.registerComponent<DebugShape>();
-
-        keyboard_sys = coordinator.registerSystem<KeyboardControllerSystem>();
-
-        transform_sys = coordinator.registerSystem<TransformSystem>();
-        rigidbody_sys = coordinator.registerSystem<RigidbodySystem>();
-        collider_sys  = coordinator.registerSystem<ColliderSystem>();
-        physics_sys   = coordinator.registerSystem<PhysicsSystem>();
-
-        EMP_LOG(DEBUG2) << "ECS render systems...";
-        debugShape_sys = coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
-        models_sys    = coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
+        registerSceneTypes();
+        registerSceneSystems(device);
     }
     void App::run() {
         EMP_LOG(LogLevel::DEBUG) << "start running ...";
@@ -119,13 +101,13 @@ namespace emp {
         EMP_LOG(DEBUG3) << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
         EMP_LOG(LogLevel::DEBUG) << "render systems...";
-        SimpleRenderSystem simpleRenderSystem{
+        SimpleRenderSystem simple_render_system{
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
                 "assets/shaders/basic_shader.vert.spv",
                 "assets/shaders/basic_shader.frag.spv"};
-        DebugShapeRenderSystem debugShapeRenderSystem{
+        DebugShapeRenderSystem debug_shape_render_system{
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
@@ -133,18 +115,24 @@ namespace emp {
                 "assets/shaders/debug_shape.frag.spv"};
         Camera camera{};
 
-        auto viewerObject = coordinator.createEntity();
-        coordinator.addComponent(viewerObject, Transform({0.f, 0.f}));
+        auto viewer_object = coordinator.createEntity();
+        coordinator.addComponent(viewer_object, Transform({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
         {
-            KeyboardController cameraController{};
-            cameraController.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
-            cameraController.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
-            cameraController.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
-            cameraController.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
-            coordinator.addComponent(viewerObject, cameraController);
+            KeyboardController camera_controller{};
+            camera_controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
+            camera_controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
+            camera_controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
+            camera_controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
+            coordinator.addComponent(viewer_object, camera_controller);
         }
+        auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
+        auto& transform_sys = *coordinator.getSystem<TransformSystem>();
+        auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
+        auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+        auto& keyboard_sys = *coordinator.getSystem<KeyboardControllerSystem>();
+        auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
 
 
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -152,24 +140,23 @@ namespace emp {
             glfwPollEvents();
 
             auto newTime = std::chrono::high_resolution_clock::now();
-            float frameTime =
+            float delta_time =
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            physics_sys->update(*transform_sys, *collider_sys, *rigidbody_sys, frameTime);
-            transform_sys->update();
-            rigidbody_sys->updateMasses();
-            collider_sys->update();
-            EMP_LOG_DEBUG << 1.0 / frameTime;
-            keyboard_sys->update(window.getGLFWwindow());
+            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+            transform_sys.update();
+            rigidbody_sys.updateMasses();
+            collider_sys.update();
+            keyboard_sys.update(window.getGLFWwindow());
             {
-                assert(coordinator.hasComponent<Transform>(viewerObject));
+                assert(coordinator.hasComponent<Transform>(viewer_object));
 
-                auto& viewerTransform = *coordinator.getComponent<Transform>(viewerObject);
-                auto& controller = *coordinator.getComponent<KeyboardController>(viewerObject);
-                viewerTransform.position += controller.movementInPlane2D() * frameTime * 2.f;
+                auto& viewer_transform = *coordinator.getComponent<Transform>(viewer_object);
+                auto& controller = *coordinator.getComponent<KeyboardController>(viewer_object);
+                viewer_transform.position += controller.movementInPlane2D() * delta_time * 2.f;
 
-                camera.setView(viewerTransform.position, viewerTransform.rotation);
+                camera.setView(viewer_transform.position, viewer_transform.rotation);
                 float aspect = renderer.getAspectRatio();
 
 #if EMP_SCENE_2D
@@ -178,27 +165,27 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
-            onUpdate(frameTime, window);
+            onUpdate(delta_time, window);
 
             if (auto command_buffer = renderer.beginFrame()) {
-                int frameIndex = renderer.getFrameIndex();
-                framePools[frameIndex]->resetPool();
-                FrameInfo frame_info{frameIndex,
-                                    frameTime,
+                int frame_index = renderer.getFrameIndex();
+                frame_pools[frame_index]->resetPool();
+                FrameInfo frame_info{frame_index,
+                                    delta_time,
                                     command_buffer,
                                     camera,
-                                    global_descriptor_sets[frameIndex],
-                                    *framePools[frameIndex]};
+                                    global_descriptor_sets[frame_index],
+                                    *frame_pools[frame_index]};
                                     
 
-                GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frameIndex], camera);
+                GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
 
                 // models_sys->updateBuffer(frameIndex);
-                debugShape_sys->updateBuffer(frameIndex);
+                debugshape_sys.updateBuffer(frame_index);
                 {
                     renderer.beginSwapChainRenderPass(command_buffer);
                     // simpleRenderSystem.render(frameInfo, *models_sys);
-                    debugShapeRenderSystem.render(frame_info, *debugShape_sys);
+                    debug_shape_render_system.render(frame_info, debugshape_sys);
 
                     onRender(device, frame_info);
 

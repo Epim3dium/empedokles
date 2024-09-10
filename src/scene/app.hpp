@@ -42,18 +42,7 @@ namespace emp {
         Renderer renderer;
         // order of declarations matters
         std::unique_ptr<DescriptorPool> globalPool;
-        std::vector<std::unique_ptr<DescriptorPool>> framePools;
-
-        std::shared_ptr<KeyboardControllerSystem> keyboard_sys;
-
-        std::shared_ptr<DebugShapeSystem> debugShape_sys;
-        std::shared_ptr<TexturedModelsSystem> models_sys;
-
-        std::shared_ptr<PhysicsSystem> physics_sys;
-        std::shared_ptr<RigidbodySystem> rigidbody_sys;
-        std::shared_ptr<ColliderSystem> collider_sys;
-        std::shared_ptr<TransformSystem> transform_sys;
-
+        std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
     private:
         std::vector<AssetInfo> m_models_to_load;
         std::vector<AssetInfo> m_textures_to_load;

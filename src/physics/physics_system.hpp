@@ -41,7 +41,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     void m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime);
 public:
     EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
-    float gravity;
+    float gravity = 1.f;
     size_t substep_count = 8U;
     void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, 
             float delT);

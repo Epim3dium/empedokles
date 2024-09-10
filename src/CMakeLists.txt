@@ -9,8 +9,9 @@ set(SOURCE_FILES
     memory/linear_allocator.cpp
     memory/pool_allocator.cpp
 
-    scene/transform.cpp
     scene/app.cpp
+    scene/register_scene_types.cpp
+    scene/transform.cpp
 
 
     core/entity_manager.cpp
@@ -72,6 +73,7 @@ set(HEADER_FILES
     physics/broad_phase.hpp
     
     scene/app.hpp
+    scene/register_scene_types.hpp
     scene/hierarchy.hpp
     scene/scene_defs.hpp
     scene/transform.hpp
