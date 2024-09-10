@@ -21,7 +21,7 @@ class Demo : public App {
             coordinator.addComponent(platform, Rigidbody{true}); 
             coordinator.addComponent(platform, Material()); 
 
-            physics_sys->gravity = 1.f;
+            physics_sys->gravity = 2.f;
             // coordinator.addComponent(cube, Texture("default"));
             EMP_LOG(LogLevel::DEBUG) << "cube created, id: " << cube;
         }
