@@ -10,8 +10,8 @@ set(SOURCE_FILES
     memory/pool_allocator.cpp
 
     scene/transform.cpp
-
     scene/app.cpp
+
 
     core/entity_manager.cpp
     core/coordinator.cpp
@@ -75,6 +75,9 @@ set(HEADER_FILES
     scene/hierarchy.hpp
     scene/scene_defs.hpp
     scene/transform.hpp
+
+    resources/behaviour.hpp
+
     core/entity.hpp
     core/entity_manager.hpp
     core/component.hpp
