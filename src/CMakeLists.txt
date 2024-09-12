@@ -17,6 +17,7 @@ set(SOURCE_FILES
     core/entity_manager.cpp
     core/coordinator.cpp
 
+    physics/constraint.cpp
     physics/collider.cpp
     physics/rigidbody.cpp
     physics/physics_system.cpp
@@ -66,6 +67,7 @@ set(HEADER_FILES
     math/math.hpp
     math/geometry_func.hpp
 
+    physics/constraint.hpp
     physics/collider.hpp
     physics/rigidbody.hpp
     physics/material.hpp
