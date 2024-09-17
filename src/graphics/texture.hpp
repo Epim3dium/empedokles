@@ -1,6 +1,7 @@
 #ifndef EMP_TEXTURE_HPP
 #define EMP_TEXTURE_HPP
 
+#include "math/math_defs.hpp"
 #include "vulkan/device.hpp"
 
 // libs
@@ -34,6 +35,8 @@ namespace emp {
         [[nodiscard]] VkSampler sampler() const { return mTextureSampler; }
 
         [[nodiscard]] VkImage getImage() const { return mTextureImage; }
+
+        [[nodiscard]] vec2f getSize() const { return m_size; }
 
         [[nodiscard]] VkImageView getImageView() const { return mTextureImageView; }
 
@@ -72,6 +75,7 @@ namespace emp {
         uint32_t mMipLevels{1};
         uint32_t mLayerCount{1};
         VkExtent3D mExtent{};
+        vec2f m_size;
     };
     class Texture {
     private:
@@ -92,9 +96,9 @@ namespace emp {
         static bool isLoaded(std::string id) {
             return m_tex_table.contains(id);
         }
-        Texture(){}
+        Texture() : m_id("undefined") {}
         Texture(std::string model_id) : m_id(model_id) {
-            assert(m_tex_table.contains(m_id) && "texture must be first created");
+            assert(isLoaded(model_id) && "texture must be first created");
         }
     };
 

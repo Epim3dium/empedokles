@@ -4,7 +4,6 @@
 
 // libs
 #define STB_IMAGE_IMPLEMENTATION
-
 #include <stb_image.h>
 
 // std
@@ -130,6 +129,7 @@ namespace emp {
                 stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
+        m_size = {texWidth, texHeight};
         if (!pixels) {
             std::cerr << filepath;
             throw std::runtime_error("failed to load texture image!");
