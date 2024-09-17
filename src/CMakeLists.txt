@@ -41,6 +41,8 @@ set(SOURCE_FILES
     graphics/model.cpp
     graphics/renderer.cpp
     graphics/texture.cpp
+    graphics/sprite.cpp
+    graphics/sprite_system.cpp
 
     io/keyboard_controller.cpp
     io/window.cpp
@@ -118,6 +120,8 @@ set(HEADER_FILES
     graphics/model.hpp
     graphics/renderer.hpp
     graphics/texture.hpp
+    graphics/sprite.hpp
+    graphics/sprite_system.hpp
     graphics/utils.hpp
 
     io/keyboard_controller.hpp

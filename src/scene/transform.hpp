@@ -28,7 +28,7 @@ public:
         return m_global_transform;
     }
     Transform() {}
-    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { }
+    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f}) : position(pos), rotation(rot), scale(s) { m_updateLocalTransform(); }
     friend TransformSystem;
 };
 class TransformSystem : public System<Transform> {
