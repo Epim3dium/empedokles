@@ -23,7 +23,13 @@ namespace emp {
         //size set by default
         Sprite(Texture tex, AABB tex_rect, vec2f size = vec2f(0.f, 0.f));
 
-        static const Vertex verticies[6];
+        static constexpr uint32_t s_vertex_count = 6U;
+        static const Vertex s_verticies[s_vertex_count];
+        static std::unique_ptr<Buffer> s_vertex_buffer;
+
+        static void init(Device& device);
+        static void bind(VkCommandBuffer commandBuffer);
+        static void draw(VkCommandBuffer commandBuffer);
     };
     class SpriteRenderer {
         std::string m_id;
