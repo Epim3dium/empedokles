@@ -18,11 +18,11 @@ namespace emp {
         return fmin(-(coef * abs(normal_impulse)), (tangent_speed / generalized_inv_mass_sum));
     }
     float PhysicsSystem::m_applyPositionalCorrection(Entity& e1, Entity& e2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
-        auto& trans1 = getComponent<Transform>(e1);
-        auto& rb1 = getComponent<Rigidbody>(e1);
+        auto& trans1 = *coordinator.getComponent<Transform>(e1);
+        auto& rb1 = *coordinator.getComponent<Rigidbody>(e1);
 
-        auto& trans2 = getComponent<Transform>(e2);
-        auto& rb2 = getComponent<Rigidbody>(e2);
+        auto& trans2 = *coordinator.getComponent<Transform>(e2);
+        auto& rb2 = *coordinator.getComponent<Rigidbody>(e2);
 
         const vec2f& pos1 = trans1.position;
         const vec2f& pos2 = trans2.position;

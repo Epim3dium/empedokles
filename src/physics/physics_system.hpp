@@ -10,6 +10,7 @@
 
 #include <memory>
 namespace emp {
+    struct Constraint;
 class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     struct PenetrationConstraint {
         bool detected = false;
@@ -29,7 +30,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     };
     float m_calcRestitution(float coef, float normal_speed, float pre_solve_norm_speed, vec2f gravity, float delT);
     float m_calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt);
-    float m_applyPositionalCorrection(Entity& b1, Entity& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance = 0.f);
+    static float m_applyPositionalCorrection(Entity& b1, Entity& b2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance = 0.f);
     vec2f m_calcContactVel(vec2f vel, float ang_vel, vec2f r);
 
     PenetrationConstraint m_handleCollision(Entity b1, const int convexIdx1, Entity b2, const int convexIdx2, float delT, float compliance = 0.f);
@@ -46,6 +47,7 @@ public:
     void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, 
             float delT);
     void onEntityAdded(Entity entity) override;
+    friend Constraint;
 };
 };
 #endif
