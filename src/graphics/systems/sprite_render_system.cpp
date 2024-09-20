@@ -92,11 +92,11 @@ namespace emp {
             DescriptorWriter desc_writer(*render_system_layout, frameInfo.frameDescriptorPool);
 
             desc_writer.writeBuffer(0, &buffer_info);
-            desc_writer.build(entity_desc_set);
 
             image_info = sprite->sprite().texture().getImageInfo();
             desc_writer.writeImage(1, &image_info);
 
+            desc_writer.build(entity_desc_set);
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
                     VK_PIPELINE_BIND_POINT_GRAPHICS,
