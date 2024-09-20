@@ -2,6 +2,8 @@
 #include "core/coordinator.hpp"
 #include "graphics/debug_shape.hpp"
 #include "graphics/debug_shape_system.hpp"
+#include "graphics/sprite.hpp"
+#include "graphics/sprite_system.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
 #include "physics/material.hpp"
@@ -20,6 +22,7 @@ namespace emp {
         coordinator.registerComponent<Model>();
         coordinator.registerComponent<Texture>();
         coordinator.registerComponent<DebugShape>();
+        coordinator.registerComponent<SpriteRenderer>();
     }
     void registerSceneSystems(Device& device) {
         coordinator.registerSystem<KeyboardControllerSystem>();
@@ -29,6 +32,7 @@ namespace emp {
         coordinator.registerSystem<ColliderSystem>();
         coordinator.registerSystem<PhysicsSystem>();
 
+        coordinator.registerSystem<SpriteSystem>(std::ref(device));
         coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
         coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
     }

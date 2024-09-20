@@ -8,6 +8,7 @@
 #include "io/keyboard_controller.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "graphics/systems/debug_shape_render_system.hpp"
+#include "graphics/systems/sprite_render_system.hpp"
 #include "physics/collider.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
@@ -87,6 +88,8 @@ namespace emp {
         setupECS();
 
         EMP_LOG(LogLevel::DEBUG) << "assets...";
+
+        Sprite::init(device);
         loadAssets();
         EMP_LOG(LogLevel::DEBUG) << "users onSetup...";
         onSetup(window, device);
@@ -113,6 +116,12 @@ namespace emp {
                 globalSetLayout->getDescriptorSetLayout(),
                 "assets/shaders/debug_shape.vert.spv",
                 "assets/shaders/debug_shape.frag.spv"};
+        SpriteRenderSystem sprite_render_system{
+                device,
+                renderer.getSwapChainRenderPass(),
+                globalSetLayout->getDescriptorSetLayout(),
+                "assets/shaders/sprite.vert.spv",
+                "assets/shaders/sprite.frag.spv"};
         Camera camera{};
 
         auto viewer_object = coordinator.createEntity();
@@ -133,6 +142,7 @@ namespace emp {
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
         auto& keyboard_sys = *coordinator.getSystem<KeyboardControllerSystem>();
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
+        auto& sprite_sys= *coordinator.getSystem<SpriteSystem>();
 
 
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -144,11 +154,7 @@ namespace emp {
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
-            transform_sys.update();
-            rigidbody_sys.updateMasses();
-            collider_sys.update();
-            keyboard_sys.update(window.getGLFWwindow());
+            onUpdate(delta_time, window);
             {
                 assert(coordinator.hasComponent<Transform>(viewer_object));
 
@@ -165,7 +171,11 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
-            onUpdate(delta_time, window);
+            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+            transform_sys.update();
+            rigidbody_sys.updateMasses();
+            collider_sys.update();
+            keyboard_sys.update(window.getGLFWwindow());
 
             if (auto command_buffer = renderer.beginFrame()) {
                 int frame_index = renderer.getFrameIndex();
@@ -182,10 +192,12 @@ namespace emp {
 
                 // models_sys->updateBuffer(frameIndex);
                 debugshape_sys.updateBuffer(frame_index);
+                sprite_sys.updateBuffer(frame_index);
                 {
                     renderer.beginSwapChainRenderPass(command_buffer);
                     // simpleRenderSystem.render(frameInfo, *models_sys);
                     debug_shape_render_system.render(frame_info, debugshape_sys);
+                    sprite_render_system.render(frame_info, sprite_sys);
 
                     onRender(device, frame_info);
 
