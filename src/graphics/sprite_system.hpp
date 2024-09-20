@@ -7,9 +7,8 @@ namespace emp {
     struct SpriteInfo {
         glm::mat4 model_matrix{1.f};
         glm::mat4 offset_matrix{1.f};
-
-        glm::vec2 size;
-        glm::vec2 pivot;
+        glm::mat4 pivot_matrix{1.f};
+        glm::mat4 size_matrix{1.f};
 
         glm::vec2 rect_min;
         glm::vec2 rect_max;

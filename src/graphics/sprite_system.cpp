@@ -28,8 +28,11 @@ namespace emp {
 
             data.model_matrix = transform.global();
             data.offset_matrix = Transform(sprite.sprite().position_offset, sprite.sprite().rotation_offset, sprite.sprite().scale_offset).local();
-            data.size = sprite.sprite().size();
-            data.pivot = sprite.sprite().pivot;
+            data.size_matrix = glm::scale(glm::mat4{1.f}, {sprite.sprite().size().x, sprite.sprite().size().y, 1.f});
+
+            auto pivot = sprite.sprite().pivot;
+            data.pivot_matrix = glm::translate(glm::mat4{1.f}, glm::vec3(pivot.x, pivot.y, 0.f));
+
             data.rect_min = sprite.sprite().rect().min;
             data.rect_max = sprite.sprite().rect().max;
             data.flip = {sprite.flipX, sprite.flipY}; // only 0.f or 1.f

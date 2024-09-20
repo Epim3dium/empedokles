@@ -30,25 +30,26 @@ namespace emp {
         static void init(Device& device);
         static void bind(VkCommandBuffer commandBuffer);
         static void draw(VkCommandBuffer commandBuffer);
+
+        static Sprite& create(std::string id, Texture tex, AABB tex_rect, vec2f size = vec2f(0.f, 0.f));
+        static std::unordered_map<std::string, std::unique_ptr<Sprite>> s_sprite_table;
+        static void destroyAll() { s_sprite_table.clear(); }
+        static bool isLoaded(std::string id) { return s_sprite_table.contains(id); }
     };
     class SpriteRenderer {
         std::string m_id;
-        static std::unordered_map<std::string, std::unique_ptr<Sprite>> m_sprite_table;
     public:
         bool flipX = false;
         bool flipY = false;
         glm::vec4 color;
-
-        static void destroyAll() { m_sprite_table.clear(); }
         std::string getID() const {return m_id; }
-        static bool isLoaded(std::string id) { return m_sprite_table.contains(id); }
+        bool isLoaded() const { return Sprite::isLoaded(m_id); }
 
         Sprite& sprite();
         const Sprite& sprite() const;
-        static void create(std::string id, Texture tex, AABB tex_rect, vec2f size = vec2f(0.f, 0.f));
         SpriteRenderer() : m_id("undefined") {}
-        SpriteRenderer(std::string model_id) : m_id(model_id) {
-            assert(isLoaded(model_id) && "texture must be first created");
+        SpriteRenderer(std::string sprite_id) : m_id(sprite_id) {
+            assert(isLoaded() && "texture must be first created");
         }
     };
 };
