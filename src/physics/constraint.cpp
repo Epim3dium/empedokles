@@ -46,7 +46,7 @@ namespace emp {
         const auto w1 = 0.f;
         const auto w2 = rb.generalizedInverseMass(r2, normal(diff));
 
-        const auto tilde_compliance = 0.f / (delta_time * delta_time);
+        const auto tilde_compliance = stiffness / (delta_time * delta_time);
 
         auto delta_lagrange = -length(diff);
         delta_lagrange /= (w1 + w2 + tilde_compliance);
