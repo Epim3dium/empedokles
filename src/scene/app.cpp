@@ -104,24 +104,18 @@ namespace emp {
         EMP_LOG(DEBUG3) << "atom size: " << device.properties.limits.nonCoherentAtomSize;
 
         EMP_LOG(LogLevel::DEBUG) << "render systems...";
-        SimpleRenderSystem simple_render_system{
-                device,
-                renderer.getSwapChainRenderPass(),
-                globalSetLayout->getDescriptorSetLayout(),
-                "assets/shaders/basic_shader.vert.spv",
-                "assets/shaders/basic_shader.frag.spv"};
-        DebugShapeRenderSystem debug_shape_render_system{
+        m_debugShape_rend_sys = std::make_unique<DebugShapeRenderSystem>(
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
                 "assets/shaders/debug_shape.vert.spv",
-                "assets/shaders/debug_shape.frag.spv"};
-        SpriteRenderSystem sprite_render_system{
+                "assets/shaders/debug_shape.frag.spv");
+        m_sprite_rend_sys = std::make_unique<SpriteRenderSystem>(
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
                 "assets/shaders/sprite.vert.spv",
-                "assets/shaders/sprite.frag.spv"};
+                "assets/shaders/sprite.frag.spv");
         Camera camera{};
 
         auto viewer_object = coordinator.createEntity();
@@ -142,17 +136,23 @@ namespace emp {
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
         auto& keyboard_sys = *coordinator.getSystem<KeyboardControllerSystem>();
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
-        auto& sprite_sys= *coordinator.getSystem<SpriteSystem>();
+        auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
 
 
+        auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
         auto currentTime = std::chrono::high_resolution_clock::now();
-        while (!window.shouldClose()) {
+        while (isAppRunning) {
             glfwPollEvents();
 
             auto newTime = std::chrono::high_resolution_clock::now();
             float delta_time =
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
+
+            //renderer has priority
+            while(m_isRenderer_waiting) std::this_thread::yield();
+
+            m_coordinator_access_mutex.lock();
 
             onUpdate(delta_time, window);
             {
@@ -176,36 +176,13 @@ namespace emp {
             rigidbody_sys.updateMasses();
             collider_sys.update();
             keyboard_sys.update(window.getGLFWwindow());
+            m_coordinator_access_mutex.unlock();
 
-            if (auto command_buffer = renderer.beginFrame()) {
-                int frame_index = renderer.getFrameIndex();
-                frame_pools[frame_index]->resetPool();
-                FrameInfo frame_info{frame_index,
-                                    delta_time,
-                                    command_buffer,
-                                    camera,
-                                    global_descriptor_sets[frame_index],
-                                    *frame_pools[frame_index]};
-                                    
-
-                GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
-
-                // models_sys->updateBuffer(frameIndex);
-                debugshape_sys.updateBuffer(frame_index);
-                sprite_sys.updateBuffer(frame_index);
-                {
-                    renderer.beginSwapChainRenderPass(command_buffer);
-                    // simpleRenderSystem.render(frameInfo, *models_sys);
-                    debug_shape_render_system.render(frame_info, debugshape_sys);
-                    sprite_render_system.render(frame_info, sprite_sys);
-
-                    onRender(device, frame_info);
-
-                    renderer.endSwapChainRenderPass(command_buffer);
-                }
-                renderer.endFrame();
-            }
+            isAppRunning = isAppRunning && !window.shouldClose();
+            // renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
         }
+        rendering_thread->join();
+        EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
 
         EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
         coordinator.destroy();
@@ -215,6 +192,56 @@ namespace emp {
         Texture::destroyAll();
 
         vkDeviceWaitIdle(device.device());
+    }
+    std::unique_ptr<std::thread> App::createRenderThread(Camera& camera, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
+        return std::move(std::make_unique<std::thread>([&]() {
+                    auto currentTimeRender = std::chrono::high_resolution_clock::now();
+                    while(isAppRunning) {
+                        auto newTime = std::chrono::high_resolution_clock::now();
+                        float delta_time =
+                                std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTimeRender).count();
+                        currentTimeRender = newTime;
+                        renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+                    }
+                    EMP_LOG(LogLevel::DEBUG1) << "rendering thread exit";
+                }));
+    }
+    void App::renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
+        if (auto command_buffer = renderer.beginFrame()) {
+            m_isRenderer_waiting = true;
+            m_coordinator_access_mutex.lock();
+            m_isRenderer_waiting = false;
+
+
+            int frame_index = renderer.getFrameIndex();
+            frame_pools[frame_index]->resetPool();
+            FrameInfo frame_info{frame_index,
+                                delta_time,
+                                command_buffer,
+                                camera,
+                                global_descriptor_sets[frame_index],
+                                *frame_pools[frame_index]};
+
+            GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
+            auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
+            auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
+
+            // models_sys->updateBuffer(frameIndex);
+            debugshape_sys.updateBuffer(frame_index);
+            sprite_sys.updateBuffer(frame_index);
+            {
+                renderer.beginSwapChainRenderPass(command_buffer);
+                // simpleRenderSystem.render(frameInfo, *models_sys);
+                m_debugShape_rend_sys->render(frame_info, debugshape_sys);
+                m_sprite_rend_sys->render(frame_info, sprite_sys);
+
+                onRender(device, frame_info);
+
+                renderer.endSwapChainRenderPass(command_buffer);
+            }
+            m_coordinator_access_mutex.unlock();
+            renderer.endFrame();
+        }
     }
     GlobalUbo App::m_updateUBO(FrameInfo frameInfo, Buffer& uboBuffer, Camera& camera) {
         GlobalUbo ubo{};
