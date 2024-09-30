@@ -1,5 +1,6 @@
 #include "physics_system.hpp"
 #include "core/coordinator.hpp"
+#include "physics/constraint.hpp"
 namespace emp {
     float PhysicsSystem::m_calcRestitution(float coef, float normal_speed, float pre_solve_norm_speed, vec2f gravity, float delT) {
         // TODO: The XPBD paper has this, but it seems to be prevent bounces in cases
@@ -17,26 +18,22 @@ namespace emp {
         auto normal_impulse = normal_lagrange / sub_dt;
         return fmin(-(coef * abs(normal_impulse)), (tangent_speed / generalized_inv_mass_sum));
     }
-    float PhysicsSystem::m_applyPositionalCorrection(Entity& e1, Entity& e2, float c, vec2f normal, vec2f radius1, vec2f radius2, float delT, float compliance) {
+    float PhysicsSystem::m_applyPositionalCorrection(PhysicsSystem::PositionalCorrectionInfo info, float c, vec2f normal, float delT, float compliance) {
+        auto e1 = info.entity1;
+        auto e2 = info.entity2;
         auto& trans1 = *coordinator.getComponent<Transform>(e1);
-        auto& rb1 = *coordinator.getComponent<Rigidbody>(e1);
 
         auto& trans2 = *coordinator.getComponent<Transform>(e2);
-        auto& rb2 = *coordinator.getComponent<Rigidbody>(e2);
 
         const vec2f& pos1 = trans1.position;
         const vec2f& pos2 = trans2.position;
         const float& rot1 = trans1.rotation;
         const float& rot2 = trans2.rotation;
-        const float mass1 = rb1.mass();
-        const float mass2 = rb2.mass();
-        const float inertia1 = rb1.inertia();
-        const float inertia2 = rb2.inertia();
 
-        const auto r1 = rotateVec(radius1, trans1.rotation);
-        const auto r2 = rotateVec(radius2, trans2.rotation);
-        const auto w1 = rb1.generalizedInverseMass(r1, normal);
-        const auto w2 = rb2.generalizedInverseMass(r2, normal);
+        const auto r1 = rotateVec(info.radius1, trans1.rotation);
+        const auto r2 = rotateVec(info.radius2, trans2.rotation);
+        const auto w1 = info.generalized_inverse_mass1;
+        const auto w2 = info.generalized_inverse_mass2;
 
         const auto tilde_compliance = compliance / (delT * delT);
 
@@ -45,13 +42,13 @@ namespace emp {
 
         auto p = delta_lagrange * normal;
 
-        if(!rb1.isStatic) {
-            trans1.setPositionNow(pos1 + p / mass1);
-            trans1.setRotationNow(rot1 + cross(r1, p) / inertia1);
+        if(!info.isStatic1) {
+            trans1.setPositionNow(pos1 + p / info.mass1);
+            trans1.setRotationNow(rot1 + cross(r1, p) / info.inertia1);
         }
-        if(!rb2.isStatic) {
-            trans2.setPositionNow(pos2 - p / mass2);
-            trans2.setRotationNow(rot2 - cross(r2, p) / inertia2);
+        if(!info.isStatic2) {
+            trans2.setPositionNow(pos2 - p / info.mass2);
+            trans2.setRotationNow(rot2 - cross(r2, p) / info.inertia2);
         }
 
         return delta_lagrange;
@@ -129,7 +126,7 @@ namespace emp {
         result.radius1 = r1;
         result.radius2 = r2;
 
-        auto delta_lagrange = m_applyPositionalCorrection(e1, e2, penetration, normal, r1, r2, delT);
+        auto delta_lagrange = m_applyPositionalCorrection(PositionalCorrectionInfo(normal, e1, r1, e2, r2), penetration, normal, delT);
         result.normal_lagrange = delta_lagrange;
         const auto normal_impulse = delta_lagrange / delT;
 
@@ -148,7 +145,7 @@ namespace emp {
         }
         auto tangent = delta_p_tangent / sliding_len;
         if(sliding_len < sfriction * penetration){
-            delta_lagrange = m_applyPositionalCorrection(e1, e2, sliding_len, tangent, r1, r2, delT);
+            delta_lagrange = m_applyPositionalCorrection(PositionalCorrectionInfo(tangent, e1, r2, e2, r2), sliding_len, tangent, delT);
         }
         return result;
     }
@@ -242,6 +239,9 @@ namespace emp {
         col_sys.update();
         auto potential_pairs = m_broadPhase();
         auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);;
+        for(auto& c : constraints) {
+            c.solve(deltaTime);
+        }
         rb_sys.deriveVelocities(deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
@@ -263,7 +263,6 @@ namespace emp {
         }
     }
     void PhysicsSystem::onEntityAdded(Entity entity) {
-        EMP_LOG_DEBUG << "added entity: " << entity << " to physics system";
         auto& rb = getComponent<Rigidbody>(entity);
         if(!rb.useAutomaticMass)
             return;
