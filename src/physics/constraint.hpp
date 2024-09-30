@@ -12,7 +12,7 @@ enum class eConstraintType {
 struct Constraint {
     
     std::vector<Entity> entity_list;
-    float stiffness = 1.f;
+    float stiffness = 1000;
     bool disabled_collision_between_bodies = false;
     eConstraintType type;
     

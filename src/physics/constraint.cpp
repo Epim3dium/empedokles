@@ -28,35 +28,13 @@ namespace emp {
         auto target = point_anchor.relative_position;
         const auto& anchor_trans = *coordinator.getComponent<Transform>(anchor);
         auto& rigid_trans = *coordinator.getComponent<Transform>(rigidbody);
-        auto relative_position = anchor_trans.position - rigid_trans.position;
-
-        auto& rb = *coordinator.getComponent<Rigidbody>(rigidbody);
 
         const vec2f& pos1 = anchor_trans.position;
         const vec2f& pos2 = rigid_trans.position;
         auto diff = pos1-pos2;
-        const float& rot2 = anchor_trans.rotation;
-        const float mass1 = INFINITY;
-        const float mass2 = rb.mass();
-        const float inertia1 = 0.f;
-        const float inertia2 = rb.inertia();
-
-        const auto r1 = vec2f(0, 0);
-        const auto r2 = rotateVec(target, rigid_trans.rotation);
-        const auto w1 = 0.f;
-        const auto w2 = rb.generalizedInverseMass(r2, normal(diff));
-
-        const auto tilde_compliance = stiffness / (delta_time * delta_time);
-
-        auto delta_lagrange = -length(diff);
-        delta_lagrange /= (w1 + w2 + tilde_compliance);
-
-        auto p = delta_lagrange * normal(diff);
-
-        if(!rb.isStatic) {
-            rigid_trans.setPositionNow(pos2 - p / mass2);
-            rigid_trans.setRotationNow(rot2 - cross(r2, p) / inertia2);
-        }
+        PhysicsSystem::m_applyPositionalCorrection(
+            PhysicsSystem::PositionalCorrectionInfo(normal(diff), rigidbody, vec2f(0, 0), anchor, vec2f(0, 0)),
+            length(diff), -normal(diff), delta_time, (1.f / (stiffness * delta_time)));
     }
     void Constraint::solve(float delta_time) {
         switch(type) {
