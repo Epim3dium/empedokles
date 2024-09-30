@@ -12,7 +12,6 @@
 
 namespace emp {
     void registerSceneTypes() {
-        coordinator.registerComponent<KeyboardController>();
         coordinator.registerComponent<Transform>();
 
         coordinator.registerComponent<Material>();
@@ -25,7 +24,6 @@ namespace emp {
         coordinator.registerComponent<SpriteRenderer>();
     }
     void registerSceneSystems(Device& device) {
-        coordinator.registerSystem<KeyboardControllerSystem>();
 
         coordinator.registerSystem<TransformSystem>();
         coordinator.registerSystem<RigidbodySystem>();

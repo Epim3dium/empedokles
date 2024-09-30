@@ -6,7 +6,7 @@
 
 namespace emp {
 
-    void KeyboardControllerSystem::update(GLFWwindow* window) {
+    void KeyboardController::update(GLFWwindow* window) {
         for (int key = 32; key < 348; key++) {
             int state = glfwGetKey(window, key);
             if (state == GLFW_PRESS) {
@@ -25,14 +25,11 @@ namespace emp {
                 keys[key].pressed = false;
             }
         }
-        for(auto e : entities) {
-            auto& controller = getComponent<KeyboardController>(e);
-            controller.m_key_states.clear();
-            for(auto binding : controller.m_mappings) {
-                const auto& state = keys[binding.second];
+        m_key_states.clear();
+        for(auto binding : m_mappings) {
+            const auto& state = keys[binding.second];
 
-                controller.m_key_states[binding.first] = state;
-            }
+            m_key_states[binding.first] = state;
         }
     }
     vec2f KeyboardController::movementInPlane2D() {

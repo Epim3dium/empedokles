@@ -122,19 +122,16 @@ namespace emp {
         coordinator.addComponent(viewer_object, Transform({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
-        {
-            KeyboardController camera_controller{};
-            camera_controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
-            camera_controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
-            camera_controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
-            camera_controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
-            coordinator.addComponent(viewer_object, camera_controller);
-        }
+        KeyboardController camera_controller{};
+        camera_controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
+        camera_controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
+        camera_controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
+        camera_controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
+
         auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
         auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
-        auto& keyboard_sys = *coordinator.getSystem<KeyboardControllerSystem>();
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
         auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
 
@@ -154,13 +151,13 @@ namespace emp {
 
             m_coordinator_access_mutex.lock();
 
+            camera_controller.update(window.getGLFWwindow());
             onUpdate(delta_time, window);
             {
                 assert(coordinator.hasComponent<Transform>(viewer_object));
 
                 auto& viewer_transform = *coordinator.getComponent<Transform>(viewer_object);
-                auto& controller = *coordinator.getComponent<KeyboardController>(viewer_object);
-                viewer_transform.position += controller.movementInPlane2D() * delta_time * 2.f;
+                viewer_transform.position += camera_controller.movementInPlane2D() * delta_time * 2.f;
 
                 camera.setView(viewer_transform.position, viewer_transform.rotation);
                 float aspect = renderer.getAspectRatio();
@@ -175,7 +172,6 @@ namespace emp {
             transform_sys.update();
             rigidbody_sys.updateMasses();
             collider_sys.update();
-            keyboard_sys.update(window.getGLFWwindow());
             m_coordinator_access_mutex.unlock();
 
             isAppRunning = isAppRunning && !window.shouldClose();
@@ -201,6 +197,7 @@ namespace emp {
                         float delta_time =
                                 std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTimeRender).count();
                         currentTimeRender = newTime;
+
                         renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
                     }
                     EMP_LOG(LogLevel::DEBUG1) << "rendering thread exit";
