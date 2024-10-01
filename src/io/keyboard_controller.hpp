@@ -37,11 +37,11 @@ namespace emp {
         Ability7,
         Ability8,
     };
-    class KeyboardControllerSystem;
     class KeyboardController {
     private:
         std::map<eKeyMappings, int> m_mappings;
         std::unordered_map<eKeyMappings, KeyState> m_key_states;
+        std::unordered_map<int, KeyState> keys;
     public:
         void bind(eKeyMappings action, int key) {
             m_mappings[action] = key;
@@ -50,16 +50,6 @@ namespace emp {
             return m_key_states[action];
         }
         vec2f movementInPlane2D();
-        friend KeyboardControllerSystem;
-    };
-
-    class KeyboardControllerSystem : public System<KeyboardController> {
-    private:
-        std::unordered_map<int, KeyState> keys;
-    public:
-        inline const std::unordered_map<int, KeyState>& getKeys() const {
-            return keys;
-        }
         void update(GLFWwindow* window);
     };
 }  // namespace emp
