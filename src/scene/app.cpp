@@ -140,6 +140,7 @@ namespace emp {
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
         auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+        auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
         auto& keyboard_sys = *coordinator.getSystem<KeyboardControllerSystem>();
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
         auto& sprite_sys= *coordinator.getSystem<SpriteSystem>();
@@ -171,7 +172,7 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
-            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, constraint_sys, delta_time);
             transform_sys.update();
             rigidbody_sys.updateMasses();
             collider_sys.update();
