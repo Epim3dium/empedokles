@@ -2,6 +2,7 @@
 #define EMP_BROADPHASE_HPP
 #include <set>
 #include <stack>
+#include <algorithm>
 #include <vector>
 #include "core/entity.hpp"
 #include "math/geometry_func.hpp"
@@ -18,197 +19,139 @@ class SweepBroadPhase{
 public:
     std::vector<CollidingPair> findPotentialPairs(std::set<Entity>::iterator begin, std::set<Entity>::iterator end);
 };
-class Quadtree {
-    struct Node  {
-        int32_t first_child = -1;
-        int32_t count = 0;
-    };
-
-    struct Element {
-        Entity data;
-        AABB aabb;
-    };
-    struct LinkedElement {
-        int next = -1;
-        int element;
-    };
-    FreeList<Element> elements;
-    FreeList<LinkedElement> linked_elements;
-    FreeList<Node> nodes;
-    int free_node = -1;
-
-    AABB root_rect;
-
-private:
-    AABB Rect0(AABB parent) const {
-        return AABB::CreateMinMax(parent.bl(), parent.center());
-    };
-    AABB Rect1(AABB parent) const {
-        return AABB::CreateMinMax({parent.center().x, parent.bl().y}, {parent.br().x, parent.center().y});
-    };
-    AABB Rect2(AABB parent) const {
-        return AABB::CreateMinMax(parent.center(), parent.tr());
-    };
-    AABB Rect3(AABB parent) const {
-        return AABB::CreateMinMax({parent.bl().x, parent.center().y}, {parent.center().x, parent.tr().y});
-    };
-    struct NodeData {
+struct LooseTightDoubleGrid {
+    struct LooseCell {
+        int head;
         AABB area;
-        int index;
-        int depth_left = 8;
     };
-    int divide(int node_index, AABB rect) {
-        assert(nodes[node_index].count != -1);
-        auto& node = nodes[node_index];
-        int first_linked_element = nodes[node_index].first_child;
-        node.first_child = std::min({nodes.insert(Node()), nodes.insert(Node()), nodes.insert(Node()), nodes.insert(Node())});
-        node.count = -1;
-        int to_readd = first_linked_element;
-        while(to_readd != -1) {
-            int cur_linked_index = to_readd;
-            to_readd = linked_elements[cur_linked_index].next;
+    struct LooseCellNode {
+        // Points to the next loose cell node in the tight cell.
+        int next = -1;
 
-            const auto& element = elements[linked_elements[cur_linked_index].element];
-            auto rect0 = Rect0(rect);
-            auto rect1 = Rect0(rect);
-            auto rect2 = Rect0(rect);
-            auto rect3 = Rect0(rect);
-            int i = 0;
-            for(auto r : {rect0, rect1, rect2, rect3}) {
-                if(AABBcontainsAABB(r, element.aabb)) {
-                    m_insertIntoNode(node.first_child + i, cur_linked_index);
-                }
-                i++;
+        // Stores an index to the loose cell.
+        int cell_idx;
+    };
+    struct DataNode {
+        int next = -1;
+        AABB area;
+        Entity entity;
+    };
+
+    struct TightCell {
+        int head = -1;
+    };
+    vec2f inv_cell_size;
+    vec2f cell_size;
+    int num_cols;
+    int num_rows;
+    std::vector<LooseCell> loose_cells;
+
+    //points to linked_loose_cells
+    std::vector<TightCell> tight_cells;
+    FreeList<LooseCellNode> linked_loose_cells;
+    FreeList<DataNode> linked_data;
+    std::map<Entity, int> entities_in_loose_cells;
+
+    int cellIndex(vec2f position) {
+        int cell_x = std::clamp<int>(floor(position.x * inv_cell_size.x), 0, num_cols-1);
+        int cell_y = std::clamp<int>(floor(position.y * inv_cell_size.y), 0, num_rows-1);
+        int cell_idx = cell_y*num_rows + cell_x;
+        return cell_idx;
+    }
+    AABB tightAABB(int index) {
+        vec2f min = {(index % num_rows) * cell_size.x, index * cell_size.y};
+        return AABB::CreateMinMax(min, min + cell_size);
+    }
+    bool tightContains(TightCell tight_cell, int cell_idx_loose) {
+        int next = tight_cell.head;
+        while(next != -1) {
+            if(linked_loose_cells[next].cell_idx == cell_idx_loose) {
+                return true;
             }
+            next = linked_loose_cells[next].next;
         }
+        return false;
     }
-    std::vector<NodeData> m_findLeaves(int root = 0) {
-        return m_findLeaves(root_rect, root);
-    }
-    std::vector<NodeData> m_findLeaves(AABB area, int root = 0) {
-        std::vector<NodeData> result;
-        std::stack<NodeData> to_process;
-        to_process.push({area, root, max_depth});
-        while(to_process.size() > 0) {
-            auto node = to_process.top();
-            to_process.pop();
-            if(node.depth_left < 0) {
-                continue;
-            }
-            //is a leaf, push back
-            if(nodes[node.index].count != -1) {
-                result.push_back(node);
-            }else {
-                //push intersecting children
-                auto rect = Rect0(area);
-                if(isOverlappingAABBAABB(rect, area)) {
-                    to_process.push({ rect, nodes[node.index].first_child+0, node.depth_left - 1} );
-                }
-                rect = Rect1(area);
-                if(isOverlappingAABBAABB(rect, area)) {
-                    to_process.push({ rect, nodes[node.index].first_child+1, node.depth_left - 1} );
-                }
-                rect = Rect2(area);
-                if(isOverlappingAABBAABB(rect, area)) {
-                    to_process.push({ rect, nodes[node.index].first_child+2, node.depth_left - 1} );
-                }
-                rect = Rect3(area);
-                if(isOverlappingAABBAABB(rect, area)) {
-                    to_process.push({ rect, nodes[node.index].first_child+3, node.depth_left - 1} );
+    std::vector<Entity> query(AABB queried_area) {
+        std::vector<Entity> result;
+        int minx = std::clamp<int>(floor(queried_area.min.x * inv_cell_size.x ), 0, num_cols-1);
+        int maxx = std::clamp<int>(floor(queried_area.max.x * inv_cell_size.x ), 0, num_cols-1);
+        int miny = std::clamp<int>(floor(queried_area.min.y * inv_cell_size.y ), 0, num_rows-1);
+        int maxy = std::clamp<int>(floor(queried_area.max.y * inv_cell_size.y ), 0, num_rows-1);
+
+        for(int y = miny; y <= maxy; y++) {
+            int trow = y * num_cols;
+            for(int x = minx; x <= maxx; x++) {
+                int index = trow + x;
+                auto& tight_cell = tight_cells[index];
+                int current_loose_node = tight_cell.head;
+                while(current_loose_node != -1) {
+                    int loose_cell_idx = linked_loose_cells[current_loose_node].cell_idx;
+                    int current_element = loose_cells[loose_cell_idx].head;
+                    while(current_element != -1) {
+                        if(isOverlappingAABBAABB(linked_data[current_element].area, queried_area)) {
+                            result.push_back(linked_data[current_element].entity);
+                        }
+                        current_element = linked_data[current_element].next;
+                    }
+                    current_loose_node = linked_loose_cells[current_loose_node].next;
                 }
             }
         }
         return result;
     }
-    int findBestFitFor(AABB object, int root = 0) {
-        std::stack<NodeData> to_process;
-        to_process.push({object, root, max_depth});
-        while(to_process.size() > 0) {
-            auto node = to_process.top();
-            to_process.pop();
-            if(node.depth_left < 0) {
-                continue;
-            }
-            auto rect0 = Rect0(node.area);
-            auto rect1 = Rect0(node.area);
-            auto rect2 = Rect0(node.area);
-            auto rect3 = Rect0(node.area);
-            int i = 0;
-            for(auto r : {rect0, rect1, rect2, rect3}) {
-                if(AABBcontainsAABB(r, object) && node.depth_left == ) {
-                    to_process.push({r, nodes[node.index].first_child + i, node.depth_left - 1});
-                    break;
+    void insert(AABB object, Entity entity) {
+        auto object_index = linked_data.insert({-1, object, entity});
+
+        auto loose_cell_index = cellIndex(object.center());
+        auto& loose_cell = loose_cells[loose_cell_index];
+        loose_cell.area.expandToContain(object.min);
+        loose_cell.area.expandToContain(object.max);
+
+        linked_data[object_index].next = loose_cell.head;
+        loose_cell.head = object_index;
+        entities_in_loose_cells[entity] = loose_cell_index;
+
+        // linked_loose_cells.insert({tight_cells[cell_index].head, cell_index});
+
+        int minx = std::clamp<int>(floor(object.min.x * inv_cell_size.x ), 0, num_cols-1);
+        int maxx = std::clamp<int>(floor(object.max.x * inv_cell_size.x ), 0, num_cols-1);
+        int miny = std::clamp<int>(floor(object.min.y * inv_cell_size.y ), 0, num_rows-1);
+        int maxy = std::clamp<int>(floor(object.max.y * inv_cell_size.y ), 0, num_rows-1);
+
+        for(int y = miny; y <= maxy; y++) {
+            int trow = y * num_cols;
+            for(int x = minx; x <= maxx; x++) {
+                int index = trow + x;
+                auto& tight_cell = tight_cells[index];
+                if(isOverlappingAABBAABB(loose_cell.area, tightAABB(index))) {
+                    tight_cell.head = linked_loose_cells.insert({tight_cell.head, loose_cell_index});
                 }
-                i++;
-            }
-            
-        }
-
-    }
-    void cleanup() {
-        // Only process the root if it's not a leaf.
-        std::vector<int> to_process;
-        if (nodes[0].count == -1)
-            to_process.push_back(0);
-
-        while (to_process.size() > 0)
-        {
-            const int node_index = to_process.back();
-            to_process.pop_back();
-            auto& node = nodes[node_index];
-
-            // Loop through the children.
-            int num_empty_leaves = 0;
-            for (int j=0; j < 4; ++j)
-            {
-                const int child_index = node.first_child + j;
-                const auto& child = nodes[child_index];
-
-                // Increment empty leaf count if the child is an empty 
-                // leaf. Otherwise if the child is a branch, add it to
-                // the stack to be processed in the next iteration.
-                if (child.count == 0)
-                    ++num_empty_leaves;
-                else if (child.count == -1)
-                    to_process.push_back(child_index);
-            }
-
-            // If all the children were empty leaves, remove them and 
-            // make this node the new empty leaf.
-            if (num_empty_leaves == 4)
-            {
-                // Push all 4 children to the free list.
-                nodes[node.first_child].first_child = free_node;
-                free_node = node.first_child;
-
-                // Make this node the new empty leaf.
-                node.first_child = -1;
-                node.count = 0;
             }
         }
     }
-    int m_insertElement(Entity data, AABB aabb) {
-        auto index = elements.insert({data, aabb});
-        auto linked_index = linked_elements.insert({-1, index});
-        return linked_index;
+    void erase(Entity entity) {
+        if(!entities_in_loose_cells.contains(entity)) {
+            return;
+        }
+        int loose_cell_idx = entities_in_loose_cells.at(entity);
+        entities_in_loose_cells.erase(entity);
+        int current_idx = loose_cells[loose_cell_idx].head;
+        int* prev_link = &loose_cells[loose_cell_idx].head;
+        while(current_idx != -1) {
+            if(linked_data[current_idx].entity == entity) {
+                *prev_link = linked_data[current_idx].next;
+                linked_data.erase(current_idx);
+            }else {
+                prev_link = &linked_data[current_idx].next;
+                current_idx = linked_data[current_idx].next;
+            }
+        }
     }
-    void m_insertIntoNode(int node_index, int linked_element_index) {
-        auto& node = nodes[node_index];
-        linked_elements[linked_element_index].next = node.first_child;
-        node.first_child = linked_element_index;
-        node.count++;
+    void update(AABB object, Entity entity) {
+        erase(entity);
+        insert(object, entity);
     }
-public:
-    int max_depth = 8;
-    Quadtree(size_t max_entities_count, AABB max_quadtree_size);
-    void add(Entity data, AABB aabb) {
-        int node_index = m_findNode(aabb);
-        int linked_element = m_insertElement(data, aabb);
-        m_insertIntoNode(node_index, linked_element);
-    }
-    void remove(Entity data, AABB aabb);
-    void query(vec2f point);
-    void query(AABB area);
 };
 };
 #endif
