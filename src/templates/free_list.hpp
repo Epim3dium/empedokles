@@ -31,7 +31,7 @@ namespace emp {
     private:
         union FreeElement
         {
-            T element;
+            T element{};
             int next;
         };
         std::vector<FreeElement> data;
