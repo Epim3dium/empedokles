@@ -131,6 +131,7 @@ namespace emp {
         auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
         auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
+        auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
         auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
