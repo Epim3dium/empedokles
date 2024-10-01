@@ -7,74 +7,47 @@
 #include "physics/collider.hpp"
 
 namespace emp {
+    // Entity e1;
+    // Entity e2;
+    // size_t shape_index1;
+    // size_t shape_index2;
     std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(std::set<Entity>::iterator begin, std::set<Entity>::iterator end) {
     std::vector<CollidingPair> result;
-    struct SwipeeInformation {
-        float x_value;
-        //index of owner
-        Entity entity;
-        //index of convex
-        size_t sub_idx;
+    struct Object {
+        Entity owner;
         AABB aabb;
+        size_t sub_shape_idx;
     };
-    std::vector<SwipeeInformation> sweep_along_x;
-    size_t index = 0;
+    std::vector<Object> objects_sorted;
     for(auto itr = begin; itr != end; itr++) {
-        const Entity entity = *itr;
-
-        const auto shape_ptr = coordinator.getComponent<Collider>(entity);
-        assert(shape_ptr != nullptr);
-        const auto& shape = shape_ptr->transformed_shape;
-
-        size_t sub_index = 0;
-        for(const auto& convex : shape) {
-            AABB aabb = AABB::Expandable();
-            for(auto& point : convex) {
-                aabb.expandToContain(point);
-            }
-            sweep_along_x.push_back({aabb.min.x, entity, sub_index, aabb});
-            sweep_along_x.push_back({aabb.max.x, entity, sub_index, aabb});
-            sub_index++;
+        auto& col = *coordinator.getComponent<Collider>(*itr);
+        size_t i = 0;
+        for(const auto& shape : col.transformed_shape) {
+            objects_sorted.push_back({*itr, AABB::CreateFromVerticies(shape), i});
+            i++;
         }
-        index++;
     }
-    std::sort(sweep_along_x.begin(), sweep_along_x.end(),
-        [](const SwipeeInformation& p1, const SwipeeInformation& p2) {
-            return p1.x_value < p2.x_value;
-        });
-    struct OpenedSwipee {
-        Entity entity;
-        size_t sub_idx;
-        AABB aabb;
-    };
-    std::vector<OpenedSwipee> open;
-    for(auto evaluated : sweep_along_x) {
-        auto itr = std::find_if(open.begin(), open.end(), 
-            [&](const OpenedSwipee& p) {
-                return p.entity == evaluated.entity && p.sub_idx == evaluated.sub_idx;
-            });
-        //delete if already was opened
-        if(itr != open.end()) {
-            std::swap(*itr, open.back());
-            open.pop_back();
-            continue;
-        }
-        
-        //compare against all other opened 
-        auto aabb = evaluated.aabb;
-        for(auto other : open) {
-            if(other.entity == evaluated.entity) {
-                if(other.sub_idx == evaluated.sub_idx) {
-                    assert(other.entity != evaluated.entity && "opened convex shape should have already been evaluated");
+	std::sort(objects_sorted.begin(), objects_sorted.end(),
+		[](const Object& a, const Object& b) -> bool
+	{ return a.aabb.min.x < b.aabb.min.x; });
+
+    std::vector<int> opened; 
+    for (auto i = 0; i < objects_sorted.size(); ++i) {
+        for (auto j = 0; j < opened.size(); ++j) {
+            if(objects_sorted[i].aabb.min.x > objects_sorted[opened[j]].aabb.max.x) {
+                opened.erase(opened.begin() + j);
+                j--;
+            }else if(objects_sorted[i].owner != objects_sorted[opened[j]].owner) {
+                if(isOverlappingAABBAABB(objects_sorted[i].aabb, objects_sorted[opened[j]].aabb)) {
+                    const auto& obj1 = objects_sorted[i];
+                    const auto& obj2 = objects_sorted[opened[j]];
+                    result.push_back({obj1.owner, obj2.owner, obj1.sub_shape_idx, obj2.sub_shape_idx}); 
                 }
-                continue;
-            }
-            if(isOverlappingAABBAABB(other.aabb, aabb)) {
-                result.push_back({evaluated.entity, other.entity, evaluated.sub_idx, other.sub_idx});
             }
         }
-        open.push_back({evaluated.entity, evaluated.sub_idx, aabb});
+        opened.push_back(i);
     }
-    return result;
+	return  result;
 }
+
 };
