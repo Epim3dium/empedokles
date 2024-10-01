@@ -77,13 +77,12 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     std::vector<PenetrationConstraint> m_narrowPhase(ColliderSystem& col_sys, const std::vector<CollidingPair>& pairs, float delT);
     //need to update colliders after
     void m_solveVelocities(std::vector<PenetrationConstraint>& constraints, float delT);
-    void m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, float deltaTime);
+    void m_step(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys,ConstraintSystem& const_sys, float deltaTime);
 public:
-    std::vector<Constraint> constraints;
     EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
     float gravity = 1.f;
     size_t substep_count = 8U;
-    void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, 
+    void update(TransformSystem& trans_sys, ColliderSystem& col_sys, RigidbodySystem& rb_sys, ConstraintSystem& const_sys,
             float delT);
     void onEntityAdded(Entity entity) override;
     friend Constraint;
