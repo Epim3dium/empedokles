@@ -137,7 +137,7 @@ namespace emp {
         auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
 
 
-        auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
+        // auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (isAppRunning) {
             glfwPollEvents();
@@ -176,9 +176,9 @@ namespace emp {
             m_coordinator_access_mutex.unlock();
 
             isAppRunning = isAppRunning && !window.shouldClose();
-            // renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+            renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
         }
-        rendering_thread->join();
+        // rendering_thread->join();
         EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
 
         EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
@@ -206,9 +206,9 @@ namespace emp {
     }
     void App::renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         if (auto command_buffer = renderer.beginFrame()) {
-            m_isRenderer_waiting = true;
-            m_coordinator_access_mutex.lock();
-            m_isRenderer_waiting = false;
+            // m_isRenderer_waiting = true;
+            // m_coordinator_access_mutex.lock();
+            // m_isRenderer_waiting = false;
 
 
             int frame_index = renderer.getFrameIndex();
@@ -237,7 +237,7 @@ namespace emp {
 
                 renderer.endSwapChainRenderPass(command_buffer);
             }
-            m_coordinator_access_mutex.unlock();
+            // m_coordinator_access_mutex.unlock();
             renderer.endFrame();
         }
     }
