@@ -31,44 +31,6 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     };
     float m_calcRestitution(float coef, float normal_speed, float pre_solve_norm_speed, vec2f gravity, float delT);
     float m_calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt);
-    struct PositionalCorrectionInfo {
-        Entity entity1;
-        vec2f radius1;
-        bool isStatic1;
-        float inertia1;
-        float mass1;
-        float generalized_inverse_mass1;
-        Entity entity2;
-        vec2f radius2;
-        bool isStatic2;
-        float inertia2;
-        float mass2;
-        float generalized_inverse_mass2;
-        PositionalCorrectionInfo() {}
-        explicit PositionalCorrectionInfo(vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2) : entity1(e1), radius1(r1), entity2(e2), radius2(r2) 
-        {
-            assert(coordinator.hasComponent<Rigidbody>(e1));
-            auto& rb1 = *coordinator.getComponent<Rigidbody>(e1);
-            isStatic1 = rb1.isStatic;
-            inertia1 = rb1.inertia();
-            mass1 = rb1.mass();
-            generalized_inverse_mass1 = rb1.generalizedInverseMass(r1, normal);
-
-            if(coordinator.hasComponent<Rigidbody>(e2)) {
-                auto& rb2 = *coordinator.getComponent<Rigidbody>(e2);
-                isStatic2 = rb2.isStatic;
-                inertia2 = rb2.inertia();
-                mass2 = rb2.mass();
-                generalized_inverse_mass2 = rb2.generalizedInverseMass(r2, normal);
-            }else {
-                isStatic2 = true;
-                inertia2 = 0.f;
-                mass2 = INFINITY;
-                generalized_inverse_mass2 = 0.f;
-            }
-        }
-    };
-    static float m_applyPositionalCorrection(PositionalCorrectionInfo info, float c, vec2f normal, float delT, float compliance = 0.f);
     vec2f m_calcContactVel(vec2f vel, float ang_vel, vec2f r);
 
     PenetrationConstraint m_handleCollision(Entity b1, const int convexIdx1, Entity b2, const int convexIdx2, float delT, float compliance = 0.f);
