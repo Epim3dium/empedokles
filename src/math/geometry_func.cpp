@@ -506,7 +506,7 @@ std::vector<vec2f> findContactPointFast(const ConvexPolygon* p0, const ConvexPol
         }
         for(auto p : p0->getVertecies()) {
             auto d = dot(normal(p - p0->getPos()), cn);
-            if(abs(best - d) < VERY_SMALL_AMOUNT * VERY_SMALL_AMOUNT) {
+            if(abs(best - d) != 0.f) {
                 best = d;
                 contact_point.push_back(p);
             }
@@ -640,7 +640,7 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
             vec2f axis_proj = normal(vec2f(-axis_proj_perp.y, axis_proj_perp.x));
             
             //very rare TODO: remove findClosestPointONRay from inner loop
-            if(incidentEdgeOwner == flipShapes && (nearlyEqual(cn, axis_proj) || nearlyEqual(cn, -axis_proj))) {
+            if(incidentEdgeOwner == flipShapes && (cn == axis_proj || cn == -axis_proj)) {
                 auto closest_current = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
                 auto closest_potential = findClosestPointOnRay(poly1[a], poly1[b] - poly1[a], contact_vertex);
                 if(qlen(closest_current - contact_vertex) > qlen(closest_potential - contact_vertex)) {
@@ -683,7 +683,7 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(const std::vector<vec2f
                 return {false};
         }
     }
-    if(nearlyEqual(overlap, 0.f))
+    if(overlap ==  0.f)
         return {false};
 
     auto closest = findClosestPointOnRay(incident_edge.first, incident_edge.second - incident_edge.first, contact_vertex);
