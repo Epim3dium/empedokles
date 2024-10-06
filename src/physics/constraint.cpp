@@ -45,7 +45,7 @@ namespace emp {
         }
         PhysicsSystem::m_applyPositionalCorrection(
             PhysicsSystem::PositionalCorrectionInfo(norm, rigidbody, point_anchor.pinch_point_model, anchor, vec2f(0, 0)),
-            c - damping_force, -norm, delta_time, (1.f / stiffness));
+            c - damping_force, -norm, delta_time, compliance);
     }
     void Constraint::solve(float delta_time) {
         switch(type) {

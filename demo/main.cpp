@@ -43,7 +43,7 @@ class Demo : public App {
 
             Constraint constraint;
             constraint = Constraint::createPointAnchor(mouse_entity, cube, vec2f(0.f, cube_scale));
-            constraint.stiffness = 1000.f;
+            constraint.compliance = 0.001f;
             auto spring = coordinator.createEntity();
             coordinator.addComponent(spring, constraint);
 
