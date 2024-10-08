@@ -139,6 +139,10 @@ namespace emp {
         auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (isAppRunning) {
+            std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
+            while(m_isRenderer_waiting) {
+                m_priority_access.wait(lock);
+            }
             glfwPollEvents();
 
             auto newTime = std::chrono::high_resolution_clock::now();
@@ -146,10 +150,6 @@ namespace emp {
                     std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            //renderer has priority
-            while(m_isRenderer_waiting) std::this_thread::yield();
-
-            m_coordinator_access_mutex.lock();
 
             camera_controller.update(window.getGLFWwindow());
             onUpdate(delta_time, window);
@@ -172,7 +172,6 @@ namespace emp {
             transform_sys.update();
             rigidbody_sys.updateMasses();
             collider_sys.update();
-            m_coordinator_access_mutex.unlock();
 
             isAppRunning = isAppRunning && !window.shouldClose();
             // renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
@@ -205,10 +204,6 @@ namespace emp {
     }
     void App::renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         if (auto command_buffer = renderer.beginFrame()) {
-            m_isRenderer_waiting = true;
-            m_coordinator_access_mutex.lock();
-            m_isRenderer_waiting = false;
-
 
             int frame_index = renderer.getFrameIndex();
             frame_pools[frame_index]->resetPool();
@@ -219,24 +214,30 @@ namespace emp {
                                 global_descriptor_sets[frame_index],
                                 *frame_pools[frame_index]};
 
-            GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
-            auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
-            auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
-
-            // models_sys->updateBuffer(frameIndex);
-            debugshape_sys.updateBuffer(frame_index);
-            sprite_sys.updateBuffer(frame_index);
             {
-                renderer.beginSwapChainRenderPass(command_buffer);
-                // simpleRenderSystem.render(frameInfo, *models_sys);
-                m_debugShape_rend_sys->render(frame_info, debugshape_sys);
-                m_sprite_rend_sys->render(frame_info, sprite_sys);
+                m_isRenderer_waiting = true;
+                std::unique_lock<std::mutex> resource_lock(m_coordinator_access_mutex);
+                m_isRenderer_waiting = false;
 
-                onRender(device, frame_info);
+                GlobalUbo ubo = m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
+                auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
+                auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
 
-                renderer.endSwapChainRenderPass(command_buffer);
+                // models_sys->updateBuffer(frameIndex);
+                debugshape_sys.updateBuffer(frame_index);
+                sprite_sys.updateBuffer(frame_index);
+                {
+                    renderer.beginSwapChainRenderPass(command_buffer);
+                    // simpleRenderSystem.render(frameInfo, *models_sys);
+                    m_debugShape_rend_sys->render(frame_info, debugshape_sys);
+                    m_sprite_rend_sys->render(frame_info, sprite_sys);
+
+                    onRender(device, frame_info);
+
+                    renderer.endSwapChainRenderPass(command_buffer);
+                }
+                m_priority_access.notify_all();
             }
-            m_coordinator_access_mutex.unlock();
             renderer.endFrame();
         }
     }
