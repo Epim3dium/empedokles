@@ -53,6 +53,7 @@ namespace emp {
         std::condition_variable m_priority_access;
         std::mutex m_coordinator_access_mutex;
         std::atomic<bool> m_isRenderer_waiting = false;
+        std::atomic<bool> m_isPhysics_waiting = false;
         std::atomic<bool> isAppRunning = true;
 
         std::vector<AssetInfo> m_models_to_load;
@@ -66,6 +67,7 @@ namespace emp {
 
         void renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
         std::unique_ptr<std::thread> createRenderThread(Camera& camera, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
+        std::unique_ptr<std::thread> createPhysicsThread(const float target_tickrate = 120.f);
     };
 }  
 #endif

@@ -132,15 +132,18 @@ namespace emp {
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
         auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
         auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
 
 
         auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
+        auto physics_thread = createPhysicsThread(120.f);
+
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (isAppRunning) {
             std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
-            while(m_isRenderer_waiting) {
+            while(m_isRenderer_waiting || m_isPhysics_waiting) {
                 m_priority_access.wait(lock);
             }
             glfwPollEvents();
@@ -168,15 +171,13 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
-            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
-            transform_sys.update();
-            rigidbody_sys.updateMasses();
-            collider_sys.update();
 
             isAppRunning = isAppRunning && !window.shouldClose();
             // renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
         }
         rendering_thread->join();
+        physics_thread->join();
+
         EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
 
         EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
@@ -190,17 +191,57 @@ namespace emp {
     }
     std::unique_ptr<std::thread> App::createRenderThread(Camera& camera, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         return std::move(std::make_unique<std::thread>([&]() {
-                    auto currentTimeRender = std::chrono::high_resolution_clock::now();
+                    auto current_time_render = std::chrono::high_resolution_clock::now();
                     while(isAppRunning) {
                         auto newTime = std::chrono::high_resolution_clock::now();
                         float delta_time =
-                                std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTimeRender).count();
-                        currentTimeRender = newTime;
+                                std::chrono::duration<float, std::chrono::seconds::period>(newTime - current_time_render).count();
+                        current_time_render = newTime;
 
                         renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
                     }
-                    EMP_LOG(LogLevel::DEBUG1) << "rendering thread exit";
+                    EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
                 }));
+    }
+    std::unique_ptr<std::thread> App::createPhysicsThread(const float target_tickrate) {
+        return std::move(std::make_unique<std::thread>([&, target_tickrate]() {
+            auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
+            auto& transform_sys = *coordinator.getSystem<TransformSystem>();
+            auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
+            auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+
+            const float desired_delta_time = 1.f / target_tickrate;
+            auto whole_time_physics = std::chrono::high_resolution_clock::now();
+            auto compute_time_physics = std::chrono::high_resolution_clock::now();
+            while(isAppRunning) {
+                m_isPhysics_waiting = false;
+                auto newTime = std::chrono::high_resolution_clock::now();
+                float delta_time =
+                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics).count();
+                float compute_delta_time =
+                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - compute_time_physics).count();
+
+                whole_time_physics = newTime;
+                {
+                    if(compute_delta_time < desired_delta_time) {   
+                        const float sleep_duration = (desired_delta_time - compute_delta_time) * 0.9f;
+                        std::this_thread::sleep_for(std::chrono::nanoseconds( static_cast<long long>(1e9 * sleep_duration) ));
+                    }
+                }
+                compute_time_physics = std::chrono::high_resolution_clock::now();
+                
+                m_isPhysics_waiting = true;
+                std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
+                while(m_isRenderer_waiting) {
+                    m_priority_access.wait(lock);
+                }
+
+                EMP_LOG_DEBUG << 1.f / delta_time;
+                physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+                m_priority_access.notify_all();
+            }
+            EMP_LOG(LogLevel::WARNING) << "physics thread exit";
+        }));
     }
     void App::renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         if (auto command_buffer = renderer.beginFrame()) {
