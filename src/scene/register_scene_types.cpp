@@ -14,6 +14,7 @@ namespace emp {
     void registerSceneTypes() {
         coordinator.registerComponent<Transform>();
 
+        coordinator.registerComponent<Constraint>();
         coordinator.registerComponent<Material>();
         coordinator.registerComponent<Collider>();
         coordinator.registerComponent<Rigidbody>();
@@ -28,6 +29,7 @@ namespace emp {
         coordinator.registerSystem<TransformSystem>();
         coordinator.registerSystem<RigidbodySystem>();
         coordinator.registerSystem<ColliderSystem>();
+        coordinator.registerSystem<ConstraintSystem>();
         coordinator.registerSystem<PhysicsSystem>();
 
         coordinator.registerSystem<SpriteSystem>(std::ref(device));

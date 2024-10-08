@@ -131,6 +131,7 @@ namespace emp {
         auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
         auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
+        auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
         auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
 
         auto& debugshape_sys= *coordinator.getSystem<DebugShapeSystem>();
@@ -173,7 +174,6 @@ namespace emp {
             }
 
             isAppRunning = isAppRunning && !window.shouldClose();
-            // renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
         }
         rendering_thread->join();
         physics_thread->join();
@@ -213,6 +213,7 @@ namespace emp {
             auto& transform_sys = *coordinator.getSystem<TransformSystem>();
             auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
             auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+            auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
 
             auto whole_time_physics = std::chrono::high_resolution_clock::now();
             auto last_sleep_duration = std::chrono::nanoseconds(0);
@@ -241,7 +242,7 @@ namespace emp {
                 m_isPhysics_waiting = false;
 
 
-                physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+                physics_sys.update(transform_sys, collider_sys, rigidbody_sys, constraint_sys, delta_time);
                 EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / delta_time << " TPS";
                 m_priority_access.notify_all();
             }
@@ -250,7 +251,6 @@ namespace emp {
     }
     void App::renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         if (auto command_buffer = renderer.beginFrame()) {
-
             int frame_index = renderer.getFrameIndex();
             frame_pools[frame_index]->resetPool();
             FrameInfo frame_info{frame_index,
