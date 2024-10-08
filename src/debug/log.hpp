@@ -30,15 +30,16 @@ public:
     virtual ~LogOutput() {}
 };
 
-class Log
-{
+class Log {
 public:
     Log();
     virtual ~Log();
     std::ostringstream& Get(LogLevel level = INFO);
 public:
-    static std::unique_ptr<LogOutput> out;
-    static LogLevel ReportingLevel;
+    static std::unique_ptr<LogOutput> s_out;
+    static std::mutex s_out_lock;
+
+    static LogLevel s_reporting_level;
     static std::string ToString(LogLevel level);
 protected:
     std::ostringstream os;
@@ -46,6 +47,7 @@ private:
     Log(const Log&);
     Log& operator =(const Log&);
 };
+
 
 class Output2Cerr : public  LogOutput {
 public:
@@ -76,22 +78,38 @@ public:
 
 #define EMP_LOG(level) \
     if (level > FILELOG_MAX_LEVEL) ;\
-    else if (level > Log::ReportingLevel) ; \
+    else if (level > Log::s_reporting_level) ; \
     else Log().Get(level)
 
 #define EMP_LOG_DEBUG \
     if (LogLevel::DEBUG > FILELOG_MAX_LEVEL) ;\
-    else if (LogLevel::DEBUG > Log::ReportingLevel) ; \
+    else if (LogLevel::DEBUG > Log::s_reporting_level) ; \
     else Log().Get(LogLevel::DEBUG)
 
 #define EMP_LOG_TRACE(level) \
     if (level > FILELOG_MAX_LEVEL) ;\
-    else if (level > Log::ReportingLevel) ; \
+    else if (level > Log::s_reporting_level) ; \
     else Log().Get(level) << "{ in file: " << __FILE__ << ", at line: " << __LINE__ << " }:"
+
+#define EMP__HELPER_LOG_INTERVAL(level, time, line, file) \
+    static std::chrono::time_point<std::chrono::high_resolution_clock> line##file##timepoint = std::chrono::high_resolution_clock::now();\
+    static int line##file##canLog = 1;\
+    if (level > FILELOG_MAX_LEVEL) ;\
+    else if (level > Log::s_reporting_level) ; \
+    else if(std::chrono::duration<float, std::chrono::seconds::period>(std::chrono::high_resolution_clock::now() - line##file##timepoint).count() >= time){\
+        line##file##timepoint = std::chrono::high_resolution_clock::now();\
+        line##file##canLog = 1;\
+    }\
+    if(line##file##canLog != 0 && line##file##canLog-- == 1) Log().Get(level)
+
+#define EMP_LOG_INTERVAL(level, time) EMP__HELPER_LOG_INTERVAL(level, time, __LINE__, __FILE__)
+
+
+
 
 //#define L_(level) \
 //if (level > FILELOG_MAX_LEVEL) ;\
-//else if (level > FILELog::ReportingLevel || !Output2FILE::Stream()) ; \
+//else if (level > FILELog::s_reporting_level || !Output2FILE::Stream()) ; \
 //else FILELog().Get(level)
 
 

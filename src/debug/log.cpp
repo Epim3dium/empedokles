@@ -14,8 +14,9 @@ std::string FormatTime(std::chrono::system_clock::time_point tp) {
     return ss.str();
 }
 
-LogLevel Log::ReportingLevel = DEBUG3;
-std::unique_ptr<LogOutput> Log::out = std::make_unique<Output2Cerr>(Output2Cerr());
+LogLevel Log::s_reporting_level = DEBUG3;
+std::unique_ptr<LogOutput> Log::s_out = std::make_unique<Output2Cerr>(Output2Cerr());
+std::mutex Log::s_out_lock;
 
 Log::Log()
 {
@@ -32,7 +33,8 @@ std::ostringstream& Log::Get(LogLevel level)
 Log::~Log()
 {
     os << std::endl;
-    out->Output(os.str());
+    std::lock_guard<std::mutex> lock(s_out_lock);
+    s_out->Output(os.str());
 }
 
 #ifdef __unix__ 
