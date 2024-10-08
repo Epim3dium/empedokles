@@ -199,6 +199,7 @@ namespace emp {
                         current_time_render = newTime;
 
                         renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+                        EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{render thread}: " << 1.f / delta_time << " FPS";
                     }
                     EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
                 }));
@@ -212,32 +213,33 @@ namespace emp {
 
             const float desired_delta_time = 1.f / target_tickrate;
             auto whole_time_physics = std::chrono::high_resolution_clock::now();
-            auto compute_time_physics = std::chrono::high_resolution_clock::now();
+            auto last_sleep_duration = std::chrono::nanoseconds(0);
             while(isAppRunning) {
-                m_isPhysics_waiting = false;
                 auto newTime = std::chrono::high_resolution_clock::now();
                 float delta_time =
                         std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics).count();
                 float compute_delta_time =
-                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - compute_time_physics).count();
+                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics - last_sleep_duration).count();
 
                 whole_time_physics = newTime;
                 {
                     if(compute_delta_time < desired_delta_time) {   
-                        const float sleep_duration = (desired_delta_time - compute_delta_time) * 0.9f;
-                        std::this_thread::sleep_for(std::chrono::nanoseconds( static_cast<long long>(1e9 * sleep_duration) ));
+                        const float sleep_duration = (desired_delta_time - compute_delta_time);
+                        last_sleep_duration = std::chrono::nanoseconds( static_cast<long long>(floorf(1e9 * sleep_duration)) );
+                        std::this_thread::sleep_for(last_sleep_duration);
                     }
                 }
-                compute_time_physics = std::chrono::high_resolution_clock::now();
                 
                 m_isPhysics_waiting = true;
                 std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
                 while(m_isRenderer_waiting) {
                     m_priority_access.wait(lock);
                 }
+                m_isPhysics_waiting = false;
 
-                EMP_LOG_DEBUG << 1.f / delta_time;
+
                 physics_sys.update(transform_sys, collider_sys, rigidbody_sys, delta_time);
+                EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / delta_time << " TPS";
                 m_priority_access.notify_all();
             }
             EMP_LOG(LogLevel::WARNING) << "physics thread exit";

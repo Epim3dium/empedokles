@@ -50,6 +50,7 @@ namespace emp {
         std::unique_ptr<DebugShapeRenderSystem> m_debugShape_rend_sys;
         std::unique_ptr<SpriteRenderSystem> m_sprite_rend_sys;
 
+        //synchronization systems
         std::condition_variable m_priority_access;
         std::mutex m_coordinator_access_mutex;
         std::atomic<bool> m_isRenderer_waiting = false;
