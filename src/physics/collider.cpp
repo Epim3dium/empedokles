@@ -20,6 +20,13 @@ namespace emp {
     //     transformed_shape = model_shape;
     //     m_transform = trans;
     // }
+    AABB Collider::m_calcAABB() const {
+        auto result = AABB::Expandable();
+        for(const auto& p : transformed_outline) {
+            result.expandToContain(p);
+        }
+        return result;
+    }
     void Collider::m_updateNewTransform(const Transform& transform) {
         for(int i = 0; i < model_shape.size(); i++) {
             auto& poly = model_shape[i];
@@ -30,6 +37,7 @@ namespace emp {
         for (int i = 0; i < model_outline.size(); i++) {
             transformed_outline[i] = transformPoint(transform.global(), model_outline[i]);
         }
+        m_aabb = m_calcAABB();
     }
     void ColliderSystem::update() {
         for(auto entity : entities) {
