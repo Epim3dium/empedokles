@@ -46,6 +46,7 @@ namespace emp {
         // order of declarations matters
         std::unique_ptr<DescriptorPool> globalPool;
         std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
+        void forcePhysicsTickrate(const float tick_rate);
     private:
         std::unique_ptr<DebugShapeRenderSystem> m_debugShape_rend_sys;
         std::unique_ptr<SpriteRenderSystem> m_sprite_rend_sys;
@@ -55,6 +56,7 @@ namespace emp {
         std::mutex m_coordinator_access_mutex;
         std::atomic<bool> m_isRenderer_waiting = false;
         std::atomic<bool> m_isPhysics_waiting = false;
+        std::atomic<float> m_physics_tick_rate = 120.f;
         std::atomic<bool> isAppRunning = true;
 
         std::vector<AssetInfo> m_models_to_load;
@@ -68,7 +70,7 @@ namespace emp {
 
         void renderFrame(Camera& camera, float delta_time, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
         std::unique_ptr<std::thread> createRenderThread(Camera& camera, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers);
-        std::unique_ptr<std::thread> createPhysicsThread(const float target_tickrate = 120.f);
+        std::unique_ptr<std::thread> createPhysicsThread();
     };
 }  
 #endif

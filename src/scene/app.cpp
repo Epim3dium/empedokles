@@ -138,7 +138,7 @@ namespace emp {
 
 
         auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
-        auto physics_thread = createPhysicsThread(120.f);
+        auto physics_thread = createPhysicsThread();
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         while (isAppRunning) {
@@ -204,17 +204,20 @@ namespace emp {
                     EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
                 }));
     }
-    std::unique_ptr<std::thread> App::createPhysicsThread(const float target_tickrate) {
-        return std::move(std::make_unique<std::thread>([&, target_tickrate]() {
+    void App::forcePhysicsTickrate(const float tick_rate) {
+        m_physics_tick_rate = tick_rate;
+    }
+    std::unique_ptr<std::thread> App::createPhysicsThread() {
+        return std::move(std::make_unique<std::thread>([&]() {
             auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
             auto& transform_sys = *coordinator.getSystem<TransformSystem>();
             auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
             auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
 
-            const float desired_delta_time = 1.f / target_tickrate;
             auto whole_time_physics = std::chrono::high_resolution_clock::now();
             auto last_sleep_duration = std::chrono::nanoseconds(0);
             while(isAppRunning) {
+                const float desired_delta_time = 1.f / m_physics_tick_rate;
                 auto newTime = std::chrono::high_resolution_clock::now();
                 float delta_time =
                         std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics).count();
