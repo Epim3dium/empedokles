@@ -145,7 +145,7 @@ namespace emp {
             const auto& col2 = getComponent<Collider>(e2);
             const auto& mat2 = getComponent<Material>(e2);
 
-            const auto rest = (mat1.restitution + mat2.restitution) * 0.5f;
+            const auto restitution = (mat1.restitution + mat2.restitution) * 0.5f;
 
             const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_pre_col);
             const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_pre_col);
@@ -165,7 +165,7 @@ namespace emp {
             const auto tangent_speed = length(tangent_vel);
 
             vec2f p = {0, 0};
-            auto restitution_speed = m_calcRestitution(rest, normal_speed, pre_solve_normal_speed, {}, delT);
+            auto restitution_speed = m_calcRestitution(restitution, normal_speed, pre_solve_normal_speed, {}, delT);
             if(abs(restitution_speed) > 0.f){
                 const auto w1 = rb1.generalizedInverseMass(r1model, constraint.normal);
                 const auto w2 = rb2.generalizedInverseMass(r2model, constraint.normal);
@@ -173,14 +173,15 @@ namespace emp {
                 p += restitution_impulse * constraint.normal;
             }
 
-            constexpr float dfric = 0.4f;
+            const float sfriction = 0.5f * (mat1.static_friction  + mat2.static_friction);
+            const float dfriction = 0.5f * (mat1.dynamic_friction + mat2.dynamic_friction);
             // Compute dynamic friction
             if(abs(tangent_speed) > 0.f){
                 const auto tangent = tangent_vel / tangent_speed;
                 const auto w1 = rb1.generalizedInverseMass(r1model, tangent);
                 const auto w2 = rb2.generalizedInverseMass(r2model, tangent);
                 const auto friction_impulse =
-                    m_calcDynamicFriction(dfric, tangent_speed, w1 + w2, constraint.normal_lagrange, delT);
+                    m_calcDynamicFriction(dfriction, tangent_speed, w1 + w2, constraint.normal_lagrange, delT);
                 p += friction_impulse * tangent;
                 // constraint.contact.tangent_impulse += friction_impulse;
             }

@@ -91,20 +91,22 @@ public:
     else if (level > Log::s_reporting_level) ; \
     else Log().Get(level) << "{ in file: " << __FILE__ << ", at line: " << __LINE__ << " }:"
 
-#define EMP__HELPER_LOG_INTERVAL(level, time, line, file) \
-    static std::chrono::time_point<std::chrono::high_resolution_clock> line##file##timepoint = std::chrono::high_resolution_clock::now();\
-    static int line##file##canLog = 1;\
+#define EMP__HELPER_CONCAT_(prefix, suffix) prefix##suffix
+#define EMP__HELPER_CONCAT(prefix, suffix) EMP__HELPER_CONCAT_(prefix, suffix)
+#define EMP__HELPER_MAKE_UNIQUE_VARIABLE_NAME(prefix) EMP__HELPER_CONCAT(prefix##_, __LINE__)
+
+#define EMP__HELPER_LOG_INTERVAL(level, time, uniquetp, uniquecanlog) \
+    static std::chrono::time_point<std::chrono::high_resolution_clock> uniquetp = std::chrono::high_resolution_clock::now();\
+    static int uniquecanlog = 1;\
     if (level > FILELOG_MAX_LEVEL) ;\
     else if (level > Log::s_reporting_level) ; \
-    else if(std::chrono::duration<float, std::chrono::seconds::period>(std::chrono::high_resolution_clock::now() - line##file##timepoint).count() >= time){\
-        line##file##timepoint = std::chrono::high_resolution_clock::now();\
-        line##file##canLog = 1;\
+    else if(std::chrono::duration<float, std::chrono::seconds::period>(std::chrono::high_resolution_clock::now() - uniquetp).count() >= time){\
+        uniquetp = std::chrono::high_resolution_clock::now();\
+        uniquecanlog = 1;\
     }\
-    if(line##file##canLog != 0 && line##file##canLog-- == 1) Log().Get(level)
+    if(uniquecanlog != 0 && uniquecanlog-- == 1) Log().Get(level)
 
-#define EMP_LOG_INTERVAL(level, time) EMP__HELPER_LOG_INTERVAL(level, time, __LINE__, __FILE__)
-
-
+#define EMP_LOG_INTERVAL(level, time) EMP__HELPER_LOG_INTERVAL(level, time, EMP__HELPER_MAKE_UNIQUE_VARIABLE_NAME(time_point_name_that_you_will_never_use), EMP__HELPER_MAKE_UNIQUE_VARIABLE_NAME(canlog_name_that_you_will_never_use))
 
 
 //#define L_(level) \

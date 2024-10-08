@@ -243,7 +243,8 @@ namespace emp {
 
 
                 physics_sys.update(transform_sys, collider_sys, rigidbody_sys, constraint_sys, delta_time);
-                EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / delta_time << " TPS";
+                EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / compute_delta_time << " TPS";
+
                 m_priority_access.notify_all();
             }
             EMP_LOG(LogLevel::WARNING) << "physics thread exit";
