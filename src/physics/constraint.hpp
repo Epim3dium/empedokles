@@ -3,6 +3,7 @@
 #include "core/entity.hpp"
 #include "core/system.hpp"
 #include "math/math_defs.hpp"
+#include "physics/rigidbody.hpp"
 #include "scene/transform.hpp"
 #include <set>
 #include <vector>
@@ -26,6 +27,7 @@ struct PositionalCorrectionInfo {
     float generalized_inverse_mass2;
     PositionalCorrectionInfo() {}
     PositionalCorrectionInfo(vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2);
+    PositionalCorrectionInfo(vec2f normal, Entity e1, vec2f r1, const Rigidbody* rb1, Entity e2, vec2f r2, const Rigidbody* rb2 = nullptr);
 };
 float applyPositionalCorrection(PositionalCorrectionInfo info, float c, vec2f normal, float delT, float compliance = 0.f);
 struct Constraint {

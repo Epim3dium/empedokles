@@ -1,6 +1,32 @@
 #include "constraint.hpp"
 #include "physics_system.hpp"
 namespace emp {
+    PositionalCorrectionInfo::PositionalCorrectionInfo(vec2f normal, Entity e1, vec2f r1, const Rigidbody* rb1, Entity e2,
+                                                       vec2f r2, const Rigidbody* rb2)
+        : entity1(e1), radius1(r1), entity2(e2), radius2(r2) {
+        if (rb1 == nullptr) {
+            EMP_LOG(WARNING) << "no rigidbody to create PositionalCorrectionInfo";
+        }
+        assert(coordinator.hasComponent<Rigidbody>(e1));
+        assert(coordinator.hasComponent<Rigidbody>(e2));
+
+        isStatic1 = rb1->isStatic;
+        inertia1 = rb1->inertia();
+        mass1 = rb1->mass();
+        generalized_inverse_mass1 = rb1->generalizedInverseMass(r1, normal);
+
+        if (rb2 != nullptr) {
+            isStatic2 = rb2->isStatic;
+            inertia2 = rb2->inertia();
+            mass2 = rb2->mass();
+            generalized_inverse_mass2 = rb2->generalizedInverseMass(r2, normal);
+        } else {
+            isStatic2 = true;
+            inertia2 = 0.f;
+            mass2 = INFINITY;
+            generalized_inverse_mass2 = 0.f;
+        }
+    }
     PositionalCorrectionInfo::PositionalCorrectionInfo(vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2) : entity1(e1), radius1(r1), entity2(e2), radius2(r2) 
     {
         assert(coordinator.hasComponent<Rigidbody>(e1));
@@ -24,19 +50,7 @@ namespace emp {
         }
     }
     float applyPositionalCorrection(PositionalCorrectionInfo info, float c, vec2f normal, float delT, float compliance) {
-        auto e1 = info.entity1;
-        auto e2 = info.entity2;
-        auto& trans1 = *coordinator.getComponent<Transform>(e1);
 
-        auto& trans2 = *coordinator.getComponent<Transform>(e2);
-
-        const vec2f& pos1 = trans1.position;
-        const vec2f& pos2 = trans2.position;
-        const float& rot1 = trans1.rotation;
-        const float& rot2 = trans2.rotation;
-
-        const auto r1 = rotateVec(info.radius1, trans1.rotation);
-        const auto r2 = rotateVec(info.radius2, trans2.rotation);
         const auto w1 = info.generalized_inverse_mass1;
         const auto w2 = info.generalized_inverse_mass2;
 
@@ -48,11 +62,19 @@ namespace emp {
         auto p = delta_lagrange * normal;
 
         if(!info.isStatic1) {
+            auto e1 = info.entity1;
+            auto& trans1 = *coordinator.getComponent<Transform>(e1);
+            const auto r1 = rotateVec(info.radius1, trans1.rotation);
+
             trans1.position += p / info.mass1;
             trans1.rotation += cross(r1, p) / info.inertia1;
             trans1.syncWithChange();
         }
         if(!info.isStatic2) {
+            auto e2 = info.entity2;
+            auto& trans2 = *coordinator.getComponent<Transform>(e2);
+            const auto r2 = rotateVec(info.radius2, trans2.rotation);
+
             trans2.position += -p / info.mass2;
             trans2.rotation += -cross(r2, p) / info.inertia2;
             trans2.syncWithChange();

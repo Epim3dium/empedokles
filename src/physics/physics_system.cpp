@@ -94,7 +94,7 @@ namespace emp {
         result.radius1 = r1;
         result.radius2 = r2;
 
-        auto delta_lagrange = applyPositionalCorrection(PositionalCorrectionInfo(normal, e1, r1, e2, r2), penetration, normal, delT);
+        auto delta_lagrange = applyPositionalCorrection(PositionalCorrectionInfo(normal, e1, r1, &rb1, e2, r2, &rb2), penetration, normal, delT);
         result.normal_lagrange = delta_lagrange;
         const auto normal_impulse = delta_lagrange / delT;
 
@@ -113,7 +113,7 @@ namespace emp {
         }
         auto tangent = delta_p_tangent / sliding_len;
         if(sliding_len < sfriction * penetration){
-            delta_lagrange = applyPositionalCorrection(PositionalCorrectionInfo(tangent, e1, r2, e2, r2), sliding_len, tangent, delT);
+            delta_lagrange = applyPositionalCorrection(PositionalCorrectionInfo(tangent, e1, r1, &rb1, e2, r2, &rb2), sliding_len, tangent, delT);
         }
         return result;
     }
