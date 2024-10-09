@@ -8,10 +8,10 @@ namespace emp {
         // Maybe change the threshold to be even lower? Or is this even needed at all?
         /*
         // If normal velocity is small enough, use restitution of 0 to avoid jittering
-        if normal_speed.abs() <= 2.0 * gravity.length() * sub_dt {
-            coefficient = 0.0;
-        }
         */
+        if( abs(normal_speed) <= gravity.length() * delT) {
+            coef = 0.0;
+        }
         return fmin(-normal_speed + (-coef * pre_solve_norm_speed), 0.f);
     }
     float PhysicsSystem::m_calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt) {
@@ -164,7 +164,7 @@ namespace emp {
             const auto tangent_speed = length(tangent_vel);
 
             vec2f p = {0, 0};
-            auto restitution_speed = m_calcRestitution(restitution, normal_speed, pre_solve_normal_speed, {}, delT);
+            auto restitution_speed = m_calcRestitution(restitution, normal_speed, pre_solve_normal_speed, {0.f, gravity}, delT);
             if(abs(restitution_speed) > 0.f){
                 const auto w1 = rb1.generalizedInverseMass(r1model, constraint.normal);
                 const auto w2 = rb2.generalizedInverseMass(r2model, constraint.normal);
