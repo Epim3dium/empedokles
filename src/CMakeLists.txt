@@ -132,11 +132,12 @@ set(HEADER_FILES
     external/tinyobjloader/tiny_obj_loader.h
     external/stbimage/stb_image.h
 )
+
 include_directories(.)
 include_directories(external/tinyobjloader)
 include_directories(external/stbimage)
 add_library(empedokles SHARED
     ${SOURCE_FILES} ${HEADER_FILES}
 )
-target_compile_options(empedokles PUBLIC -glldb)
+target_compile_options(empedokles PUBLIC -g)
 

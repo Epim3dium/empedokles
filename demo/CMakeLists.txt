@@ -8,4 +8,4 @@ target_link_libraries(demo
   PRIVATE
     empedokles
 )
-target_compile_options(demo PRIVATE -glldb)
+target_compile_options(demo PUBLIC -g)

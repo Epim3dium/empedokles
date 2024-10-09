@@ -5,7 +5,10 @@ project(empedokles
   LANGUAGES CXX
 )
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_compile_options( -glldb )
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_STRIP "")
+
 set(CMAKE_CXX_STANDARD 20)
 
 if(POLICY CMP0079 )
