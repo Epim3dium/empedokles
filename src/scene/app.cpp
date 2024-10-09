@@ -159,7 +159,7 @@ namespace emp {
 
 
             controller.update(window, *coordinator.getComponent<Transform>(viewer_object));
-            onUpdate(delta_time, window);
+            onUpdate(delta_time, window, controller);
             {
                 assert(coordinator.hasComponent<Transform>(viewer_object));
 

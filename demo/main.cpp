@@ -7,21 +7,26 @@ class Demo : public App {
     public:
         Entity mouse_entity;
         Entity cube;
-        void onUpdate(const float delta_time, Window& window) override final {
-            double xpos, ypos;
+        std::vector<vec2f> cube_model_shape = {vec2f(-50.0f, -50.0f), vec2f(-50.0f, 50.0f), vec2f(50.0f, 50.0f), vec2f(50.0f, -50.0f)};
+        void onUpdate(const float delta_time, Window& window, KeyboardController& controller) override final {
             {
-                glfwGetCursorPos(window.getGLFWwindow(), &xpos, &ypos);
-                auto xdenom = static_cast<float>(window.getExtent().width);
-                auto ydenom = static_cast<float>( window.getExtent().height);
-                xpos = (xpos + (ydenom - xdenom) / 2.f) / ydenom * 2.f - 1.f;
-                ypos = ypos / ydenom * 2.f - 1.f;
-                coordinator.getComponent<Transform>(mouse_entity)->position = {xpos, ypos};
+                coordinator.getComponent<Transform>(mouse_entity)->position = controller.global_mouse_pos();
+            }
+            if(controller.get(eKeyMappings::Ability1).pressed) {
+                Rigidbody rb; rb.useAutomaticMass = true;
+                auto e = coordinator.createEntity();
+                coordinator.addComponent(e, Transform(vec2f(controller.global_mouse_pos()), 0.f));
+                coordinator.addComponent(e, DebugShape(device, cube_model_shape, glm::vec4(1, 0, 0, 1), glm::vec4(0, 0, 1, 1)));
+                coordinator.addComponent(e, Collider(cube_model_shape)); 
+                coordinator.addComponent(e, rb); 
+                coordinator.addComponent(e, Material()); 
+                coordinator.addComponent(e, SpriteRenderer("test"));
             }
         }
         void onRender(Device&, const FrameInfo& frame) override final {
         }
-        std::vector<vec2f> cube_model_shape = {vec2f(-1.0f, -1.0f), vec2f(-1.0f, 1.0f), vec2f(1.0f, 1.0f), vec2f(1.0f, -1.0f)};
         void onSetup(Window& window, Device& device) override final {
+            controller.bind(eKeyMappings::Ability1, GLFW_KEY_SPACE);
             // coordinator.addComponent(cube, Model("cube"));
             cube = coordinator.createEntity();
             mouse_entity = coordinator.createEntity();
@@ -30,32 +35,35 @@ class Demo : public App {
             Sprite::create("test", Texture("dummy"), {{0, 0}, {1, 1}});
             auto rend = SpriteRenderer("test");
             rend.flipX = true;
-            coordinator.addComponent(cube, rend);
+            // coordinator.addComponent(cube, rend);
 
-            const float cube_scale = 0.125f; 
-            coordinator.addComponent(cube, Transform(vec2f(0.f, 0.f), 0.f, {cube_scale, cube_scale}));
-            coordinator.addComponent(cube, DebugShape(device, cube_model_shape, glm::vec4(1, 0, 0, 1), glm::vec4(0, 0, 1, 1)));
-            coordinator.addComponent(cube, Collider(cube_model_shape)); 
-            Rigidbody rb; rb.useAutomaticMass = false;
-            rb.real_mass = 0.1f; rb.real_inertia = 1.f / 6.f * 0.1f;
-            coordinator.addComponent(cube, rb); 
-            coordinator.addComponent(cube, Material()); 
+            
+            for(int ii = 0; ii < 0; ii++)
+            for(int i = 0; i < 0; i++) {
+                auto e = coordinator.createEntity();
+                coordinator.addComponent(e, Transform(vec2f(i, ii), 0.f));
+                coordinator.addComponent(e, DebugShape(device, cube_model_shape, glm::vec4(1, 0, 0, 1), glm::vec4(0, 0, 1, 1)));
+                coordinator.addComponent(e, Collider(cube_model_shape)); 
+                coordinator.addComponent(e, Rigidbody()); 
+                coordinator.addComponent(e, Material()); 
+                coordinator.addComponent(e, rend);
+            }
 
-            Constraint constraint;
-            constraint = Constraint::createPointAnchor(mouse_entity, cube, vec2f(0.f, cube_scale));
-            constraint.compliance = 0.001f;
-            auto spring = coordinator.createEntity();
-            coordinator.addComponent(spring, constraint);
+            // Constraint constraint;
+            // constraint = Constraint::createPointAnchor(mouse_entity, cube, vec2f(0.f, cube_scale));
+            // constraint.compliance = 0.001f;
+            // auto spring = coordinator.createEntity();
+            // coordinator.addComponent(spring, constraint);
 
 
             auto platform = coordinator.createEntity();
-            coordinator.addComponent(platform, Transform(vec2f(0.f, 1.0f), 0.f, {1.0f, 0.125f}));
+            coordinator.addComponent(platform, Transform(vec2f(0.f, 0.0f), 0.f, {8.0f, 1.f}));
             coordinator.addComponent(platform, DebugShape(device, cube_model_shape));
             coordinator.addComponent(platform, Collider(cube_model_shape)); 
             coordinator.addComponent(platform, Rigidbody{true}); 
             coordinator.addComponent(platform, Material()); 
 
-            coordinator.getSystem<PhysicsSystem>()->gravity = 10.f;
+            coordinator.getSystem<PhysicsSystem>()->gravity = 1000.f;
             // coordinator.addComponent(cube, Texture("default"));
             EMP_LOG(LogLevel::DEBUG) << "cube created, id: " << cube;
             {

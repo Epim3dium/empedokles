@@ -24,7 +24,7 @@ namespace emp {
             const char* id;
         };
 
-        virtual void onUpdate(const float, Window&) {}
+        virtual void onUpdate(const float, Window&, KeyboardController&) {}
         virtual void onRender(Device&, const FrameInfo&) {}
         virtual void onSetup(Window&, Device&) {}
 
