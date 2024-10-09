@@ -1,30 +1,37 @@
 #ifndef EMP_TIME_HPP
 #define EMP_TIME_HPP
 #include <chrono>
+#include <string>
+#include <unordered_map>
 namespace emp {
 
-class Time {
-    double delta_time;
+class Stopwatch {
+    double delta_time = -1.0;
     typedef  std::chrono::duration<double> duration_t;
-    typedef std::chrono::time_point<std::chrono::steady_clock> time_point_t;
-
-    time_point_t start;
-    time_point_t stop;
-    static Time& getInstance() {
-        static Time s_Instance;
-        return s_Instance;
-    }
+    typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point_t;
+    time_point_t m_start;
+    time_point_t m_stop;
 public:
-    static void update() {
-        getInstance().stop = std::chrono::steady_clock::now();
-
-        auto dur = getInstance().stop - getInstance().start;
-        getInstance().start = std::chrono::steady_clock::now();
-        getInstance().delta_time = 
-            static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count()) / 1e9;
+    Stopwatch() {
+        m_start = std::chrono::high_resolution_clock::now();
     }
-    static double deltaTime() {
-        return getInstance().delta_time;
+    double getElapsedTime() {
+        m_stop = std::chrono::high_resolution_clock::now();
+        auto dur = m_stop - m_start;
+        return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count()) / 1e9;
+    }
+    double stop() {
+        m_stop = std::chrono::high_resolution_clock::now();
+        auto dur = m_stop - m_start;
+        delta_time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count()) / 1e9;
+        return delta_time;
+    }
+    double restart() {
+        m_stop = std::chrono::high_resolution_clock::now();
+        auto dur = m_stop - m_start;
+        double elapsed = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count()) / 1e9;
+        m_start = std::chrono::high_resolution_clock::now();
+        return elapsed;
     }
 };
 

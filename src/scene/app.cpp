@@ -12,6 +12,7 @@
 #include "physics/collider.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
+#include "utils/time.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -141,7 +142,7 @@ namespace emp {
         auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
         auto physics_thread = createPhysicsThread();
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
+        Stopwatch delta_clock;
         while (isAppRunning) {
             std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
             while(m_isRenderer_waiting || m_isPhysics_waiting) {
@@ -149,10 +150,7 @@ namespace emp {
             }
             glfwPollEvents();
 
-            auto newTime = std::chrono::high_resolution_clock::now();
-            float delta_time =
-                    std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-            currentTime = newTime;
+            float delta_time = delta_clock.restart();
 
 
             camera_controller.update(window.getGLFWwindow());
@@ -191,12 +189,9 @@ namespace emp {
     }
     std::unique_ptr<std::thread> App::createRenderThread(Camera& camera, const std::vector<VkDescriptorSet>& global_descriptor_sets, const std::vector<std::unique_ptr<Buffer>>& uboBuffers) {
         return std::move(std::make_unique<std::thread>([&]() {
-                    auto current_time_render = std::chrono::high_resolution_clock::now();
+                    Stopwatch clock;
                     while(isAppRunning) {
-                        auto newTime = std::chrono::high_resolution_clock::now();
-                        float delta_time =
-                                std::chrono::duration<float, std::chrono::seconds::period>(newTime - current_time_render).count();
-                        current_time_render = newTime;
+                        float delta_time = clock.restart();
 
                         renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
                         EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{render thread}: " << 1.f / delta_time << " FPS";
@@ -215,17 +210,13 @@ namespace emp {
             auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
             auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
 
-            auto whole_time_physics = std::chrono::high_resolution_clock::now();
+            Stopwatch clock;
             auto last_sleep_duration = std::chrono::nanoseconds(0);
             while(isAppRunning) {
                 const float desired_delta_time = 1.f / m_physics_tick_rate;
-                auto newTime = std::chrono::high_resolution_clock::now();
-                float delta_time =
-                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics).count();
-                float compute_delta_time =
-                        std::chrono::duration<float, std::chrono::seconds::period>(newTime - whole_time_physics - last_sleep_duration).count();
+                float delta_time = clock.restart();
+                float compute_delta_time = delta_time - last_sleep_duration.count() / 1e9;
 
-                whole_time_physics = newTime;
                 {
                     if(compute_delta_time < desired_delta_time) {   
                         const float sleep_duration = (desired_delta_time - compute_delta_time);
@@ -243,7 +234,8 @@ namespace emp {
 
 
                 physics_sys.update(transform_sys, collider_sys, rigidbody_sys, constraint_sys, delta_time);
-                EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / compute_delta_time << " TPS";
+                EMP_LOG_INTERVAL(DEBUG2, 5.f) << "{physics thread}: " << 1.f / delta_time << " TPS";
+                EMP_LOG_INTERVAL(DEBUG3, 5.f) << "{physics thread}: " << 1.f / compute_delta_time << " MAX TPS";
 
                 m_priority_access.notify_all();
             }
