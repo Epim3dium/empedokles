@@ -123,11 +123,10 @@ namespace emp {
         coordinator.addComponent(viewer_object, Transform({0.f, 0.f}));
         // viewerObject.transform.translation.z = -2.5f;
 
-        KeyboardController camera_controller{};
-        camera_controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
-        camera_controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
-        camera_controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
-        camera_controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
+        controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
+        controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
+        controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
+        controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
 
         auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
         auto& transform_sys = *coordinator.getSystem<TransformSystem>();
@@ -159,19 +158,21 @@ namespace emp {
             float delta_time = delta_clock.restart();
 
 
-            camera_controller.update(window.getGLFWwindow());
+            controller.update(window.getGLFWwindow());
             onUpdate(delta_time, window);
             {
                 assert(coordinator.hasComponent<Transform>(viewer_object));
 
                 auto& viewer_transform = *coordinator.getComponent<Transform>(viewer_object);
-                viewer_transform.position += camera_controller.movementInPlane2D() * delta_time * 2.f;
+                viewer_transform.position += controller.movementInPlane2D() * delta_time * 500.f;
 
                 camera.setView(viewer_transform.position, viewer_transform.rotation);
                 float aspect = renderer.getAspectRatio();
 
 #if EMP_SCENE_2D
-                camera.setOrthographicProjection(-1.f * aspect, 1.f * aspect, -1.f, 1.f);
+                float width = window.getExtent().width;
+                float hegith = window.getExtent().height;
+                camera.setOrthographicProjection(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f);
 #else
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
