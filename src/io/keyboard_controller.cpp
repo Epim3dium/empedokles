@@ -1,14 +1,22 @@
 #include "keyboard_controller.hpp"
 #include "core/coordinator.hpp"
+#include "math/math_func.hpp"
 
 // std
 #include <limits>
 
 namespace emp {
 
-    void KeyboardController::update(GLFWwindow* window) {
+    void KeyboardController::update(Window& window, const Transform& camera_transform) {
+        double xpos, ypos;
+        glfwGetCursorPos(window.getGLFWwindow(), &xpos, &ypos);
+        xpos -= window.getExtent().width / 2.f;
+        ypos -= window.getExtent().width / 2.f;
+        m_mouse_pos = {xpos, ypos};
+        m_global_mouse_pos = transformPoint(camera_transform.global(), m_mouse_pos);
+
         for (int key = 32; key < 348; key++) {
-            int state = glfwGetKey(window, key);
+            int state = glfwGetKey(window.getGLFWwindow(), key);
             if (state == GLFW_PRESS) {
                 if (!keys[key].held) {
                     keys[key].pressed = true;

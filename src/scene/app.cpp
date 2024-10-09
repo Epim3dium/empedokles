@@ -158,7 +158,7 @@ namespace emp {
             float delta_time = delta_clock.restart();
 
 
-            controller.update(window.getGLFWwindow());
+            controller.update(window, *coordinator.getComponent<Transform>(viewer_object));
             onUpdate(delta_time, window);
             {
                 assert(coordinator.hasComponent<Transform>(viewer_object));

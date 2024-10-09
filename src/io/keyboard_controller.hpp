@@ -42,7 +42,11 @@ namespace emp {
         std::map<eKeyMappings, int> m_mappings;
         std::unordered_map<eKeyMappings, KeyState> m_key_states;
         std::unordered_map<int, KeyState> keys;
+        vec2f m_mouse_pos;
+        vec2f m_global_mouse_pos;
     public:
+        vec2f mouse_pos() const {return m_mouse_pos; }
+        vec2f global_mouse_pos() const {return m_global_mouse_pos; }
         void bind(eKeyMappings action, int key) {
             m_mappings[action] = key;
         }
@@ -50,7 +54,7 @@ namespace emp {
             return m_key_states[action];
         }
         vec2f movementInPlane2D();
-        void update(GLFWwindow* window);
+        void update(Window& window, const Transform& camera_transform);
     };
 }  // namespace emp
 
