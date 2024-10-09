@@ -62,8 +62,8 @@ public:
     }
 
 private:
-    std::unordered_map<const char*, Signature> m_signatures{};
-    std::unordered_map<const char*, std::shared_ptr<SystemBase>> m_systems{};
+    std::unordered_map<std::string, Signature> m_signatures{};
+    std::unordered_map<std::string, std::shared_ptr<SystemBase>> m_systems{};
 };
 }; // namespace emp
 #endif
