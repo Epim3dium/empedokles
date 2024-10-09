@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <stdio.h>
+#include <cassert>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
