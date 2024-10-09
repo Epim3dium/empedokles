@@ -56,7 +56,7 @@ namespace emp {
         std::mutex m_coordinator_access_mutex;
         std::atomic<bool> m_isRenderer_waiting = false;
         std::atomic<bool> m_isPhysics_waiting = false;
-        std::atomic<float> m_physics_tick_rate = 120.f;
+        std::atomic<float> m_physics_tick_rate = 60.f;
         std::atomic<bool> isAppRunning = true;
 
         std::vector<AssetInfo> m_models_to_load;

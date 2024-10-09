@@ -139,15 +139,21 @@ namespace emp {
         auto& sprite_sys=     *coordinator.getSystem<SpriteSystem>();
 
 
+#if EMP_ENABLE_RENDER_THREAD
         auto rendering_thread = createRenderThread(camera, global_descriptor_sets, uboBuffers);
+#endif
+#if EMP_ENABLE_PHYSICS_THREAD
         auto physics_thread = createPhysicsThread();
+#endif
 
         Stopwatch delta_clock;
         while (isAppRunning) {
+#if EMP_ENABLE_RENDER_THREAD
             std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
             while(m_isRenderer_waiting || m_isPhysics_waiting) {
                 m_priority_access.wait(lock);
             }
+#endif
             glfwPollEvents();
 
             float delta_time = delta_clock.restart();
@@ -170,11 +176,22 @@ namespace emp {
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
             }
+#if not EMP_ENABLE_PHYSICS_THREAD
+            physics_sys.update(transform_sys, collider_sys, rigidbody_sys, constraint_sys, delta_time);
+#endif
+#if not EMP_ENABLE_RENDER_THREAD
+            renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+#endif
 
             isAppRunning = isAppRunning && !window.shouldClose();
         }
+
+#if EMP_ENABLE_RENDER_THREAD
         rendering_thread->join();
+#endif
+#if EMP_ENABLE_PHYSICS_THREAD
         physics_thread->join();
+#endif
 
         EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
 
