@@ -48,12 +48,14 @@ namespace emp {
         auto p = delta_lagrange * normal;
 
         if(!info.isStatic1) {
-            trans1.setPositionNow(pos1 + p / info.mass1);
-            trans1.setRotationNow(rot1 + cross(r1, p) / info.inertia1);
+            trans1.position += p / info.mass1;
+            trans1.rotation += cross(r1, p) / info.inertia1;
+            trans1.syncWithChange();
         }
         if(!info.isStatic2) {
-            trans2.setPositionNow(pos2 - p / info.mass2);
-            trans2.setRotationNow(rot2 - cross(r2, p) / info.inertia2);
+            trans2.position += -p / info.mass2;
+            trans2.rotation += -cross(r2, p) / info.inertia2;
+            trans2.syncWithChange();
         }
 
         return delta_lagrange;

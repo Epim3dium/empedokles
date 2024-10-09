@@ -12,7 +12,6 @@ class Transform {
     TransformMatrix m_global_transform;
 
     void m_updateLocalTransform();
-    void m_syncWithChange();
 public:
     vec2f position = vec2f(0.f, 0.f);
     float rotation = 0.f;
@@ -21,6 +20,7 @@ public:
     void setPositionNow(vec2f p);
     void setRotationNow(float r);
     void setScaleNow(vec2f s);
+    void syncWithChange();
     inline const TransformMatrix& local() const {
         return m_local_transform;
     }

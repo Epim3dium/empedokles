@@ -10,22 +10,22 @@ namespace emp {
         m_local_transform = glm::rotate(m_local_transform, rotation, vec3f(0.f, 0.f, 1.f));
         m_local_transform = glm::scale(m_local_transform, vec3f(scale.x, scale.y, 1.f));
     }
-    void Transform::m_syncWithChange() {
+    void Transform::syncWithChange() {
         m_global_transform = m_global_transform * glm::inverse(m_local_transform);
         m_updateLocalTransform();
         m_global_transform = m_global_transform * m_local_transform;
     }
     void Transform::setPositionNow(vec2f p) {
         position = p;
-        m_syncWithChange();
+        syncWithChange();
     }
     void Transform::setRotationNow(float r) {
         rotation = r;
-        m_syncWithChange();
+        syncWithChange();
     }
     void Transform::setScaleNow(vec2f s) {
         scale = s;
-        m_syncWithChange();
+        syncWithChange();
     }
     void TransformSystem::update() {
         for(auto entity : entities) {

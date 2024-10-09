@@ -19,8 +19,6 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
         Entity entity2;
         vec2f normal;
         float penetration;
-        vec2f pos1_pre_col;
-        vec2f pos2_pre_col;
         float rot1_pre_col;
         float rot2_pre_col;
         //not rotated not translated (model space)
@@ -28,6 +26,9 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
         //not rotated not translated (model space)
         vec2f radius2;
         float normal_lagrange;
+        float sfriction;
+        float dfriction;
+        float restitution;
     };
     float m_calcRestitution(float coef, float normal_speed, float pre_solve_norm_speed, vec2f gravity, float delT);
     float m_calcDynamicFriction(float coef, float tangent_speed, float generalized_inv_mass_sum, float normal_lagrange, float sub_dt);

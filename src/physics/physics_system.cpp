@@ -49,6 +49,11 @@ namespace emp {
             return result;
         const float sfriction = 0.5f * (mat1.static_friction  + mat2.static_friction);
         const float dfriction = 0.5f * (mat1.dynamic_friction + mat2.dynamic_friction);
+        const float restitution = 0.5f * (mat1.restitution + mat2.restitution);
+
+        result.sfriction = sfriction;
+        result.dfriction = dfriction;
+        result.restitution= restitution;
 
         const auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
         const auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
@@ -74,8 +79,6 @@ namespace emp {
 
         result.normal = intersection.contact_normal;
         result.penetration = penetration;
-        result.pos1_pre_col = pos1;
-        result.pos2_pre_col = pos2;
         result.rot1_pre_col = rot1;
         result.rot2_pre_col = rot2;
 
@@ -137,15 +140,11 @@ namespace emp {
 
             const auto& trans1 = getComponent<Transform>(e1);
             auto& rb1 = getComponent<Rigidbody>(e1);
-            const auto& col1 = getComponent<Collider>(e1);
-            const auto& mat1 = getComponent<Material>(e1);
 
             const auto& trans2 = getComponent<Transform>(e2);
             auto& rb2 = getComponent<Rigidbody>(e2);
-            const auto& col2 = getComponent<Collider>(e2);
-            const auto& mat2 = getComponent<Material>(e2);
 
-            const auto restitution = (mat1.restitution + mat2.restitution) * 0.5f;
+            const auto restitution = constraint.restitution;
 
             const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_pre_col);
             const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_pre_col);
@@ -173,8 +172,8 @@ namespace emp {
                 p += restitution_impulse * constraint.normal;
             }
 
-            const float sfriction = 0.5f * (mat1.static_friction  + mat2.static_friction);
-            const float dfriction = 0.5f * (mat1.dynamic_friction + mat2.dynamic_friction);
+            const float sfriction = constraint.sfriction;
+            const float dfriction = constraint.dfriction;
             // Compute dynamic friction
             if(abs(tangent_speed) > 0.f){
                 const auto tangent = tangent_vel / tangent_speed;
@@ -206,6 +205,7 @@ namespace emp {
         const_sys.update(deltaTime);
         auto potential_pairs = m_broadPhase();
         auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);;
+        trans_sys.update();
         rb_sys.deriveVelocities(deltaTime);
         m_solveVelocities(penetrations, deltaTime);
     }
