@@ -7,31 +7,22 @@
 namespace emp {
 class Coordinator {
 public:
-    void init() {
-        // Create pointers to each manager
-        m_component_manager = std::make_unique<ComponentManager>();
-        m_entity_manager = std::make_unique<EntityManager>();
-        m_system_manager = std::make_unique<SystemManager>();
-    }
+    void init();
 
     // Entity methods
-    Entity createEntity() {
-        return m_entity_manager->createEntity(); 
-    }
+    Entity createEntity();
 
-    void destroyEntity(Entity entity) {
-        m_entity_manager->destroyEntity(entity);
-        m_component_manager->EntityDestroyed(entity);
-        m_system_manager->EntityDestroyed(entity);
-    }
+    void destroyEntity(Entity entity);
+
+    void destroy();
 
     template <typename T>
-    void registerComponent() {
+    inline void registerComponent() {
         m_component_manager->registerComponent<T>();
     }
 
     template <typename T>
-    void addComponent(Entity entity, T component) {
+    inline void addComponent(Entity entity, T component) {
         m_component_manager->addComponent<T>(entity, component);
 
         auto signature = m_entity_manager->getSignature(entity);
@@ -42,7 +33,7 @@ public:
     }
 
     template <typename T>
-    void removeComponent(Entity entity) {
+    inline void removeComponent(Entity entity) {
         m_component_manager->removeComponent<T>(entity);
 
         auto signature = m_entity_manager->getSignature(entity);
@@ -53,7 +44,7 @@ public:
     }
 
     template <typename T>
-    T* getComponent(Entity entity) {
+    inline T* getComponent(Entity entity) {
         if(!hasComponent<T>(entity)) {
             return nullptr;
         }
@@ -61,11 +52,11 @@ public:
     }
 
     template <typename T>
-    ComponentType getComponentType() {
+    inline ComponentType getComponentType() {
         return m_component_manager->getComponentType<T>();
     }
     template <typename T>
-    bool hasComponent(Entity entity) {
+    inline bool hasComponent(Entity entity) {
         return m_component_manager->hasComponent<T>(entity);
     }
 
@@ -79,13 +70,8 @@ public:
         return system;
     }
     template <typename SystemType>
-    SystemType* getSystem() {
+    inline SystemType* getSystem() {
         return m_system_manager->getSystem<SystemType>();
-    }
-    void destroy() {
-        delete m_component_manager.release();
-        delete m_entity_manager.release();
-        delete m_system_manager.release();
     }
 private:
     template<class OgSystemType, class ...ComponentType>
