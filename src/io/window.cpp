@@ -36,8 +36,8 @@ namespace emp {
     void Window::framebufferResizeCallback(GLFWwindow *window, int width, int height) {
         auto pwindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
         pwindow->framebufferResized = true;
-        pwindow->width = width;
-        pwindow->height = height;
+        pwindow->width = width / 2;
+        pwindow->height = height / 2;
     }
 
 }  // namespace emp

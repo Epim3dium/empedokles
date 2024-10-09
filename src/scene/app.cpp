@@ -172,7 +172,8 @@ namespace emp {
 #if EMP_SCENE_2D
                 float width = window.getExtent().width;
                 float hegith = window.getExtent().height;
-                camera.setOrthographicProjection(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f);
+
+                camera.setOrthographicProjection(-height * 0.5f * aspect, height * 0.5f * aspect, -height * 0.5f, height * 0.5f);
 #else
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif

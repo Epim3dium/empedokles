@@ -32,7 +32,7 @@ class Demo : public App {
             mouse_entity = coordinator.createEntity();
             coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
-            Sprite::create("test", Texture("dummy"), {{0, 0}, {1, 1}});
+            Sprite::create("test", Texture("dummy"), {{0, 0}, {1, 1}}, {50.f, 50.f});
             auto rend = SpriteRenderer("test");
             rend.flipX = true;
             // coordinator.addComponent(cube, rend);

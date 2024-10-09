@@ -46,14 +46,16 @@ namespace emp {
         vkCmdDraw(commandBuffer, s_vertex_count, 1, 0, 0);
     }
 
-    Sprite::Sprite(Texture tex, AABB tex_rect, vec2f size) : m_texture(tex), m_rect(tex_rect) {
+    Sprite::Sprite(Texture tex, AABB tex_rect, vec2f size) : m_texture(tex), m_rect(tex_rect), m_size(size) {
         auto tex_size = tex.texture().getSize();
-        if(tex_size.x > tex_size.y) {
-            m_size.x = 1.f;
-            m_size.y = tex_size.y / tex_size.x;
-        }else {
-            m_size.y = 1.f;
-            m_size.x = tex_size.x / tex_size.y;
+        if(size.x == 0 && size.y == 0) {
+            if(tex_size.x > tex_size.y) {
+                m_size.x = 1.f;
+                m_size.y = tex_size.y / tex_size.x;
+            }else {
+                m_size.y = 1.f;
+                m_size.x = tex_size.x / tex_size.y;
+            }
         }
     }
     Sprite& SpriteRenderer::sprite() {
