@@ -171,7 +171,6 @@ namespace emp {
 #if EMP_SCENE_2D
                 float width = window.getExtent().width;
                 float hegith = window.getExtent().height;
-                EMP_LOG_DEBUG << width << "\t" << height;
 
                 camera.setOrthographicProjection(-width* 0.5f, width* 0.5f, -height * 0.5f, height * 0.5f);
 #else
