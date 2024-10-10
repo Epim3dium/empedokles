@@ -37,8 +37,8 @@ namespace emp {
 
     protected:
 
-        static constexpr int width = 800;
-        static constexpr int height = 600;
+        static constexpr int width = 1000;
+        static constexpr int height = 1000;
         KeyboardController controller;
 
         Window window;

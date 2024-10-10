@@ -167,13 +167,13 @@ namespace emp {
                 viewer_transform.position += controller.movementInPlane2D() * delta_time * 500.f;
 
                 camera.setView(viewer_transform.position, viewer_transform.rotation);
-                float aspect = renderer.getAspectRatio();
 
 #if EMP_SCENE_2D
                 float width = window.getExtent().width;
                 float hegith = window.getExtent().height;
+                EMP_LOG_DEBUG << width << "\t" << height;
 
-                camera.setOrthographicProjection(-height * 0.5f * aspect, height * 0.5f * aspect, -height * 0.5f, height * 0.5f);
+                camera.setOrthographicProjection(-width* 0.5f, width* 0.5f, -height * 0.5f, height * 0.5f);
 #else
                 camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 #endif
