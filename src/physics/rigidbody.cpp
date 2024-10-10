@@ -7,7 +7,7 @@ namespace emp {
 float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
     if(isStatic)
         return 0.f;
-    return 1.f / mass() + (SQ(cross(radius, normal)) / inertia());
+    return 1.f / mass() + (SQ(perp_dot(radius, normal)) / inertia());
 }
 void RigidbodySystem::updateMasses() {
     for(auto entity : entities) {

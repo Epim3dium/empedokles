@@ -18,7 +18,7 @@ struct Triangle {
         return area * thickness * density;
     }
     float calcArea() const {
-        return 0.5f * fabs(cross(a - b, a - c));
+        return 0.5f * fabs(perp_dot(a - b, a - c));
     }
     float calcMMOI(float mass) const {
         auto centroid = calcCentroid();

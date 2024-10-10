@@ -67,7 +67,7 @@ namespace emp {
             const auto r1 = rotateVec(info.radius1, trans1.rotation);
 
             trans1.position += p / info.mass1;
-            trans1.rotation += cross(r1, p) / info.inertia1;
+            trans1.rotation += perp_dot(r1, p) / info.inertia1;
             trans1.syncWithChange();
         }
         if(!info.isStatic2) {
@@ -76,7 +76,7 @@ namespace emp {
             const auto r2 = rotateVec(info.radius2, trans2.rotation);
 
             trans2.position += -p / info.mass2;
-            trans2.rotation += -cross(r2, p) / info.inertia2;
+            trans2.rotation += -perp_dot(r2, p) / info.inertia2;
             trans2.syncWithChange();
         }
 

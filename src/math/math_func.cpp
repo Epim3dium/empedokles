@@ -46,7 +46,7 @@ float qlen(vec2f v) {
     return v.x * v.x + v.y * v.y;
 }
 float angle(vec2f a, vec2f b) {
-    return atan2(cross(a,b), dot(a,b));
+    return atan2(perp_dot(a,b), dot(a,b));
 }
 vec2f rotate(vec2f vec, float angle) {
     return { 
@@ -66,7 +66,7 @@ vec2f normal(vec2f v) {
 vec2f proj(vec2f a, vec2f plane_norm) {
     return (dot(a, plane_norm) / dot(plane_norm, plane_norm)) * plane_norm;
 }
-float cross(vec2f a, vec2f b) {
+float perp_dot(vec2f a, vec2f b) {
     return a.x * b.y - b.x * a.y;
 }
 

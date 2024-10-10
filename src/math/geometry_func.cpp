@@ -587,7 +587,7 @@ vec2f centerOfMass(std::vector<vec2f> model) {
     for (auto next : model) {
         auto a = prev - inside;
         auto b = next - inside;
-        float area_step = abs(cross(a, b))/2.f;
+        float area_step = abs(perp_dot(a, b))/2.f;
         sum_weight += area_step;
         sum_avg += (prev + next + inside) / 3.f * area_step;
         prev = next;
@@ -742,7 +742,7 @@ float calculateInertia(const std::vector<vec2f>& model, float mass) {
     auto prev = model.back();
     for (auto next : model) {
 
-        float area_step = abs(cross(prev, next))/2.f;
+        float area_step = abs(perp_dot(prev, next))/2.f;
         float mmoi_step = area_step*(dot(prev, prev) + dot(next, next) + abs(dot(prev, next))) / 6.f;
 
         area += area_step;
