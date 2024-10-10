@@ -19,8 +19,6 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
         Entity entity2;
         vec2f normal;
         float penetration;
-        float rot1_pre_col;
-        float rot2_pre_col;
         //not rotated not translated (model space)
         vec2f radius1;
         //not rotated not translated (model space)

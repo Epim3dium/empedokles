@@ -79,8 +79,6 @@ namespace emp {
 
         result.normal = intersection.contact_normal;
         result.penetration = penetration;
-        result.rot1_pre_col = rot1;
-        result.rot2_pre_col = rot2;
 
         // result.vel1_pre_solve = b1.vel;
         // result.vel2_pre_solve = b2.vel;
@@ -146,15 +144,14 @@ namespace emp {
 
             const auto restitution = constraint.restitution;
 
-            const auto pre_r1model = rotateVec(constraint.radius1, constraint.rot1_pre_col);
-            const auto pre_r2model = rotateVec(constraint.radius2, constraint.rot2_pre_col);
-            const auto pre_solve_contact_vel1 = m_calcContactVel(rb1.vel_pre_solve, rb1.ang_vel_pre_solve, pre_r1model);
-            const auto pre_solve_contact_vel2 = m_calcContactVel(rb2.vel_pre_solve, rb2.ang_vel_pre_solve, pre_r2model);
+            const auto r1model = rotateVec(constraint.radius1, trans1.rotation);
+            const auto r2model = rotateVec(constraint.radius2, trans2.rotation);
+
+            const auto pre_solve_contact_vel1 = m_calcContactVel(rb1.vel_pre_solve, rb1.ang_vel_pre_solve, r1model);
+            const auto pre_solve_contact_vel2 = m_calcContactVel(rb2.vel_pre_solve, rb2.ang_vel_pre_solve, r2model);
             const auto pre_solve_relative_vel = pre_solve_contact_vel1 - pre_solve_contact_vel2;
             const auto pre_solve_normal_speed = dot(pre_solve_relative_vel, constraint.normal);
 
-            const auto r1model = rotateVec(constraint.radius1, trans1.rotation);
-            const auto r2model = rotateVec(constraint.radius2, trans2.rotation);
             const auto contact_vel1 = m_calcContactVel(rb1.vel, rb1.ang_vel, r1model);
             const auto contact_vel2 = m_calcContactVel(rb2.vel, rb2.ang_vel, r2model);
             const auto relative_vel = contact_vel1 - contact_vel2;
@@ -186,13 +183,13 @@ namespace emp {
             }
             if(!rb1.isStatic) {
                 const auto delta_lin_vel = p / rb1.mass();
-                const auto delta_ang_vel = cross(r1model, p) / rb1.inertia();
+                const auto delta_ang_vel = perp_dot(r1model, p) / rb1.inertia();
                 rb1.vel += delta_lin_vel;
                 rb1.ang_vel += delta_ang_vel;
             }
             if(!rb2.isStatic) {
                 const auto delta_lin_vel = p / rb2.mass();
-                const auto delta_ang_vel = cross(r2model, p) / rb2.inertia();
+                const auto delta_ang_vel = perp_dot(r2model, p) / rb2.inertia();
                 rb2.vel -= delta_lin_vel;
                 rb2.ang_vel -= delta_ang_vel;
             }
