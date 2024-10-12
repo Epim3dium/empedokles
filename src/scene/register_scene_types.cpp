@@ -9,10 +9,12 @@
 #include "physics/material.hpp"
 #include "physics/physics_system.hpp"
 #include "physics/rigidbody.hpp"
+#include "scene/behaviour.hpp"
 
 namespace emp {
 void registerSceneTypes() {
     coordinator.registerComponent<Transform>();
+    coordinator.registerComponent<Behaviour>();
 
     coordinator.registerComponent<Constraint>();
     coordinator.registerComponent<Material>();
@@ -26,6 +28,8 @@ void registerSceneTypes() {
 }
 void registerSceneSystems(Device& device) {
     coordinator.registerSystem<TransformSystem>();
+    coordinator.registerSystem<BehaviourSystem>();
+
     coordinator.registerSystem<RigidbodySystem>();
     coordinator.registerSystem<ColliderSystem>();
     coordinator.registerSystem<ConstraintSystem>();
