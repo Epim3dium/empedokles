@@ -1,8 +1,8 @@
+#include "core/coordinator.hpp"
 #include "graphics/debug_shape.hpp"
 #include "simple_render_system.hpp"
-#include "core/coordinator.hpp"
 
-#include"debug_shape_render_system.hpp"
+#include "debug_shape_render_system.hpp"
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -17,109 +17,154 @@
 
 namespace emp {
 
-    DebugShapeRenderSystem::DebugShapeRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, const char* vert_filename, const char* frag_filename) 
-            : device{device} {
-        createPipelineLayout(globalSetLayout);
-        createPipeline(renderPass, vert_filename, frag_filename);
-    }
+DebugShapeRenderSystem::DebugShapeRenderSystem(
+        Device& device,
+        VkRenderPass renderPass,
+        VkDescriptorSetLayout globalSetLayout,
+        const char* vert_filename,
+        const char* frag_filename
+)
+    : device{device} {
+    createPipelineLayout(globalSetLayout);
+    createPipeline(renderPass, vert_filename, frag_filename);
+}
 
-    DebugShapeRenderSystem::~DebugShapeRenderSystem() {
-        vkDestroyPipelineLayout(device.device(), outline_pipeline_layout, nullptr);
-        vkDestroyPipelineLayout(device.device(), fill_pipeline_layout, nullptr);
-    }
+DebugShapeRenderSystem::~DebugShapeRenderSystem() {
+    vkDestroyPipelineLayout(device.device(), outline_pipeline_layout, nullptr);
+    vkDestroyPipelineLayout(device.device(), fill_pipeline_layout, nullptr);
+}
 
-    void DebugShapeRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, size_t push_const_size) {
-        VkPushConstantRange pushConstantRange{};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-        pushConstantRange.offset = 0;
-        pushConstantRange.size = push_const_size;
+void DebugShapeRenderSystem::createPipelineLayout(
+        VkDescriptorSetLayout globalSetLayout, size_t push_const_size
+) {
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.stageFlags =
+            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = push_const_size;
 
-        render_system_layout =
+    render_system_layout =
             DescriptorSetLayout::Builder(device)
-                .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .addBinding(
+                            0,
+                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                             VK_SHADER_STAGE_VERTEX_BIT |
-                                VK_SHADER_STAGE_FRAGMENT_BIT)
-                .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                            VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build();
+                                    VK_SHADER_STAGE_FRAGMENT_BIT
+                    )
+                    .addBinding(
+                            1,
+                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                            VK_SHADER_STAGE_FRAGMENT_BIT
+                    )
+                    .build();
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-            globalSetLayout, render_system_layout->getDescriptorSetLayout()};
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
+            globalSetLayout, render_system_layout->getDescriptorSetLayout()
+    };
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-        pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutInfo.pushConstantRangeCount = push_const_size ? 1 : 0;
-        pipelineLayoutInfo.pPushConstantRanges = push_const_size ? &pushConstantRange : nullptr;
-        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &outline_pipeline_layout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
-        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &fill_pipeline_layout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount =
+            static_cast<uint32_t>(descriptorSetLayouts.size());
+    pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+    pipelineLayoutInfo.pushConstantRangeCount = push_const_size ? 1 : 0;
+    pipelineLayoutInfo.pPushConstantRanges =
+            push_const_size ? &pushConstantRange : nullptr;
+    if (vkCreatePipelineLayout(
+                device.device(),
+                &pipelineLayoutInfo,
+                nullptr,
+                &outline_pipeline_layout
+        ) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create pipeline layout!");
     }
-
-    void DebugShapeRenderSystem::createPipeline(VkRenderPass renderPass, const char* vert_filename, const char* frag_filename) {
-        assert(outline_pipeline_layout != nullptr && "Cannot create pipeline before pipeline layout");
-        assert(fill_pipeline_layout != nullptr && "Cannot create pipeline before pipeline layout");
-
-        PipelineConfigInfo pipelineConfig{};
-        Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderPass;
-
-        pipelineConfig.pipelineLayout = fill_pipeline_layout;
-        fill_pipeline = std::make_unique<Pipeline>(
-                device,
-                vert_filename,
-                frag_filename,
-                pipelineConfig);
-
-        //!!!!
-        pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-        pipelineConfig.pipelineLayout = outline_pipeline_layout;
-        outline_pipeline = std::make_unique<Pipeline>(
-                device,
-                vert_filename,
-                frag_filename,
-                pipelineConfig);
-
+    if (vkCreatePipelineLayout(
+                device.device(),
+                &pipelineLayoutInfo,
+                nullptr,
+                &fill_pipeline_layout
+        ) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create pipeline layout!");
     }
+}
 
-    void DebugShapeRenderSystem::render(FrameInfo &frameInfo, DebugShapeSystem& model_sys) {
-        outline_pipeline->bind(frameInfo.commandBuffer);
+void DebugShapeRenderSystem::createPipeline(
+        VkRenderPass renderPass,
+        const char* vert_filename,
+        const char* frag_filename
+) {
+    assert(outline_pipeline_layout != nullptr &&
+           "Cannot create pipeline before pipeline layout");
+    assert(fill_pipeline_layout != nullptr &&
+           "Cannot create pipeline before pipeline layout");
 
-        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline_layout, 0, 1,
-                                &frameInfo.globalDescriptorSet, 0, nullptr);
+    PipelineConfigInfo pipelineConfig{};
+    Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+    pipelineConfig.renderPass = renderPass;
 
-        for (auto e: model_sys.entities){
+    pipelineConfig.pipelineLayout = fill_pipeline_layout;
+    fill_pipeline = std::make_unique<Pipeline>(
+            device, vert_filename, frag_filename, pipelineConfig
+    );
 
-            auto shape = coordinator.getComponent<DebugShape>(e);
-            if (shape == nullptr) continue;
+    //!!!!
+    pipelineConfig.inputAssemblyInfo.topology =
+            VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    pipelineConfig.pipelineLayout = outline_pipeline_layout;
+    outline_pipeline = std::make_unique<Pipeline>(
+            device, vert_filename, frag_filename, pipelineConfig
+    );
+}
 
-            // writing descriptor set each frame can slow performance
-            // would be more efficient to implement some sort of caching
-            auto buffer_info = model_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
-            VkDescriptorImageInfo image_info;
-            VkDescriptorSet entity_desc_set;
+void DebugShapeRenderSystem::render(
+        FrameInfo& frameInfo, DebugShapeSystem& model_sys
+) {
+    outline_pipeline->bind(frameInfo.commandBuffer);
 
-            DescriptorWriter desc_writer(*render_system_layout, frameInfo.frameDescriptorPool);
-            desc_writer.writeBuffer(0, &buffer_info);
-            desc_writer.build(entity_desc_set);
+    vkCmdBindDescriptorSets(
+            frameInfo.commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            outline_pipeline_layout,
+            0,
+            1,
+            &frameInfo.globalDescriptorSet,
+            0,
+            nullptr
+    );
 
-            vkCmdBindDescriptorSets(
-                    frameInfo.commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    outline_pipeline_layout,
-                    1,  // starting set (0 is the globalDescriptorSet, 1 is the set specific to this system)
-                    1,  // set count
-                    &entity_desc_set,
-                    0,
-                    nullptr);
+    for (auto e : model_sys.entities) {
+        auto shape = coordinator.getComponent<DebugShape>(e);
+        if (shape == nullptr)
+            continue;
 
-            shape->model().bind(frameInfo.commandBuffer);
-            shape->model().draw(frameInfo.commandBuffer);
-        }
+        // writing descriptor set each frame can slow performance
+        // would be more efficient to implement some sort of caching
+        auto buffer_info =
+                model_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
+        VkDescriptorImageInfo image_info;
+        VkDescriptorSet entity_desc_set;
+
+        DescriptorWriter desc_writer(
+                *render_system_layout, frameInfo.frameDescriptorPool
+        );
+        desc_writer.writeBuffer(0, &buffer_info);
+        desc_writer.build(entity_desc_set);
+
+        vkCmdBindDescriptorSets(
+                frameInfo.commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                outline_pipeline_layout,
+                1, // starting set (0 is the globalDescriptorSet, 1 is the set
+                   // specific to this system)
+                1, // set count
+                &entity_desc_set,
+                0,
+                nullptr
+        );
+
+        shape->model().bind(frameInfo.commandBuffer);
+        shape->model().draw(frameInfo.commandBuffer);
     }
+}
 
-}  // namespace emp
+} // namespace emp
