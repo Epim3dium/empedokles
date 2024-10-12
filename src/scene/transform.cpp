@@ -15,9 +15,8 @@ void Transform::m_updateLocalTransform() {
             glm::scale(m_local_transform, vec3f(scale.x, scale.y, 1.f));
 }
 void Transform::syncWithChange() {
-    m_global_transform = m_global_transform * glm::inverse(m_local_transform);
     m_updateLocalTransform();
-    m_global_transform = m_global_transform * m_local_transform;
+    m_global_transform = m_parents_global_transform * m_local_transform;
 }
 void Transform::setPositionNow(vec2f p) {
     position = p;
@@ -34,8 +33,10 @@ void Transform::setScaleNow(vec2f s) {
 void TransformSystem::update() {
     for (auto entity : entities) {
         auto& trans = getComponent<Transform>(entity);
+        trans.m_parents_global_transform = glm::mat4x4(1.f);
         trans.m_updateLocalTransform();
-        trans.m_global_transform = trans.m_local_transform;
+        trans.m_global_transform =
+                trans.m_parents_global_transform * trans.m_local_transform;
     }
 }
 }; // namespace emp

@@ -4,13 +4,16 @@ namespace emp {
 PositionalCorrectionInfo::PositionalCorrectionInfo(
         vec2f normal,
         Entity e1,
-        vec2f r1,
+        vec2f center_to_col1,
         const Rigidbody* rb1,
         Entity e2,
-        vec2f r2,
+        vec2f center_to_col2,
         const Rigidbody* rb2
 )
-    : entity1(e1), radius1(r1), entity2(e2), radius2(r2) {
+    : entity1(e1),
+      center_to_collision1(center_to_col1),
+      entity2(e2),
+      center_to_collision2(center_to_col2) {
     if (rb1 == nullptr) {
         EMP_LOG(WARNING) << "no rigidbody to create PositionalCorrectionInfo";
     }
@@ -20,13 +23,15 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
     isStatic1 = rb1->isStatic;
     inertia1 = rb1->inertia();
     mass1 = rb1->mass();
-    generalized_inverse_mass1 = rb1->generalizedInverseMass(r1, normal);
+    generalized_inverse_mass1 =
+            rb1->generalizedInverseMass(center_to_col1, normal);
 
     if (rb2 != nullptr) {
         isStatic2 = rb2->isStatic;
         inertia2 = rb2->inertia();
         mass2 = rb2->mass();
-        generalized_inverse_mass2 = rb2->generalizedInverseMass(r2, normal);
+        generalized_inverse_mass2 =
+                rb2->generalizedInverseMass(center_to_col2, normal);
     } else {
         isStatic2 = true;
         inertia2 = 0.f;
@@ -37,7 +42,10 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
 PositionalCorrectionInfo::PositionalCorrectionInfo(
         vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2
 )
-    : entity1(e1), radius1(r1), entity2(e2), radius2(r2) {
+    : entity1(e1),
+      center_to_collision1(r1),
+      entity2(e2),
+      center_to_collision2(r2) {
     assert(coordinator.hasComponent<Rigidbody>(e1));
     auto& rb1 = *coordinator.getComponent<Rigidbody>(e1);
     isStatic1 = rb1.isStatic;
@@ -58,13 +66,15 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
         generalized_inverse_mass2 = 0.f;
     }
 }
-float applyPositionalCorrection(
+PositionalCorrResult calcPositionalCorrection(
         PositionalCorrectionInfo info,
         float c,
         vec2f normal,
         float delT,
         float compliance
 ) {
+    PositionalCorrResult result;
+
     const auto w1 = info.generalized_inverse_mass1;
     const auto w2 = info.generalized_inverse_mass2;
 
@@ -76,25 +86,18 @@ float applyPositionalCorrection(
     auto p = delta_lagrange * normal;
 
     if (!info.isStatic1) {
-        auto e1 = info.entity1;
-        auto& trans1 = *coordinator.getComponent<Transform>(e1);
-        const auto r1 = rotateVec(info.radius1, trans1.rotation);
-
-        trans1.position += p / info.mass1;
-        trans1.rotation += perp_dot(r1, p) / info.inertia1;
-        trans1.syncWithChange();
+        result.pos1_correction = p / info.mass1;
+        result.rot1_correction =
+                perp_dot(info.center_to_collision1, p) / info.inertia1;
     }
     if (!info.isStatic2) {
-        auto e2 = info.entity2;
-        auto& trans2 = *coordinator.getComponent<Transform>(e2);
-        const auto r2 = rotateVec(info.radius2, trans2.rotation);
-
-        trans2.position += -p / info.mass2;
-        trans2.rotation += -perp_dot(r2, p) / info.inertia2;
-        trans2.syncWithChange();
+        result.pos2_correction = -p / info.mass2;
+        result.rot2_correction =
+                -perp_dot(info.center_to_collision2, p) / info.inertia2;
     }
+    result.delta_lagrange = delta_lagrange;
 
-    return delta_lagrange;
+    return result;
 }
 Constraint Constraint::createPointAnchor(
         Entity anchor, Entity rigidbody, vec2f pinch_point_rotated
@@ -144,7 +147,7 @@ void Constraint::m_solvePointAnchor(float delta_time) {
     if (length(rb.vel) == 0.f) {
         damping_force = 0.f;
     }
-    applyPositionalCorrection(
+    calcPositionalCorrection(
             PositionalCorrectionInfo(
                     norm,
                     rigidbody,
@@ -174,3 +177,4 @@ void ConstraintSystem::update(float delta_time) {
     }
 }
 }; // namespace emp
+

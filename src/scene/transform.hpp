@@ -9,6 +9,7 @@ namespace emp {
 class TransformSystem;
 class Transform {
     TransformMatrix m_local_transform;
+    TransformMatrix m_parents_global_transform;
     TransformMatrix m_global_transform;
 
     void m_updateLocalTransform();
@@ -42,3 +43,4 @@ public:
 };
 }; // namespace emp
 #endif
+

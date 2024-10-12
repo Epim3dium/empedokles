@@ -14,13 +14,13 @@ enum class eConstraintType {
 };
 struct PositionalCorrectionInfo {
     Entity entity1;
-    vec2f radius1;
+    vec2f center_to_collision1;
     bool isStatic1;
     float inertia1;
     float mass1;
     float generalized_inverse_mass1;
     Entity entity2;
-    vec2f radius2;
+    vec2f center_to_collision2;
     bool isStatic2;
     float inertia2;
     float mass2;
@@ -40,7 +40,15 @@ struct PositionalCorrectionInfo {
             const Rigidbody* rb2 = nullptr
     );
 };
-float applyPositionalCorrection(
+struct PositionalCorrResult {
+    vec2f pos1_correction = vec2f(0, 0);
+    float rot1_correction = 0.f;
+    vec2f pos2_correction = vec2f(0, 0);
+    float rot2_correction = 0.f;
+
+    float delta_lagrange = 0.f;
+};
+PositionalCorrResult calcPositionalCorrection(
         PositionalCorrectionInfo info,
         float c,
         vec2f normal,
@@ -76,3 +84,4 @@ struct ConstraintSystem : public System<Constraint> {
 };
 }; // namespace emp
 #endif
+

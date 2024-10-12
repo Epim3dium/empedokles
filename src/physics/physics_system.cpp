@@ -59,10 +59,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
 
-    const vec2f& pos1 = trans1.position;
-    const vec2f& pos2 = trans2.position;
-    const float& rot1 = trans1.rotation;
-    const float& rot2 = trans2.rotation;
+    vec2f& pos1 = trans1.position;
+    vec2f& pos2 = trans2.position;
+    float& rot1 = trans1.rotation;
+    float& rot2 = trans2.rotation;
     const float mass1 = rb1.mass();
     const float mass2 = rb2.mass();
     const float inertia1 = rb1.inertia();
@@ -111,26 +111,41 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     // result.ang_vel1_pre_solve = b1.ang_vel;
     // result.ang_vel2_pre_solve = b2.ang_vel;
 
-    const auto r1modeled = p1 - pos1;
-    const auto r2modeled = p2 - pos2;
-    const auto r1 = rotateVec(r1modeled, -rot1);
-    const auto r2 = rotateVec(r2modeled, -rot2);
-    result.radius1 = r1;
-    result.radius2 = r2;
+    const auto center_to_col_point1 = p1 - pos1;
+    const auto center_to_col_point2 = p2 - pos2;
+    const auto radius1 = rotateVec(center_to_col_point1, -rot1);
+    const auto radius2 = rotateVec(center_to_col_point2, -rot2);
+    result.radius1 = radius1;
+    result.radius2 = radius2;
 
-    auto delta_lagrange = applyPositionalCorrection(
-            PositionalCorrectionInfo(normal, e1, r1, &rb1, e2, r2, &rb2),
+    auto positional_correction = calcPositionalCorrection(
+            PositionalCorrectionInfo(
+                    normal,
+                    e1,
+                    center_to_col_point1,
+                    &rb1,
+                    e2,
+                    center_to_col_point2,
+                    &rb2
+            ),
             penetration,
             normal,
             delT
     );
+    pos1 += positional_correction.pos1_correction;
+    rot1 += positional_correction.rot1_correction;
+    pos2 += positional_correction.pos2_correction;
+    rot2 += positional_correction.rot2_correction;
+
+    float delta_lagrange = positional_correction.delta_lagrange;
+
     result.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
 
-    auto delta_p1 = pos1 - rb1.prev_pos + rotateVec(r1, rot1) -
-                    rotateVec(r1, rb1.prev_rot);
-    auto delta_p2 = pos2 - rb2.prev_pos + rotateVec(r2, rot2) -
-                    rotateVec(r2, rb2.prev_rot);
+    auto delta_p1 = pos1 - rb1.prev_pos + rotateVec(radius1, rot1) -
+                    rotateVec(radius1, rb1.prev_rot);
+    auto delta_p2 = pos2 - rb2.prev_pos + rotateVec(radius2, rot2) -
+                    rotateVec(radius2, rb2.prev_rot);
     auto delta_p = delta_p1 - delta_p2;
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
@@ -140,13 +155,29 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     }
     auto tangent = delta_p_tangent / sliding_len;
     if (sliding_len < sfriction * penetration) {
-        delta_lagrange = applyPositionalCorrection(
-                PositionalCorrectionInfo(tangent, e1, r1, &rb1, e2, r2, &rb2),
+        positional_correction = calcPositionalCorrection(
+                PositionalCorrectionInfo(
+                        tangent,
+                        e1,
+                        center_to_col_point1,
+                        &rb1,
+                        e2,
+                        center_to_col_point2,
+                        &rb2
+                ),
                 sliding_len,
                 tangent,
                 delT
         );
+        pos1 += positional_correction.pos1_correction;
+        rot1 += positional_correction.rot1_correction;
+        pos2 += positional_correction.pos2_correction;
+        rot2 += positional_correction.rot2_correction;
+
+        delta_lagrange = positional_correction.delta_lagrange;
     }
+    trans1.syncWithChange();
+    trans2.syncWithChange();
     return result;
 }
 std::vector<CollidingPair> PhysicsSystem::m_broadPhase() {
@@ -313,3 +344,4 @@ void PhysicsSystem::onEntityAdded(Entity entity) {
     rb.real_inertia = col.inertia_dev_mass * rb.real_density;
 }
 }; // namespace emp
+
