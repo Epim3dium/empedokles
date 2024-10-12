@@ -1,9 +1,9 @@
 #ifndef EMP_RENDERER_HPP
 #define EMP_RENDERER_HPP
 
+#include "io/window.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/swap_chain.hpp"
-#include "io/window.hpp"
 
 // std
 #include <cassert>
@@ -11,56 +11,64 @@
 #include <vector>
 
 namespace emp {
-    class Renderer {
-    public:
-        Renderer(Window &window, Device &device);
+class Renderer {
+public:
+    Renderer(Window& window, Device& device);
 
-        ~Renderer();
+    ~Renderer();
 
-        Renderer(const Renderer &) = delete;
+    Renderer(const Renderer&) = delete;
 
-        Renderer &operator=(const Renderer &) = delete;
+    Renderer& operator=(const Renderer&) = delete;
 
-        [[nodiscard]] VkRenderPass getSwapChainRenderPass() const { return swapChain->getRenderPass(); }
+    [[nodiscard]] VkRenderPass getSwapChainRenderPass() const {
+        return swapChain->getRenderPass();
+    }
 
-        [[nodiscard]] float getAspectRatio() const { return swapChain->extentAspectRatio(); }
+    [[nodiscard]] float getAspectRatio() const {
+        return swapChain->extentAspectRatio();
+    }
 
-        [[nodiscard]] bool isFrameInProgress() const { return isFrameStarted; }
+    [[nodiscard]] bool isFrameInProgress() const {
+        return isFrameStarted;
+    }
 
-        [[nodiscard]] VkCommandBuffer getCurrentCommandBuffer() const {
-            assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-            return commandBuffers[currentFrameIndex];
-        }
+    [[nodiscard]] VkCommandBuffer getCurrentCommandBuffer() const {
+        assert(isFrameStarted &&
+               "Cannot get command buffer when frame not in progress");
+        return commandBuffers[currentFrameIndex];
+    }
 
-        [[nodiscard]] int getFrameIndex() const {
-            assert(isFrameStarted && "Cannot get frame index when frame not in progress");
-            return currentFrameIndex;
-        }
+    [[nodiscard]] int getFrameIndex() const {
+        assert(isFrameStarted &&
+               "Cannot get frame index when frame not in progress");
+        return currentFrameIndex;
+    }
 
-        VkCommandBuffer beginFrame();
+    VkCommandBuffer beginFrame();
 
-        void endFrame();
+    void endFrame();
 
-        void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+    void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
-        void endSwapChainRenderPass(VkCommandBuffer commandBuffer) const;
+    void endSwapChainRenderPass(VkCommandBuffer commandBuffer) const;
 
-    private:
-        void createCommandBuffers();
+private:
+    void createCommandBuffers();
 
-        void freeCommandBuffers();
+    void freeCommandBuffers();
 
-        void recreateSwapChain();
+    void recreateSwapChain();
 
-        Window &window;
-        Device &device;
-        std::unique_ptr<SwapChain> swapChain;
-        std::vector<VkCommandBuffer> commandBuffers;
+    Window& window;
+    Device& device;
+    std::unique_ptr<SwapChain> swapChain;
+    std::vector<VkCommandBuffer> commandBuffers;
 
-        uint32_t currentImageIndex{};
-        int currentFrameIndex{0};
-        bool isFrameStarted{false};
-    };
-}  // namespace emp
+    uint32_t currentImageIndex{};
+    int currentFrameIndex{0};
+    bool isFrameStarted{false};
+};
+} // namespace emp
 
 #endif

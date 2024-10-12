@@ -5,103 +5,138 @@
 #include "vulkan/device.hpp"
 
 // libs
-#include <unordered_map>
 #include <vulkan/vulkan.h>
+#include <unordered_map>
 
 // std
 #include <memory>
 #include <string>
 
 namespace emp {
-    class TextureAsset {
-    public:
-        TextureAsset(Device &device, const std::string &textureFilepath);
+class TextureAsset {
+public:
+    TextureAsset(Device& device, const std::string& textureFilepath);
 
-        TextureAsset(Device &device,
-                VkFormat format,
-                VkExtent3D extent,
-                VkImageUsageFlags usage,
-                VkSampleCountFlagBits sampleCount);
+    TextureAsset(
+            Device& device,
+            VkFormat format,
+            VkExtent3D extent,
+            VkImageUsageFlags usage,
+            VkSampleCountFlagBits sampleCount
+    );
 
-        ~TextureAsset();
+    ~TextureAsset();
 
-        // delete copy constructors
-        TextureAsset(const TextureAsset &) = delete;
+    // delete copy constructors
+    TextureAsset(const TextureAsset&) = delete;
 
-        TextureAsset &operator=(const TextureAsset &) = delete;
+    TextureAsset& operator=(const TextureAsset&) = delete;
 
-        [[nodiscard]] VkImageView imageView() const { return mTextureImageView; }
+    [[nodiscard]] VkImageView imageView() const {
+        return mTextureImageView;
+    }
 
-        [[nodiscard]] VkSampler sampler() const { return mTextureSampler; }
+    [[nodiscard]] VkSampler sampler() const {
+        return mTextureSampler;
+    }
 
-        [[nodiscard]] VkImage getImage() const { return mTextureImage; }
+    [[nodiscard]] VkImage getImage() const {
+        return mTextureImage;
+    }
 
-        [[nodiscard]] vec2f getSize() const { return m_size; }
+    [[nodiscard]] vec2f getSize() const {
+        return m_size;
+    }
 
-        [[nodiscard]] VkImageView getImageView() const { return mTextureImageView; }
+    [[nodiscard]] VkImageView getImageView() const {
+        return mTextureImageView;
+    }
 
-        [[nodiscard]] VkDescriptorImageInfo getImageInfo() const { return mDescriptor; }
+    [[nodiscard]] VkDescriptorImageInfo getImageInfo() const {
+        return mDescriptor;
+    }
 
-        [[nodiscard]] VkImageLayout getImageLayout() const { return mTextureLayout; }
+    [[nodiscard]] VkImageLayout getImageLayout() const {
+        return mTextureLayout;
+    }
 
-        [[nodiscard]] VkExtent3D getExtent() const { return mExtent; }
+    [[nodiscard]] VkExtent3D getExtent() const {
+        return mExtent;
+    }
 
-        [[nodiscard]] VkFormat getFormat() const { return mFormat; }
+    [[nodiscard]] VkFormat getFormat() const {
+        return mFormat;
+    }
 
-        void updateDescriptor();
+    void updateDescriptor();
 
-        void transitionLayout(
-                VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void transitionLayout(
+            VkCommandBuffer commandBuffer,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout
+    );
 
-        static std::unique_ptr<TextureAsset> createTextureFromFile(
-                Device &device, const std::string &filepath);
+    static std::unique_ptr<TextureAsset> createTextureFromFile(
+            Device& device, const std::string& filepath
+    );
 
-    private:
-        void createTextureImage(const std::string &filepath);
+private:
+    void createTextureImage(const std::string& filepath);
 
-        void createTextureImageView(VkImageViewType viewType);
+    void createTextureImageView(VkImageViewType viewType);
 
-        void createTextureSampler();
+    void createTextureSampler();
 
-        VkDescriptorImageInfo mDescriptor{};
+    VkDescriptorImageInfo mDescriptor{};
 
-        Device &mDevice;
-        VkImage mTextureImage = nullptr;
-        VkDeviceMemory mTextureImageMemory = nullptr;
-        VkImageView mTextureImageView = nullptr;
-        VkSampler mTextureSampler = nullptr;
-        VkFormat mFormat;
-        VkImageLayout mTextureLayout;
-        uint32_t mMipLevels{1};
-        uint32_t mLayerCount{1};
-        VkExtent3D mExtent{};
-        vec2f m_size;
-    };
-    class Texture {
-    private:
-        std::string m_id;
-        static std::unordered_map<std::string, std::unique_ptr<TextureAsset>> m_tex_table;
-    public:
-        static void destroyAll() { m_tex_table.clear(); }
-        TextureAsset& texture() {
-            assert(m_tex_table.contains(m_id) && "texture must be created before use");
-            return *m_tex_table.at(m_id);
-        }
-        std::string getID() const {return m_id; }
-        static void create(Device &device, const std::string &filepath, std::string id) {
-            auto tex = TextureAsset::createTextureFromFile(device, filepath);
-            assert(!m_tex_table.contains(id) && "trying to override existing texture id");
-            m_tex_table[id] = std::move(tex);
-        }
-        static bool isLoaded(std::string id) {
-            return m_tex_table.contains(id);
-        }
-        Texture() : m_id("undefined") {}
-        Texture(std::string model_id) : m_id(model_id) {
-            assert(isLoaded(model_id) && "texture must be first created");
-        }
-    };
+    Device& mDevice;
+    VkImage mTextureImage = nullptr;
+    VkDeviceMemory mTextureImageMemory = nullptr;
+    VkImageView mTextureImageView = nullptr;
+    VkSampler mTextureSampler = nullptr;
+    VkFormat mFormat;
+    VkImageLayout mTextureLayout;
+    uint32_t mMipLevels{1};
+    uint32_t mLayerCount{1};
+    VkExtent3D mExtent{};
+    vec2f m_size;
+};
+class Texture {
+private:
+    std::string m_id;
+    static std::unordered_map<std::string, std::unique_ptr<TextureAsset>>
+            m_tex_table;
 
-} 
+public:
+    static void destroyAll() {
+        m_tex_table.clear();
+    }
+    TextureAsset& texture() {
+        assert(m_tex_table.contains(m_id) &&
+               "texture must be created before use");
+        return *m_tex_table.at(m_id);
+    }
+    std::string getID() const {
+        return m_id;
+    }
+    static void create(
+            Device& device, const std::string& filepath, std::string id
+    ) {
+        auto tex = TextureAsset::createTextureFromFile(device, filepath);
+        assert(!m_tex_table.contains(id) &&
+               "trying to override existing texture id");
+        m_tex_table[id] = std::move(tex);
+    }
+    static bool isLoaded(std::string id) {
+        return m_tex_table.contains(id);
+    }
+    Texture() : m_id("undefined") {
+    }
+    Texture(std::string model_id) : m_id(model_id) {
+        assert(isLoaded(model_id) && "texture must be first created");
+    }
+};
+
+} // namespace emp
 
 #endif

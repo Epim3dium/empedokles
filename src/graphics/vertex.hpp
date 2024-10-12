@@ -12,30 +12,34 @@
 #include <memory>
 #include <vector>
 namespace emp {
-    struct Vertex {
-        glm::vec3 position{};
-        glm::vec3 color{};
-        glm::vec3 normal{};
-        glm::vec2 uv{};
+struct Vertex {
+    glm::vec3 position{};
+    glm::vec3 color{};
+    glm::vec3 normal{};
+    glm::vec2 uv{};
 
-        static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+    static std::vector<VkVertexInputBindingDescription> getBindingDescriptions(
+    );
+    static std::vector<VkVertexInputAttributeDescription>
+    getAttributeDescriptions();
 
-        bool operator==(const Vertex &other) const {
-            return position == other.position && color == other.color && normal == other.normal &&
-                   uv == other.uv;
-        }
-    };
+    bool operator==(const Vertex& other) const {
+        return position == other.position && color == other.color &&
+               normal == other.normal && uv == other.uv;
+    }
 };
+}; // namespace emp
 namespace std {
-    template<>
-    struct hash<emp::Vertex> {
-        size_t operator()(emp::Vertex const &vertex) const {
-            size_t seed = 0;
-            emp::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
-            return seed;
-        }
-    };
-}  // namespace std
+template <>
+struct hash<emp::Vertex> {
+    size_t operator()(emp::Vertex const& vertex) const {
+        size_t seed = 0;
+        emp::hashCombine(
+                seed, vertex.position, vertex.color, vertex.normal, vertex.uv
+        );
+        return seed;
+    }
+};
+} // namespace std
 
 #endif

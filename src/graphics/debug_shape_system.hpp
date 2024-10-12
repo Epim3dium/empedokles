@@ -16,24 +16,27 @@
 
 namespace emp {
 
-    struct DebugShapeInfo {
-        glm::mat4 modelMatrix{1.f};
-        glm::vec4 fill_color;
-        glm::vec4 outline_color;
+struct DebugShapeInfo {
+    glm::mat4 modelMatrix{1.f};
+    glm::vec4 fill_color;
+    glm::vec4 outline_color;
+};
+
+class DebugShapeSystem : public System<Transform, DebugShape> {
+public:
+    DebugShapeSystem(Device& device);
+
+    [[nodiscard]] VkDescriptorBufferInfo getBufferInfoForGameObject(
+            int frameIndex, Entity entity
+    ) const {
+        return uboBuffers[frameIndex]->descriptorInfoForIndex(entity);
+    }
+
+    void updateBuffer(int frameIndex);
+    std::vector<std::unique_ptr<Buffer>> uboBuffers{
+            SwapChain::MAX_FRAMES_IN_FLIGHT
     };
+};
 
-    class DebugShapeSystem : public System<Transform, DebugShape> {
-    public:
-        DebugShapeSystem(Device &device);
-
-        [[nodiscard]] VkDescriptorBufferInfo getBufferInfoForGameObject(
-                int frameIndex, Entity entity) const {
-            return uboBuffers[frameIndex]->descriptorInfoForIndex(entity);
-        }
-
-        void updateBuffer(int frameIndex);
-        std::vector<std::unique_ptr<Buffer>> uboBuffers{SwapChain::MAX_FRAMES_IN_FLIGHT};
-    };
-
-}  
+} // namespace emp
 #endif
