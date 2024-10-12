@@ -1,28 +1,30 @@
 #ifndef EMP_COMPONENT_MANAGER_HPP
 #define EMP_COMPONENT_MANAGER_HPP
+#include <typeinfo>
+#include <unordered_map>
 #include "core/component.hpp"
 #include "core/component_array.hpp"
 #include "debug/log.hpp"
-#include <typeinfo>
-#include <unordered_map>
 namespace emp {
-    class ComponentManager
-{
+class ComponentManager {
 public:
     template <typename T>
     void registerComponent() {
         const char* typeName = typeid(T).name();
-        assert(m_component_types.find(typeName) == m_component_types.end() && "Registering component type more than once.");
+        assert(m_component_types.find(typeName) == m_component_types.end() &&
+               "Registering component type more than once.");
 
         m_component_types.insert({typeName, m_next_component_type});
-        m_component_arrays.insert({typeName, std::make_shared<ComponentArray<T>>()});
+        m_component_arrays.insert(
+                {typeName, std::make_shared<ComponentArray<T>>()});
         ++m_next_component_type;
     }
 
     template <typename T>
     ComponentType getComponentType() const {
         const char* typeName = typeid(T).name();
-        assert(m_component_types.find(typeName) != m_component_types.end() && "Component not registered before use.");
+        assert(m_component_types.find(typeName) != m_component_types.end() &&
+               "Component not registered before use.");
 
         return m_component_types.at(typeName);
     }
@@ -60,18 +62,20 @@ public:
     }
 
 private:
-	std::unordered_map<std::string, ComponentType> m_component_types{};
+    std::unordered_map<std::string, ComponentType> m_component_types{};
     ComponentType m_next_component_type{};
-	std::unordered_map<std::string, std::shared_ptr<IComponentArray>> m_component_arrays{};
+    std::unordered_map<std::string, std::shared_ptr<IComponentArray>>
+            m_component_arrays{};
 
-	template<typename T>
-	ComponentArray<T>& getComponentArray()
-	{
-		const char* typeName = typeid(T).name();
-		assert(m_component_types.find(typeName) != m_component_types.end() && "Component not registered before use.");
+    template <typename T>
+    ComponentArray<T>& getComponentArray() {
+        const char* typeName = typeid(T).name();
+        assert(m_component_types.find(typeName) != m_component_types.end() &&
+               "Component not registered before use.");
 
-		return *std::static_pointer_cast<ComponentArray<T>>(m_component_arrays.at(typeName));
-	}
+        return *std::static_pointer_cast<ComponentArray<T>>(
+                m_component_arrays.at(typeName));
+    }
 };
-};
+}; // namespace emp
 #endif

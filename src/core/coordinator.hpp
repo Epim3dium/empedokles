@@ -45,7 +45,7 @@ public:
 
     template <typename T>
     inline T* getComponent(Entity entity) {
-        if(!hasComponent<T>(entity)) {
+        if (!hasComponent<T>(entity)) {
             return nullptr;
         }
         return &m_component_manager->getComponent<T>(entity);
@@ -61,7 +61,7 @@ public:
     }
 
     // System methods
-    template <typename SystemType, class ...InitalizerValues>
+    template <typename SystemType, class... InitalizerValues>
     std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
         auto system = m_system_manager->registerSystem<SystemType>(inits...);
 
@@ -73,13 +73,19 @@ public:
     inline SystemType* getSystem() {
         return m_system_manager->getSystem<SystemType>();
     }
+
 private:
-    template<class OgSystemType, class ...ComponentType>
+    template <class OgSystemType, class... ComponentType>
     Signature m_getSignatureSystemOf(SystemOf<ComponentType...>& system) {
-        static_assert(std::derived_from<OgSystemType, SystemOf<ComponentType...>> == true && "registered system must be of type SystemOf<Components>");
+        static_assert(
+                std::derived_from<OgSystemType, SystemOf<ComponentType...>> ==
+                        true &&
+                "registered system must be of type SystemOf<Components>");
 
         Signature system_signature;
-        (system_signature.set(m_component_manager->getComponentType<ComponentType>()), ...);
+        (system_signature.set(
+                 m_component_manager->getComponentType<ComponentType>()),
+         ...);
         return system_signature;
     }
 

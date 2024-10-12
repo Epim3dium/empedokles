@@ -1,17 +1,18 @@
 #ifndef EMP_SYSTEM_MANAGER_HPP
 #define EMP_SYSTEM_MANAGER_HPP
-#include "core/component.hpp"
-#include "core/system_base.hpp"
-#include "core/entity.hpp"
 #include <set>
 #include <unordered_map>
+#include "core/component.hpp"
+#include "core/entity.hpp"
+#include "core/system_base.hpp"
 namespace emp {
 class SystemManager {
 public:
-    template <typename T, class ...InitializerValues>
+    template <typename T, class... InitializerValues>
     std::shared_ptr<T> registerSystem(InitializerValues... inits) {
         const char* typeName = typeid(T).name();
-        assert(m_systems.find(typeName) == m_systems.end() && "Registering system more than once.");
+        assert(m_systems.find(typeName) == m_systems.end() &&
+               "Registering system more than once.");
 
         auto system = std::make_shared<T>(inits...);
         m_systems.insert({typeName, system});
@@ -20,13 +21,16 @@ public:
     template <typename T>
     T* getSystem() {
         const char* type_name = typeid(T).name();
-        return m_systems.contains(type_name) ? dynamic_cast<T*>(m_systems.at(type_name).get()) : nullptr;
+        return m_systems.contains(type_name)
+                       ? dynamic_cast<T*>(m_systems.at(type_name).get())
+                       : nullptr;
     }
 
     template <typename T>
     void setSignature(Signature signature) {
         const char* typeName = typeid(T).name();
-        assert(m_systems.find(typeName) != m_systems.end() && "System used before registered.");
+        assert(m_systems.find(typeName) != m_systems.end() &&
+               "System used before registered.");
 
         m_signatures.insert({typeName, signature});
     }
@@ -48,13 +52,12 @@ public:
 
             if ((entitySignature & systemSignature) == systemSignature) {
                 system->entities.insert(entity);
-                if(!contained) {
+                if (!contained) {
                     system->onEntityAdded(entity);
                 }
-            }
-            else  {
+            } else {
                 system->entities.erase(entity);
-                if(contained) {
+                if (contained) {
                     system->onEntityRemoved(entity);
                 }
             }
