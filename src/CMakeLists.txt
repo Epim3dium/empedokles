@@ -83,7 +83,7 @@ set(HEADER_FILES
     scene/scene_defs.hpp
     scene/transform.hpp
 
-    resources/behaviour.hpp
+    scene/behaviour.hpp
 
     core/entity.hpp
     core/entity_manager.hpp
