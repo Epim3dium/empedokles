@@ -116,6 +116,11 @@ public:
                "texture must be created before use");
         return *m_tex_table.at(m_id);
     }
+    const TextureAsset& texture() const {
+        assert(m_tex_table.contains(m_id) &&
+               "texture must be created before use");
+        return *m_tex_table.at(m_id);
+    }
     std::string getID() const {
         return m_id;
     }
