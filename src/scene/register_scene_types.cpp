@@ -3,6 +3,7 @@
 #include "graphics/debug_shape.hpp"
 #include "graphics/debug_shape_system.hpp"
 #include "graphics/sprite.hpp"
+#include "graphics/animated_sprite.hpp"
 #include "graphics/sprite_system.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
@@ -25,6 +26,7 @@ void registerSceneTypes() {
     coordinator.registerComponent<Texture>();
     coordinator.registerComponent<DebugShape>();
     coordinator.registerComponent<Sprite>();
+    coordinator.registerComponent<AnimatedSprite>();
 }
 void registerSceneSystems(Device& device) {
     coordinator.registerSystem<TransformSystem>();
