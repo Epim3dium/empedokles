@@ -11,29 +11,28 @@
 #include "physics/rigidbody.hpp"
 
 namespace emp {
-    void registerSceneTypes() {
-        coordinator.registerComponent<Transform>();
+void registerSceneTypes() {
+    coordinator.registerComponent<Transform>();
 
-        coordinator.registerComponent<Constraint>();
-        coordinator.registerComponent<Material>();
-        coordinator.registerComponent<Collider>();
-        coordinator.registerComponent<Rigidbody>();
+    coordinator.registerComponent<Constraint>();
+    coordinator.registerComponent<Material>();
+    coordinator.registerComponent<Collider>();
+    coordinator.registerComponent<Rigidbody>();
 
-        coordinator.registerComponent<Model>();
-        coordinator.registerComponent<Texture>();
-        coordinator.registerComponent<DebugShape>();
-        coordinator.registerComponent<SpriteRenderer>();
-    }
-    void registerSceneSystems(Device& device) {
-
-        coordinator.registerSystem<TransformSystem>();
-        coordinator.registerSystem<RigidbodySystem>();
-        coordinator.registerSystem<ColliderSystem>();
-        coordinator.registerSystem<ConstraintSystem>();
-        coordinator.registerSystem<PhysicsSystem>();
-
-        coordinator.registerSystem<SpriteSystem>(std::ref(device));
-        coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
-        coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
-    }
+    coordinator.registerComponent<Model>();
+    coordinator.registerComponent<Texture>();
+    coordinator.registerComponent<DebugShape>();
+    coordinator.registerComponent<SpriteRenderer>();
 }
+void registerSceneSystems(Device& device) {
+    coordinator.registerSystem<TransformSystem>();
+    coordinator.registerSystem<RigidbodySystem>();
+    coordinator.registerSystem<ColliderSystem>();
+    coordinator.registerSystem<ConstraintSystem>();
+    coordinator.registerSystem<PhysicsSystem>();
+
+    coordinator.registerSystem<SpriteSystem>(std::ref(device));
+    coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
+    coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
+}
+} // namespace emp
