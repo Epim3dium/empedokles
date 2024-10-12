@@ -1,11 +1,23 @@
 # 🎯 TODO:
 
-* collision idle state
-* collision triggers
+- collision
+    - collision triggers
+    - more constraints
+    - collision optimization
+        - collision idle state
+        - tighter locked critical section
+-graphics
+    - basic animation system
+        - animated sprites
+        - finite state machine animated sprite switching
+    - render system abstraction
+    - add imgui
+    - 2d lighting
+- core
+    - reconsider global coordinator
+    - message bus
+    - command terminal
 
-* basic animation system
-
-* 2d lighting
 
 ---
 
@@ -14,16 +26,16 @@
 ---
 
 # ⚠️ ISSUES:
-* weird error message when closing window
-* non resizable window
-* restitution unreliability
+- weird error message when closing window
+- non resizable window
+- restitution unreliability
 ---
 
 # ✅ DONE:
-* separate threads for rendering, physics and the rest
-* constraints as components
-* sprites (color, texRect, origin, render pipeline)
+- separate threads for rendering, physics and the rest
+- constraints as components
+- sprites (color, texRect, origin, render pipeline)
 
-* ##### basics of rendering system
-* ##### basics of collision system
-* ##### basics of ECS system
+- ##### basics of rendering system
+- ##### basics of collision system
+- ##### basics of ECS system
