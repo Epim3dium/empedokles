@@ -42,5 +42,7 @@ void main() {
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
     fragColor = sprite.color.xyz;
-    fragUv = uv;
+    vec2 uv_range = sprite.rect_max - sprite.rect_min;
+    vec2 uv_scaled = vec2(uv.x * uv_range.x, uv.y * uv_range.y);
+    fragUv = uv_scaled + sprite.rect_min;
 }

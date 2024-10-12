@@ -17,6 +17,13 @@ const Vertex Sprite::s_verticies[6] = {
         Vertex{glm::vec3(-0.5f, 0.5f, 0.f), {}, {}, glm::vec2{0.f, 1.f}
         }, //  *:'
 };
+AABB Sprite::shader_rect() const {
+    AABB actual_rect = rect();
+    vec2f texture_size = texture().getSize();
+    vec2f standardized_min(actual_rect.min.x / texture_size.x, actual_rect.min.y / texture_size.y);
+    vec2f standardized_max(actual_rect.max.x / texture_size.x, actual_rect.max.y / texture_size.y);
+    return AABB::CreateMinMax(standardized_min, standardized_max);
+}
 AABB Sprite::rect() const {
     if (hframes == 0 || vframes == 0) {
         return m_rect;

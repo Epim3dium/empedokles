@@ -25,6 +25,7 @@ public:
     glm::vec4 color;
 
     AABB rect() const;
+    AABB shader_rect() const;
     vec2f size() const {
         return m_size;
     }

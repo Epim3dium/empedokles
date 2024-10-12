@@ -41,8 +41,10 @@ void SpriteSystem::updateBuffer(int frameIndex) {
                 glm::mat4{1.f}, glm::vec3(pivot.x, pivot.y, 0.f)
         );
 
-        data.rect_min = sprite.rect().min;
-        data.rect_max = sprite.rect().max;
+        auto rect = sprite.shader_rect();
+        data.rect_min = rect.min;
+        data.rect_max = rect.max;
+
         data.flip = {sprite.flipX, sprite.flipY}; // only 0.f or 1.f
         data.color = sprite.color;
 

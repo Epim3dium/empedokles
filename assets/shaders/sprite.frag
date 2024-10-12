@@ -42,6 +42,9 @@ void main() {
     if(sprite.flip.y == 1) {
         uv.y = 1 - uv.y;
     }
-    vec3 color = texture(diffuseTex, uv).xyz;
-    outColor = vec4(color, 1);
+    vec4 color = texture(diffuseTex, uv);
+    if(color.a == 0) {
+        discard;
+    }
+    outColor = color;
 }
