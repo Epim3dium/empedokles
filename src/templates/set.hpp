@@ -11,9 +11,9 @@ struct Set : public std::set<T, CMP, ALLOC> {
     operator bool() const {
         return this->size() != 0;
     }
-    Set operator^(const std::set<T, CMP, ALLOC>& s2)const;
-    Set operator+(const std::set<T, CMP, ALLOC>& s2)const;
-    
+    Set operator^(const std::set<T, CMP, ALLOC>& s2) const;
+    Set operator+(const std::set<T, CMP, ALLOC>& s2) const;
+
     // Set(const std::set<T>& other) = default;
     // Set(std::set<T>&& other) = default;
     // Set& operator=(const std::set<T>& other) = default;
@@ -21,21 +21,31 @@ struct Set : public std::set<T, CMP, ALLOC> {
 };
 // implementation of templates
 template <class T, class CMP, class ALLOC>
-Set<T, CMP, ALLOC>
-Set<T, CMP, ALLOC>::operator^(
-    const std::set<T, CMP, ALLOC>& s2) const {
+Set<T, CMP, ALLOC> Set<T, CMP, ALLOC>::operator^(
+        const std::set<T, CMP, ALLOC>& s2
+) const {
     Set<T, CMP, ALLOC> s;
-    std::set_intersection(this->begin(), this->end(), s2.begin(), s2.end(),
-                          std::inserter(s, s.begin()));
+    std::set_intersection(
+            this->begin(),
+            this->end(),
+            s2.begin(),
+            s2.end(),
+            std::inserter(s, s.begin())
+    );
     return s;
 }
 template <class T, class CMP, class ALLOC>
-Set<T, CMP, ALLOC>
-Set<T, CMP, ALLOC>::operator+(
-    const std::set<T, CMP, ALLOC>& s2) const {
+Set<T, CMP, ALLOC> Set<T, CMP, ALLOC>::operator+(
+        const std::set<T, CMP, ALLOC>& s2
+) const {
     Set<T, CMP, ALLOC> s;
-    std::set_union(this->begin(), this->end(), s2.begin(), s2.end(),
-                   std::inserter(s, s.begin()));
+    std::set_union(
+            this->begin(),
+            this->end(),
+            s2.begin(),
+            s2.end(),
+            std::inserter(s, s.begin())
+    );
     return s;
 }
 
