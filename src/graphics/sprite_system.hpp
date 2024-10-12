@@ -16,7 +16,7 @@ struct SpriteInfo {
 
     glm::vec4 color;
 };
-struct SpriteSystem : public System<SpriteRenderer, Transform> {
+struct SpriteSystem : public System<Sprite, Transform> {
     SpriteSystem(Device& device);
 
     [[nodiscard]] VkDescriptorBufferInfo getBufferInfoForGameObject(
@@ -32,3 +32,4 @@ struct SpriteSystem : public System<SpriteRenderer, Transform> {
 };
 }; // namespace emp
 #endif
+

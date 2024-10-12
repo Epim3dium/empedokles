@@ -95,7 +95,9 @@ void SpriteRenderSystem::createPipeline(
     );
 }
 
-void SpriteRenderSystem::render(FrameInfo& frameInfo, SpriteSystem& model_sys) {
+void SpriteRenderSystem::render(
+        FrameInfo& frameInfo, SpriteSystem& sprite_sys
+) {
     pipeline->bind(frameInfo.commandBuffer);
 
     vkCmdBindDescriptorSets(
@@ -109,15 +111,13 @@ void SpriteRenderSystem::render(FrameInfo& frameInfo, SpriteSystem& model_sys) {
             nullptr
     );
 
-    for (auto e : model_sys.entities) {
-        auto sprite = coordinator.getComponent<SpriteRenderer>(e);
-        if (sprite == nullptr)
-            continue;
+    for (auto e : sprite_sys.entities) {
+        auto sprite = sprite_sys.getComponent<Sprite>(e);
 
         // writing descriptor set each frame can slow performance
         // would be more efficient to implement some sort of caching
         auto buffer_info =
-                model_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
+                sprite_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
         VkDescriptorImageInfo image_info;
         VkDescriptorSet entity_desc_set;
 
@@ -127,7 +127,7 @@ void SpriteRenderSystem::render(FrameInfo& frameInfo, SpriteSystem& model_sys) {
 
         desc_writer.writeBuffer(0, &buffer_info);
 
-        image_info = sprite->sprite().texture().getImageInfo();
+        image_info = sprite.texture().getImageInfo();
         desc_writer.writeImage(1, &image_info);
 
         desc_writer.build(entity_desc_set);
@@ -149,3 +149,4 @@ void SpriteRenderSystem::render(FrameInfo& frameInfo, SpriteSystem& model_sys) {
 }
 
 }; // namespace emp
+

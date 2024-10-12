@@ -24,7 +24,7 @@ void registerSceneTypes() {
     coordinator.registerComponent<Model>();
     coordinator.registerComponent<Texture>();
     coordinator.registerComponent<DebugShape>();
-    coordinator.registerComponent<SpriteRenderer>();
+    coordinator.registerComponent<Sprite>();
 }
 void registerSceneSystems(Device& device) {
     coordinator.registerSystem<TransformSystem>();

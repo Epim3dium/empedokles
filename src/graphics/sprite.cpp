@@ -1,21 +1,37 @@
 #include "sprite.hpp"
 #include "debug/log.hpp"
 namespace emp {
-std::unordered_map<std::string, std::unique_ptr<Sprite>> Sprite::s_sprite_table;
 std::unique_ptr<Buffer> Sprite::s_vertex_buffer;
 const Vertex Sprite::s_verticies[6] = {
-        Vertex{glm::vec3(-1.f, -1.f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
+        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
         }, //     -'*
-        Vertex{glm::vec3(1.f, -1.f, 0.f), {}, {}, glm::vec2{1.f, 0.f}
+        Vertex{glm::vec3(0.5f, -0.5f, 0.f), {}, {}, glm::vec2{1.f, 0.f}
         }, //   ./  |
-        Vertex{glm::vec3(1.f, 1.f, 0.f), {}, {}, glm::vec2{1.f, 1.f}
+        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f}
         }, //  *----*
 
-        Vertex{glm::vec3(-1.f, -1.f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
+        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
         }, //  *----*
-        Vertex{glm::vec3(1.f, 1.f, 0.f), {}, {}, glm::vec2{1.f, 1.f}}, //  |  _'
-        Vertex{glm::vec3(-1.f, 1.f, 0.f), {}, {}, glm::vec2{0.f, 1.f}}, //  *:'
+        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f}
+        }, //  |  _'
+        Vertex{glm::vec3(-0.5f, 0.5f, 0.f), {}, {}, glm::vec2{0.f, 1.f}
+        }, //  *:'
 };
+AABB Sprite::rect() const {
+    if (hframes == 0 || vframes == 0) {
+        return m_rect;
+    }
+    float frame_width = texture().getSize().x / hframes;
+    float frame_height = texture().getSize().y / vframes;
+    int idx_x = frame % hframes;
+    int idx_y = frame / hframes;
+    assert(idx_x < hframes && idx_y < vframes &&
+           "frame out of spritesheet range");
+    return AABB::CreateMinMax(
+            {idx_x * frame_width, idx_y * frame_height},
+            {(idx_x + 1) * frame_width, (idx_y + 1) * frame_height}
+    );
+}
 void Sprite::init(Device& device) {
     assert(s_vertex_count >= 3 && "Vertex count must be at least 3");
     VkDeviceSize bufferSize = sizeof(s_verticies[0]) * s_vertex_count;
@@ -55,31 +71,11 @@ void Sprite::draw(VkCommandBuffer commandBuffer) {
     vkCmdDraw(commandBuffer, s_vertex_count, 1, 0, 0);
 }
 
-Sprite::Sprite(Texture tex, AABB tex_rect, vec2f size)
-    : m_texture(tex), m_rect(tex_rect), m_size(size) {
+Sprite::Sprite(Texture tex, vec2f size) : m_texture(tex), m_size(size) {
     auto tex_size = tex.texture().getSize();
     if (size.x == 0 && size.y == 0) {
-        if (tex_size.x > tex_size.y) {
-            m_size.x = 1.f;
-            m_size.y = tex_size.y / tex_size.x;
-        } else {
-            m_size.y = 1.f;
-            m_size.x = tex_size.x / tex_size.y;
-        }
+        m_size = tex_size;
     }
 }
-Sprite& SpriteRenderer::sprite() {
-    assert(isLoaded() && "texture must be created before use");
-    return *Sprite::s_sprite_table.at(m_id);
-}
-const Sprite& SpriteRenderer::sprite() const {
-    assert(isLoaded() && "texture must be created before use");
-    return *Sprite::s_sprite_table.at(m_id);
-}
-Sprite& Sprite::create(std::string id, Texture tex, AABB tex_rect, vec2f size) {
-    auto spr = std::make_unique<Sprite>(tex, tex_rect, size);
-    assert(!isLoaded(id) && "trying to override existing texture id");
-    Sprite::s_sprite_table[id] = std::move(spr);
-    return *Sprite::s_sprite_table.at(id);
-}
 }; // namespace emp
+

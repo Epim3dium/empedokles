@@ -13,6 +13,7 @@ class Demo : public App {
                 coordinator.getComponent<Transform>(mouse_entity)->position = controller.global_mouse_pos();
             }
             if(controller.get(eKeyMappings::Ability1).pressed) {
+                Sprite spr = Sprite(Texture("dummy"), {100.f, 100.f});
                 Rigidbody rb; rb.useAutomaticMass = true;
                 auto e = coordinator.createEntity();
                 coordinator.addComponent(e, Transform(vec2f(controller.global_mouse_pos()), 0.f));
@@ -20,7 +21,7 @@ class Demo : public App {
                 coordinator.addComponent(e, Collider(cube_model_shape)); 
                 coordinator.addComponent(e, rb); 
                 coordinator.addComponent(e, Material()); 
-                coordinator.addComponent(e, SpriteRenderer("test"));
+                coordinator.addComponent(e, spr);
             }
         }
         void onRender(Device&, const FrameInfo& frame) override final {
@@ -32,12 +33,8 @@ class Demo : public App {
             mouse_entity = coordinator.createEntity();
             coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
-            Sprite::create("test", Texture("dummy"), {{0, 0}, {1, 1}}, {50.f, 50.f});
-            auto rend = SpriteRenderer("test");
-            rend.flipX = true;
-            // coordinator.addComponent(cube, rend);
-
             
+            Sprite spr = Sprite(Texture("dummy"), {100.f, 100.f});
             for(int ii = 0; ii < 0; ii++)
             for(int i = 0; i < 0; i++) {
                 auto e = coordinator.createEntity();
@@ -46,7 +43,7 @@ class Demo : public App {
                 coordinator.addComponent(e, Collider(cube_model_shape)); 
                 coordinator.addComponent(e, Rigidbody()); 
                 coordinator.addComponent(e, Material()); 
-                coordinator.addComponent(e, rend);
+                coordinator.addComponent(e, spr);
             }
 
             // Constraint constraint;

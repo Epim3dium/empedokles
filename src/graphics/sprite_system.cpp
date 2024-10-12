@@ -25,28 +25,24 @@ void SpriteSystem::updateBuffer(int frameIndex) {
     for (auto e : entities) {
         // auto &obj = kv.second;
         const auto& transform = getComponent<Transform>(e);
-        const auto& sprite = getComponent<SpriteRenderer>(e);
+        const auto& sprite = getComponent<Sprite>(e);
         SpriteInfo data{};
 
         data.model_matrix = transform.global();
-        data.offset_matrix = Transform(
-                                     sprite.sprite().position_offset,
-                                     sprite.sprite().rotation_offset,
-                                     sprite.sprite().scale_offset
-        )
-                                     .local();
+        data.offset_matrix = glm::translate(
+                glm::mat4x4(1.f), glm::vec3(sprite.position_offset, 0)
+        );
         data.size_matrix = glm::scale(
-                glm::mat4{1.f},
-                {sprite.sprite().size().x, sprite.sprite().size().y, 1.f}
+                glm::mat4{1.f}, {sprite.size().x, sprite.size().y, 1.f}
         );
 
-        auto pivot = sprite.sprite().pivot;
+        auto pivot = (sprite.centered ? vec2f(0, 0) : sprite.size() * 0.5f);
         data.pivot_matrix = glm::translate(
                 glm::mat4{1.f}, glm::vec3(pivot.x, pivot.y, 0.f)
         );
 
-        data.rect_min = sprite.sprite().rect().min;
-        data.rect_max = sprite.sprite().rect().max;
+        data.rect_min = sprite.rect().min;
+        data.rect_max = sprite.rect().max;
         data.flip = {sprite.flipX, sprite.flipY}; // only 0.f or 1.f
         data.color = sprite.color;
 
@@ -55,3 +51,4 @@ void SpriteSystem::updateBuffer(int frameIndex) {
     uboBuffers[frameIndex]->flush();
 }
 }; // namespace emp
+
