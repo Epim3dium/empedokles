@@ -36,5 +36,5 @@ public:
     void deriveVelocities(float delT);
     void updateMasses();
 };
-};
+}; // namespace emp
 #endif

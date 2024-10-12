@@ -5,22 +5,23 @@
 namespace emp {
 #define SQ(x) ((x) * (x))
 float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
-    if(isStatic)
+    if (isStatic)
         return 0.f;
     return 1.f / mass() + (SQ(perp_dot(radius, normal)) / inertia());
 }
 void RigidbodySystem::updateMasses() {
-    for(auto entity : entities) {
+    for (auto entity : entities) {
         auto& rigidobdy = getComponent<Rigidbody>(entity);
         const auto collider = coordinator.getComponent<Collider>(entity);
-        if(rigidobdy.useAutomaticMass && collider != nullptr) {
+        if (rigidobdy.useAutomaticMass && collider != nullptr) {
             rigidobdy.real_mass = collider->area * rigidobdy.real_density;
-            rigidobdy.real_inertia = collider->inertia_dev_mass * rigidobdy.real_density;
+            rigidobdy.real_inertia =
+                    collider->inertia_dev_mass * rigidobdy.real_density;
         }
     }
 }
 void RigidbodySystem::integrate(float delT) {
-    for(auto entity : entities) {
+    for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
         auto& transform = getComponent<Transform>(entity);
         rigidbody.prev_pos = transform.position;
@@ -33,10 +34,10 @@ void RigidbodySystem::integrate(float delT) {
     }
 }
 void RigidbodySystem::deriveVelocities(float delT) {
-    for(auto entity : entities) {
+    for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
         auto& transform = getComponent<Transform>(entity);
-        if(rigidbody.isStatic)
+        if (rigidbody.isStatic)
             continue;
         rigidbody.vel_pre_solve = rigidbody.vel;
         rigidbody.vel = (transform.position - rigidbody.prev_pos) / delT;
@@ -44,4 +45,4 @@ void RigidbodySystem::deriveVelocities(float delT) {
         rigidbody.ang_vel = (transform.rotation - rigidbody.prev_rot) / delT;
     }
 }
-};
+}; // namespace emp
