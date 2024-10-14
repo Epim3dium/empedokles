@@ -149,10 +149,15 @@ void App::run() {
     coordinator.addComponent(viewer_object, Transform({0.f, 0.f}));
     // viewerObject.transform.translation.z = -2.5f;
 
-    controller.bind(eKeyMappings::MoveUp, GLFW_KEY_W);
-    controller.bind(eKeyMappings::MoveDown, GLFW_KEY_S);
-    controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_D);
-    controller.bind(eKeyMappings::MoveRight, GLFW_KEY_A);
+    controller.bind(eKeyMappings::LookUp, GLFW_KEY_W);
+    controller.bind(eKeyMappings::LookDown, GLFW_KEY_S);
+    controller.bind(eKeyMappings::LookLeft, GLFW_KEY_D);
+    controller.bind(eKeyMappings::LookRight, GLFW_KEY_A);
+
+    controller.bind(eKeyMappings::MoveUp, GLFW_KEY_UP);
+    controller.bind(eKeyMappings::MoveDown, GLFW_KEY_DOWN);
+    controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
+    controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
 
     auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
     auto& transform_sys = *coordinator.getSystem<TransformSystem>();
@@ -193,7 +198,7 @@ void App::run() {
             auto& viewer_transform =
                     *coordinator.getComponent<Transform>(viewer_object);
             viewer_transform.position +=
-                    controller.movementInPlane2D() * delta_time * 500.f;
+                    controller.lookingInPlane2D() * delta_time * 500.f;
 
             camera.setView(
                     viewer_transform.position, viewer_transform.rotation
