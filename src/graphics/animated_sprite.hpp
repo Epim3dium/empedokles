@@ -15,14 +15,14 @@ public:
         StateMachine_t::Builder FSM_builder;
         std::unordered_map<std::string, Sprite> animation_frames;
     public:
-        Builder(std::string entry_point, Sprite default_sprite) : FSM_builder(entry_point) {
+        Builder(std::string entry_point, const Sprite& default_sprite) : FSM_builder(entry_point) {
             animation_frames[entry_point] = default_sprite;
         }
-        void addNode(std::string name, Sprite sprite) {
+        void addNode(std::string name, const Sprite& sprite) {
             FSM_builder.addNode(name);
             animation_frames[name] = sprite;
         }
-        void addEdge(std::string from, Sprite from_sprite, std::string to, Sprite to_sprite, auto trigger) {
+        void addEdge(std::string from, std::string to, auto trigger) {
             FSM_builder.addEdge(from, to, trigger);
         }
         friend AnimatedSprite;
