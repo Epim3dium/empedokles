@@ -10,23 +10,23 @@ class ComponentManager {
 public:
     template <typename T>
     void registerComponent() {
-        const char* typeName = typeid(T).name();
-        assert(m_component_types.find(typeName) == m_component_types.end() &&
+        const char* type_name = typeid(T).name();
+        assert(m_component_types.find(type_name) == m_component_types.end() &&
                "Registering component type more than once.");
 
-        m_component_types.insert({typeName, m_next_component_type});
+        m_component_types.insert({type_name, m_next_component_type});
         m_component_arrays.insert(
-                {typeName, std::make_shared<ComponentArray<T>>()});
+                {type_name, std::make_shared<ComponentArray<T>>()});
         ++m_next_component_type;
     }
 
     template <typename T>
     ComponentType getComponentType() const {
-        const char* typeName = typeid(T).name();
-        assert(m_component_types.find(typeName) != m_component_types.end() &&
+        const char* type_name = typeid(T).name();
+        assert(m_component_types.find(type_name) != m_component_types.end() &&
                "Component not registered before use.");
 
-        return m_component_types.at(typeName);
+        return m_component_types.at(type_name);
     }
     template <typename T>
     bool hasComponent(Entity entity) {
@@ -69,12 +69,12 @@ private:
 
     template <typename T>
     ComponentArray<T>& getComponentArray() {
-        const char* typeName = typeid(T).name();
-        assert(m_component_types.find(typeName) != m_component_types.end() &&
+        const char* type_name = typeid(T).name();
+        assert(m_component_types.find(type_name) != m_component_types.end() &&
                "Component not registered before use.");
 
         return *std::static_pointer_cast<ComponentArray<T>>(
-                m_component_arrays.at(typeName));
+                m_component_arrays.at(type_name));
     }
 };
 }; // namespace emp

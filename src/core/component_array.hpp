@@ -36,18 +36,18 @@ public:
                "Removing non-existent component.");
 
         // Copy element at end into deleted element's place to maintain density
-        size_t indexOfRemovedEntity = m_entity_to_index_map[entity];
-        size_t indexOfLastElement = m_size - 1;
-        m_component_array[indexOfRemovedEntity] =
-                m_component_array[indexOfLastElement];
+        size_t index_of_removed_entity = m_entity_to_index_map[entity];
+        size_t index_of_last_element = m_size - 1;
+        m_component_array[index_of_removed_entity] =
+                m_component_array[index_of_last_element];
 
         // Update map to point to moved spot
-        Entity entityOfLastElement = m_index_to_entity_map[indexOfLastElement];
-        m_entity_to_index_map[entityOfLastElement] = indexOfRemovedEntity;
-        m_index_to_entity_map[indexOfRemovedEntity] = entityOfLastElement;
+        Entity entity_of_last_element = m_index_to_entity_map[index_of_last_element];
+        m_entity_to_index_map[entity_of_last_element] = index_of_removed_entity;
+        m_index_to_entity_map[index_of_removed_entity] = entity_of_last_element;
 
         m_entity_to_index_map[entity] = INVALID_INDEX;
-        m_index_to_entity_map[indexOfLastElement] = INVALID_ENTITY;
+        m_index_to_entity_map[index_of_last_element] = INVALID_ENTITY;
 
         --m_size;
     }
