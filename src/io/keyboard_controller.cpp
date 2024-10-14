@@ -45,7 +45,7 @@ void KeyboardController::update(
 vec2f KeyboardController::movementInPlane2D() {
     glm::vec3 moveDir{0.f};
     vec3f upDir{0.f, -1.f, 0.f};
-    vec3f rightDir{-1.f, 0.f, 0.f};
+    vec3f rightDir{1.f, 0.f, 0.f};
     if (m_key_states[eKeyMappings::MoveRight].held)
         moveDir += rightDir;
     if (m_key_states[eKeyMappings::MoveLeft].held)
@@ -53,6 +53,22 @@ vec2f KeyboardController::movementInPlane2D() {
     if (m_key_states[eKeyMappings::MoveUp].held)
         moveDir += upDir;
     if (m_key_states[eKeyMappings::MoveDown].held)
+        moveDir -= upDir;
+    if (moveDir == glm::vec3(0.f))
+        return moveDir;
+    return glm::normalize(moveDir);
+}
+vec2f KeyboardController::lookingInPlane2D() {
+    glm::vec3 moveDir{0.f};
+    vec3f upDir{0.f, -1.f, 0.f};
+    vec3f rightDir{-1.f, 0.f, 0.f};
+    if (m_key_states[eKeyMappings::LookRight].held)
+        moveDir += rightDir;
+    if (m_key_states[eKeyMappings::LookLeft].held)
+        moveDir -= rightDir;
+    if (m_key_states[eKeyMappings::LookUp].held)
+        moveDir += upDir;
+    if (m_key_states[eKeyMappings::LookDown].held)
         moveDir -= upDir;
     if (moveDir == glm::vec3(0.f))
         return moveDir;

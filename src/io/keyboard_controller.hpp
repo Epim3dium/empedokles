@@ -59,6 +59,7 @@ public:
         return m_key_states[action];
     }
     vec2f movementInPlane2D();
+    vec2f lookingInPlane2D();
     void update(Window& window, const Transform& camera_transform);
 };
 } // namespace emp
