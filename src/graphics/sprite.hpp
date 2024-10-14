@@ -35,12 +35,14 @@ public:
     const TextureAsset& texture() const {
         return m_texture.texture();
     }
+    std::string textureID() const {
+        return m_texture.getID();
+    }
 
     vec2f position_offset = vec2f(0, 0);
 
     // size set by default
-    Sprite() {
-    }
+    Sprite() { }
     Sprite(Texture tex, vec2f size = vec2f(0.f, 0.f));
 
     static constexpr uint32_t s_vertex_count = 6U;
