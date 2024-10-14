@@ -31,7 +31,7 @@ public:
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
 #else
-    const bool enableValidationLayers = true;
+    const bool enable_validation_layers = true;
 #endif
 
     explicit Device(Window& window);
@@ -48,27 +48,27 @@ public:
     Device& operator=(Device&&) = delete;
 
     VkCommandPool getCommandPool() {
-        return commandPool;
+        return m_command_pool;
     }
 
     VkDevice device() {
-        return device_;
+        return m_device;
     }
 
     VkSurfaceKHR surface() {
-        return surface_;
+        return m_surface;
     }
 
     VkQueue graphicsQueue() {
-        return graphicsQueue_;
+        return m_graphics_queue;
     }
 
     VkQueue presentQueue() {
-        return presentQueue_;
+        return m_present_queue;
     }
 
     SwapChainSupportDetails getSwapChainSupport() {
-        return querySwapChainSupport(physicalDevice);
+        return querySwapChainSupport(m_physical_device);
     }
 
     uint32_t findMemoryType(
@@ -76,7 +76,7 @@ public:
     );
 
     QueueFamilyIndices findPhysicalQueueFamilies() {
-        return findQueueFamilies(physicalDevice);
+        return findQueueFamilies(m_physical_device);
     }
 
     VkFormat findSupportedFormat(
@@ -158,21 +158,21 @@ private:
 
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-    VkInstance instance{};
-    VkDebugUtilsMessengerEXT debugMessenger{};
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    Window& window;
-    VkCommandPool commandPool{};
+    VkInstance m_instance{};
+    VkDebugUtilsMessengerEXT m_debug_messenger{};
+    VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
+    Window& m_window;
+    VkCommandPool m_command_pool{};
 
-    VkDevice device_{};
-    VkSurfaceKHR surface_{};
-    VkQueue graphicsQueue_{};
-    VkQueue presentQueue_{};
+    VkDevice m_device{};
+    VkSurfaceKHR m_surface{};
+    VkQueue m_graphics_queue{};
+    VkQueue m_present_queue{};
 
-    const std::vector<const char*> validationLayers = {
+    const std::vector<const char*> validation_layers = {
             "VK_LAYER_KHRONOS_validation"
     };
-    const std::vector<const char*> deviceExtensions = {
+    const std::vector<const char*> device_extensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"
     };
 };

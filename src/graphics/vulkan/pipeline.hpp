@@ -64,10 +64,10 @@ private:
             const std::vector<char>& code, VkShaderModule* shaderModule
     );
 
-    Device& device;
-    VkPipeline graphicsPipeline{};
-    VkShaderModule vertShaderModule{};
-    VkShaderModule fragShaderModule{};
+    Device& m_device;
+    VkPipeline m_graphics_pipeline{};
+    VkShaderModule m_vert_shader_module{};
+    VkShaderModule m_frag_shader_module{};
 };
 } // namespace emp
 

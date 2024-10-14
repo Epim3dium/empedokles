@@ -39,24 +39,24 @@ Buffer::Buffer(
         VkMemoryPropertyFlags memoryPropertyFlags,
         VkDeviceSize minOffsetAlignment
 )
-    : device{device},
-      instanceSize{instanceSize},
-      instanceCount{instanceCount},
-      usageFlags{usageFlags},
-      memoryPropertyFlags{memoryPropertyFlags} {
-    alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-    bufferSize = alignmentSize * instanceCount;
+    : m_device{device},
+      m_instance_size{instanceSize},
+      m_instance_count{instanceCount},
+      m_usage_flags{usageFlags},
+      m_memory_property_flags{memoryPropertyFlags} {
+    m_alignment_size = getAlignment(instanceSize, minOffsetAlignment);
+    m_buffer_size = m_alignment_size * instanceCount;
     device.createBuffer(
-            bufferSize, usageFlags, memoryPropertyFlags, buffer, memory
+            m_buffer_size, usageFlags, memoryPropertyFlags, m_buffer, m_memory
     );
-    EMP_LOG(LogLevel::DEBUG3) << "AV" << "\t@S " << memory;
+    EMP_LOG(LogLevel::DEBUG3) << "AV" << "\t@S " << m_memory;
 }
 
 Buffer::~Buffer() {
     unmap();
-    vkDestroyBuffer(device.device(), buffer, nullptr);
-    vkFreeMemory(device.device(), memory, nullptr);
-    EMP_LOG(LogLevel::DEBUG3) << "DV" << "\t@S " << memory;
+    vkDestroyBuffer(m_device.device(), m_buffer, nullptr);
+    vkFreeMemory(m_device.device(), m_memory, nullptr);
+    EMP_LOG(LogLevel::DEBUG3) << "DV" << "\t@S " << m_memory;
 }
 
 /**
@@ -70,8 +70,8 @@ Buffer::~Buffer() {
  * @return VkResult of the buffer mapping call
  */
 VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
-    assert(buffer && memory && "Called map on buffer before create");
-    return vkMapMemory(device.device(), memory, offset, size, 0, &mapped);
+    assert(m_buffer && m_memory && "Called map on buffer before create");
+    return vkMapMemory(m_device.device(), m_memory, offset, size, 0, &m_mapped);
 }
 
 /**
@@ -80,9 +80,9 @@ VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
  * @note Does not return a result as vkUnmapMemory can't fail
  */
 void Buffer::unmap() {
-    if (mapped) {
-        vkUnmapMemory(device.device(), memory);
-        mapped = nullptr;
+    if (m_mapped) {
+        vkUnmapMemory(m_device.device(), m_memory);
+        m_mapped = nullptr;
     }
 }
 
@@ -97,12 +97,12 @@ void Buffer::unmap() {
  *
  */
 void Buffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset) {
-    assert(mapped && "Cannot copy to unmapped buffer");
+    assert(m_mapped && "Cannot copy to unmapped buffer");
 
     if (size == VK_WHOLE_SIZE) {
-        memcpy(mapped, data, bufferSize);
+        memcpy(m_mapped, data, m_buffer_size);
     } else {
-        char* memOffset = (char*)mapped;
+        char* memOffset = (char*)m_mapped;
         memOffset += offset;
         memcpy(memOffset, data, size);
     }
@@ -120,12 +120,12 @@ void Buffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset) {
  * @return VkResult of the flush call
  */
 VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset) {
-    VkMappedMemoryRange mappedRange = {};
-    mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-    mappedRange.memory = memory;
-    mappedRange.offset = offset;
-    mappedRange.size = size;
-    return vkFlushMappedMemoryRanges(device.device(), 1, &mappedRange);
+    VkMappedMemoryRange mapped_range = {};
+    mapped_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mapped_range.memory = m_memory;
+    mapped_range.offset = offset;
+    mapped_range.size = size;
+    return vkFlushMappedMemoryRanges(m_device.device(), 1, &mapped_range);
 }
 
 /**
@@ -140,12 +140,12 @@ VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  * @return VkResult of the invalidate call
  */
 VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
-    VkMappedMemoryRange mappedRange = {};
-    mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-    mappedRange.memory = memory;
-    mappedRange.offset = offset;
-    mappedRange.size = size;
-    return vkInvalidateMappedMemoryRanges(device.device(), 1, &mappedRange);
+    VkMappedMemoryRange mapped_range = {};
+    mapped_range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mapped_range.memory = m_memory;
+    mapped_range.offset = offset;
+    mapped_range.size = size;
+    return vkInvalidateMappedMemoryRanges(m_device.device(), 1, &mapped_range);
 }
 
 /**
@@ -160,7 +160,7 @@ VkDescriptorBufferInfo Buffer::descriptorInfo(
         VkDeviceSize size, VkDeviceSize offset
 ) {
     return VkDescriptorBufferInfo{
-            buffer,
+            m_buffer,
             offset,
             size,
     };
@@ -175,7 +175,7 @@ VkDescriptorBufferInfo Buffer::descriptorInfo(
  *
  */
 void Buffer::writeToIndex(void* data, int index) {
-    writeToBuffer(data, instanceSize, index * alignmentSize);
+    writeToBuffer(data, m_instance_size, index * m_alignment_size);
 }
 
 /**
@@ -186,11 +186,11 @@ void Buffer::writeToIndex(void* data, int index) {
  *
  */
 VkResult Buffer::flushIndex(int index) {
-    assert(alignmentSize % device.properties.limits.nonCoherentAtomSize == 0 &&
+    assert(m_alignment_size % m_device.properties.limits.nonCoherentAtomSize == 0 &&
            "Cannot use Buffer::flushIndex if alignmentSize isn't a multiple of "
            "Device Limits "
            "nonCoherentAtomSize");
-    return flush(alignmentSize, index * alignmentSize);
+    return flush(m_alignment_size, index * m_alignment_size);
 }
 
 /**
@@ -201,7 +201,7 @@ VkResult Buffer::flushIndex(int index) {
  * @return VkDescriptorBufferInfo for instance at index
  */
 VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index) {
-    return descriptorInfo(alignmentSize, index * alignmentSize);
+    return descriptorInfo(m_alignment_size, index * m_alignment_size);
 }
 
 /**
@@ -214,7 +214,7 @@ VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index) {
  * @return VkResult of the invalidate call
  */
 VkResult Buffer::invalidateIndex(int index) {
-    return invalidate(alignmentSize, index * alignmentSize);
+    return invalidate(m_alignment_size, index * m_alignment_size);
 }
 
 } // namespace emp

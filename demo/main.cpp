@@ -23,9 +23,7 @@ class Demo : public App {
                 spr.hframes = 5;
                 spr.vframes = 2;
                 spr.frame = 9;
-                Rigidbody rb; rb.useAutomaticMass = false;
-                rb.real_inertia = INFINITY;
-                rb.real_mass = 10;
+                Rigidbody rb; rb.useAutomaticMass = true;
                 auto e = coordinator.createEntity();
                 coordinator.addComponent(e, Transform(vec2f(controller.global_mouse_pos()), 0.f));
                 coordinator.addComponent(e, DebugShape(device, cube_model_shape, glm::vec4(1, 0, 0, 1), glm::vec4(0, 0, 1, 1)));
@@ -52,13 +50,12 @@ class Demo : public App {
             Sprite spr = Sprite(Texture("jump-down"), {100.f, 100.f});
             Rigidbody rb; rb.useAutomaticMass = false;
             rb.real_inertia = INFINITY;
-            rb.real_mass = 100 * 100;
+            rb.real_mass = 100 * 100 * 100;
             coordinator.addComponent(protagonist, Transform(vec2f(), 0.f));
             coordinator.addComponent(protagonist, DebugShape(device, cube_model_shape, glm::vec4(1, 0, 0, 1), glm::vec4(0, 0, 1, 1)));
             coordinator.addComponent(protagonist, Collider(cube_model_shape)); 
             coordinator.addComponent(protagonist, rb); 
-            Material mat; mat.dynamic_friction = 0.5f; mat.static_friction = 0.9f;
-            coordinator.addComponent(protagonist, mat); 
+            coordinator.addComponent(protagonist, Material()); 
             coordinator.addComponent(protagonist, spr);
             // for(int ii = 0; ii < 0; ii++)
             // for(int i = 0; i < 0; i++) {

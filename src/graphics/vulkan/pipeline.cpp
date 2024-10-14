@@ -20,14 +20,14 @@ Pipeline::Pipeline(
         const std::string& fragFilepath,
         const PipelineConfigInfo& configInfo
 )
-    : device{device} {
+    : m_device{device} {
     createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 }
 
 Pipeline::~Pipeline() {
-    vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
-    vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
-    vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
+    vkDestroyShaderModule(m_device.device(), m_vert_shader_module, nullptr);
+    vkDestroyShaderModule(m_device.device(), m_frag_shader_module, nullptr);
+    vkDestroyPipeline(m_device.device(), m_graphics_pipeline, nullptr);
 }
 
 std::vector<char> Pipeline::readFile(const std::string& filepath) {
@@ -63,13 +63,13 @@ void Pipeline::createGraphicsPipeline(
     auto vertCode = readFile(vertFilepath);
     auto fragCode = readFile(fragFilepath);
 
-    createShaderModule(vertCode, &vertShaderModule);
-    createShaderModule(fragCode, &fragShaderModule);
+    createShaderModule(vertCode, &m_vert_shader_module);
+    createShaderModule(fragCode, &m_frag_shader_module);
 
     VkPipelineShaderStageCreateInfo shaderStages[2];
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStages[0].module = vertShaderModule;
+    shaderStages[0].module = m_vert_shader_module;
     shaderStages[0].pName = "main";
     shaderStages[0].flags = 0;
     shaderStages[0].pNext = nullptr;
@@ -77,7 +77,7 @@ void Pipeline::createGraphicsPipeline(
 
     shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStages[1].module = fragShaderModule;
+    shaderStages[1].module = m_frag_shader_module;
     shaderStages[1].pName = "main";
     shaderStages[1].flags = 0;
     shaderStages[1].pNext = nullptr;
@@ -119,12 +119,12 @@ void Pipeline::createGraphicsPipeline(
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
     if (vkCreateGraphicsPipelines(
-                device.device(),
+                m_device.device(),
                 VK_NULL_HANDLE,
                 1,
                 &pipelineInfo,
                 nullptr,
-                &graphicsPipeline
+                &m_graphics_pipeline
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline");
     }
@@ -140,7 +140,7 @@ void Pipeline::createShaderModule(
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     if (vkCreateShaderModule(
-                device.device(), &createInfo, nullptr, shaderModule
+                m_device.device(), &createInfo, nullptr, shaderModule
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to create shader module");
     }
@@ -148,7 +148,7 @@ void Pipeline::createShaderModule(
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
     vkCmdBindPipeline(
-            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline
+            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline
     );
 }
 

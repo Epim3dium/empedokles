@@ -44,13 +44,13 @@ public:
     DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
 
     [[nodiscard]] VkDescriptorSetLayout getDescriptorSetLayout() const {
-        return descriptorSetLayout;
+        return m_descriptor_set_layout;
     }
 
 private:
-    Device& device;
-    VkDescriptorSetLayout descriptorSetLayout{};
-    std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
+    Device& m_device;
+    VkDescriptorSetLayout m_descriptor_set_layout{};
+    std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings;
 
     friend class DescriptorWriter;
 };
@@ -72,9 +72,9 @@ public:
 
     private:
         Device& device;
-        std::vector<VkDescriptorPoolSize> poolSizes{};
-        uint32_t maxSets = 1000;
-        VkDescriptorPoolCreateFlags poolFlags = 0;
+        std::vector<VkDescriptorPoolSize> pool_sizes{};
+        uint32_t max_sets = 1000;
+        VkDescriptorPoolCreateFlags pool_flags = 0;
     };
 
     DescriptorPool(
@@ -100,8 +100,8 @@ public:
     void resetPool();
 
 private:
-    Device& device;
-    VkDescriptorPool descriptorPool{};
+    Device& m_device;
+    VkDescriptorPool m_descriptor_pool{};
 
     friend class DescriptorWriter;
 };
@@ -123,9 +123,9 @@ public:
     void overwrite(VkDescriptorSet& set);
 
 private:
-    DescriptorSetLayout& setLayout;
-    DescriptorPool& pool;
-    std::vector<VkWriteDescriptorSet> writes;
+    DescriptorSetLayout& m_set_layout;
+    DescriptorPool& m_pool;
+    std::vector<VkWriteDescriptorSet> m_writes;
 };
 
 } // namespace emp
