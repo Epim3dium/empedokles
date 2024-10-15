@@ -7,13 +7,14 @@ class Rigidbody;
 class Rigidbody {
 public:
     bool isStatic = false;
+    bool isRotationLocked = false;
 
     float real_inertia = 1.f;
     float real_mass = 1.f;
     float real_density = 1.f;
     bool useAutomaticMass = true;
     float inertia() const {
-        return isStatic ? INFINITY : real_inertia;
+        return (isStatic || isRotationLocked) ? INFINITY : real_inertia;
     }
     float mass() const {
         return isStatic ? INFINITY : real_mass;
