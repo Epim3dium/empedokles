@@ -6,7 +6,7 @@
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/systems/debug_shape_render_system.hpp"
-#include "graphics/systems/sprite_render_system.hpp"
+#include "graphics/systems/simple_render_system.hpp"
 #include "graphics/vulkan/descriptors.hpp"
 #include "graphics/vulkan/device.hpp"
 
@@ -54,7 +54,7 @@ protected:
 
 private:
     std::unique_ptr<DebugShapeRenderSystem> m_debugShape_rend_sys;
-    std::unique_ptr<SpriteRenderSystem> m_sprite_rend_sys;
+    std::unique_ptr<SimpleRenderSystem> m_sprite_rend_sys;
 
     // synchronization systems
     std::condition_variable m_priority_access;

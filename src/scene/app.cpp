@@ -1,11 +1,11 @@
 #include "app.hpp"
 
 #include "core/coordinator.hpp"
+#include "graphics/sprite_system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/systems/debug_shape_render_system.hpp"
 #include "graphics/systems/simple_render_system.hpp"
-#include "graphics/systems/sprite_render_system.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
@@ -137,7 +137,7 @@ void App::run() {
             "assets/shaders/debug_shape.vert.spv",
             "assets/shaders/debug_shape.frag.spv"
     );
-    m_sprite_rend_sys = std::make_unique<SpriteRenderSystem>(
+    m_sprite_rend_sys = std::make_unique<SimpleRenderSystem>(
             device,
             renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout(),
@@ -365,20 +365,15 @@ void App::renderFrame(
                 // simpleRenderSystem.render(frameInfo, *models_sys);
                 m_debugShape_rend_sys->render(frame_info, debugshape_sys);
 
-                m_sprite_rend_sys->render(frame_info, sprite_sys.entities, 
-                    [&sprite_sys](Entity entity, int frameIndex) {
-                        return sprite_sys.getBufferInfoForGameObject(frameIndex, entity);
-                    },
-                    [](Entity entity) {
-                        return coordinator.getComponent<Sprite>(entity)->texture().getImageInfo();
-                    });
-                m_sprite_rend_sys->render(frame_info, animated_sprite_sys.entities, 
-                    [&animated_sprite_sys](Entity entity, int frameIndex) {
-                        return animated_sprite_sys.getBufferInfoForGameObject(frameIndex, entity);
-                    },
-                    [](Entity entity) {
-                        return coordinator.getComponent<AnimatedSprite>(entity)->sprite().texture().getImageInfo();
-                    });
+              sprite_sys.render(frame_info, *m_sprite_rend_sys);
+              animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
+                // m_sprite_rend_sys->render(frame_info, animated_sprite_sys.entities, 
+                //     [&animated_sprite_sys](Entity entity, int frameIndex) {
+                //         return animated_sprite_sys.getBufferInfoForGameObject(frameIndex, entity);
+                //     },
+                //     [](Entity entity) {
+                //         return coordinator.getComponent<AnimatedSprite>(entity)->sprite().texture().getImageInfo();
+                //     });
 
                 onRender(device, frame_info);
 

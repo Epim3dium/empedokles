@@ -2,6 +2,27 @@
 #include "graphics/sprite_system.hpp"
 
 namespace emp {
+    void AnimatedSpriteSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+    simple_rend_system.render(
+            frame_info,
+            this->entities,
+            [this](DescriptorWriter& desc_writer,
+                   int frame_index,
+                   const Entity& entity) -> bool {
+                //TODO: fix this, its dirty and awful and it works
+                static VkDescriptorBufferInfo buf_info;
+                buf_info = getBufferInfoForGameObject(frame_index, entity);
+                auto& image_info = getComponent<AnimatedSprite>(entity).sprite().texture().getImageInfo();
+                desc_writer.writeBuffer(0, &buf_info);
+                desc_writer.writeImage(1, &image_info);
+                return true;
+            },
+            [](const VkCommandBuffer& command_buf, const Entity& entity) {
+                Sprite::bind(command_buf);
+                Sprite::draw(command_buf);
+            }
+    );
+    }
     AnimatedSpriteSystem::AnimatedSpriteSystem(Device& device) {
         // including nonCoherentAtomSize allows us to flush a specific index at once
         int alignment = std::lcm(

@@ -1,6 +1,8 @@
 #ifndef EMP_ANIMATED_SPRITE_SYSTEM
 #define EMP_ANIMATED_SPRITE_SYSTEM
 #include "graphics/animated_sprite.hpp"
+#include "graphics/frame_info.hpp"
+#include "graphics/systems/simple_render_system.hpp"
 #include "graphics/vulkan/swap_chain.hpp"
 #include "scene/transform.hpp"
 namespace emp {
@@ -13,6 +15,8 @@ namespace emp {
         ) const {
             return uboBuffers[frameIndex]->descriptorInfoForIndex(entity);
         }
+
+        void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 
         void updateTransitions();
         void updateBuffer(int frameIndex);

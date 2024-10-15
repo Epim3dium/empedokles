@@ -1,6 +1,7 @@
 #ifndef EMP_SPRITE_SYSTEM_HPP
 #define EMP_SPRITE_SYSTEM_HPP
 #include "graphics/sprite.hpp"
+#include "graphics/systems/simple_render_system.hpp"
 #include "scene/transform.hpp"
 #include "vulkan/swap_chain.hpp"
 namespace emp {
@@ -24,6 +25,8 @@ struct SpriteSystem : public System<Sprite, Transform> {
     ) const {
         return uboBuffers[frameIndex]->descriptorInfoForIndex(entity);
     }
+
+    void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 
     void updateBuffer(int frameIndex);
     std::vector<std::unique_ptr<Buffer>> uboBuffers{
