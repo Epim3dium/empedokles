@@ -44,6 +44,7 @@ set(SOURCE_FILES
     graphics/texture.cpp
     graphics/sprite.cpp
     graphics/animated_sprite.cpp
+    graphics/animated_sprite_system.cpp
     graphics/sprite_system.cpp
 
     io/keyboard_controller.cpp
@@ -125,6 +126,7 @@ set(HEADER_FILES
     graphics/texture.hpp
     graphics/sprite.hpp
     graphics/animated_sprite.hpp
+    graphics/animated_sprite_system.hpp
     graphics/sprite_system.hpp
     graphics/utils.hpp
 
