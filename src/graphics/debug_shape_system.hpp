@@ -2,6 +2,8 @@
 #define EMP_DEBUGSHAPE_SYS
 
 #include "graphics/debug_shape.hpp"
+#include "graphics/frame_info.hpp"
+#include "graphics/systems/simple_render_system.hpp"
 #include "model.hpp"
 #include "scene/transform.hpp"
 #include "texture.hpp"
@@ -36,6 +38,7 @@ public:
     std::vector<std::unique_ptr<Buffer>> uboBuffers{
             SwapChain::MAX_FRAMES_IN_FLIGHT
     };
+    void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 };
 
 } // namespace emp
