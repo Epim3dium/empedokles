@@ -5,7 +5,6 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/systems/debug_shape_render_system.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "graphics/vulkan/descriptors.hpp"
 #include "graphics/vulkan/device.hpp"

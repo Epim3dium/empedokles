@@ -25,7 +25,6 @@ set(SOURCE_FILES
 
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
-    graphics/systems/debug_shape_render_system.cpp
 
     graphics/vulkan/buffer.cpp
     graphics/vulkan/descriptors.cpp
@@ -105,7 +104,6 @@ set(HEADER_FILES
 
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
-    graphics/systems/debug_shape_render_system.hpp
 
     graphics/vulkan/buffer.hpp
     graphics/vulkan/descriptors.hpp

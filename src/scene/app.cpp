@@ -4,7 +4,6 @@
 #include "graphics/sprite_system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/camera.hpp"
-#include "graphics/systems/debug_shape_render_system.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "graphics/vulkan/buffer.hpp"
 #include "io/keyboard_controller.hpp"
