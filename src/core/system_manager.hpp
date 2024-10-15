@@ -10,29 +10,29 @@ class SystemManager {
 public:
     template <typename T, class... InitializerValues>
     std::shared_ptr<T> registerSystem(InitializerValues... inits) {
-        const char* typeName = typeid(T).name();
-        assert(m_systems.find(typeName) == m_systems.end() &&
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_systems.find(type_code) == m_systems.end() &&
                "Registering system more than once.");
 
         auto system = std::make_shared<T>(inits...);
-        m_systems.insert({typeName, system});
+        m_systems.insert({type_code, system});
         return system;
     }
     template <typename T>
     T* getSystem() {
-        const char* type_name = typeid(T).name();
-        return m_systems.contains(type_name)
-                       ? dynamic_cast<T*>(m_systems.at(type_name).get())
+        std::size_t type_code = typeid(T).hash_code();
+        return m_systems.contains(type_code)
+                       ? dynamic_cast<T*>(m_systems.at(type_code).get())
                        : nullptr;
     }
 
     template <typename T>
     void setSignature(Signature signature) {
-        const char* typeName = typeid(T).name();
-        assert(m_systems.find(typeName) != m_systems.end() &&
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_systems.find(type_code) != m_systems.end() &&
                "System used before registered.");
 
-        m_signatures.insert({typeName, signature});
+        m_signatures.insert({type_code, signature});
     }
 
     void EntityDestroyed(Entity entity) {
@@ -65,8 +65,8 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, Signature> m_signatures{};
-    std::unordered_map<std::string, std::shared_ptr<SystemBase>> m_systems{};
+    std::unordered_map<std::size_t, Signature> m_signatures{};
+    std::unordered_map<std::size_t, std::shared_ptr<SystemBase>> m_systems{};
 };
 }; // namespace emp
 #endif

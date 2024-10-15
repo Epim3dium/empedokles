@@ -10,23 +10,23 @@ class ComponentManager {
 public:
     template <typename T>
     void registerComponent() {
-        const char* type_name = typeid(T).name();
-        assert(m_component_types.find(type_name) == m_component_types.end() &&
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_component_types.find(type_code) == m_component_types.end() &&
                "Registering component type more than once.");
 
-        m_component_types.insert({type_name, m_next_component_type});
+        m_component_types.insert({type_code, m_next_component_type});
         m_component_arrays.insert(
-                {type_name, std::make_shared<ComponentArray<T>>()});
+                {type_code, std::make_shared<ComponentArray<T>>()});
         ++m_next_component_type;
     }
 
     template <typename T>
     ComponentType getComponentType() const {
-        const char* type_name = typeid(T).name();
-        assert(m_component_types.find(type_name) != m_component_types.end() &&
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_component_types.find(type_code) != m_component_types.end() &&
                "Component not registered before use.");
 
-        return m_component_types.at(type_name);
+        return m_component_types.at(type_code);
     }
     template <typename T>
     bool hasComponent(Entity entity) {
@@ -62,19 +62,19 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, ComponentType> m_component_types{};
+    std::unordered_map<std::size_t, ComponentType> m_component_types{};
     ComponentType m_next_component_type{};
-    std::unordered_map<std::string, std::shared_ptr<IComponentArray>>
+    std::unordered_map<std::size_t, std::shared_ptr<IComponentArray>>
             m_component_arrays{};
 
     template <typename T>
     ComponentArray<T>& getComponentArray() {
-        const char* type_name = typeid(T).name();
-        assert(m_component_types.find(type_name) != m_component_types.end() &&
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_component_types.find(type_code) != m_component_types.end() &&
                "Component not registered before use.");
 
         return *std::static_pointer_cast<ComponentArray<T>>(
-                m_component_arrays.at(type_name));
+                m_component_arrays.at(type_code));
     }
 };
 }; // namespace emp
