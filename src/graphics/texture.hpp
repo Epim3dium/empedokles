@@ -52,7 +52,10 @@ public:
         return mTextureImageView;
     }
 
-    [[nodiscard]] VkDescriptorImageInfo getImageInfo() const {
+    [[nodiscard]] const VkDescriptorImageInfo& getImageInfo() const {
+        return mDescriptor;
+    }
+    [[nodiscard]] VkDescriptorImageInfo& getImageInfo() {
         return mDescriptor;
     }
 

@@ -122,6 +122,8 @@ public:
 
     void overwrite(VkDescriptorSet& set);
 
+    DescriptorWriter(const DescriptorWriter&) = delete;
+    DescriptorWriter& operator=(const DescriptorWriter&) = delete;
 private:
     DescriptorSetLayout& m_set_layout;
     DescriptorPool& m_pool;
