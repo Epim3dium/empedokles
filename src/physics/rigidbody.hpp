@@ -23,12 +23,12 @@ public:
 
     vec2f prev_pos = vec2f(0.f, 0.f);
     vec2f vel_pre_solve = vec2f(0.f, 0.f);
-    vec2f vel = vec2f(0.f, 0.f);
+    vec2f velocity = vec2f(0.f, 0.f);
     vec2f force = vec2f(0.f, 0.f);
 
     float prev_rot = 0.f;
     float ang_vel_pre_solve = 0.f;
-    float ang_vel = 0.f;
+    float angular_velocity = 0.f;
     float torque = 0.f;
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {

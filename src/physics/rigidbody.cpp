@@ -25,12 +25,12 @@ void RigidbodySystem::integrate(float delT) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
         auto& transform = getComponent<Transform>(entity);
         rigidbody.prev_pos = transform.position;
-        rigidbody.vel += delT * rigidbody.force / rigidbody.mass();
-        transform.position += rigidbody.vel * delT;
+        rigidbody.velocity += delT * rigidbody.force / rigidbody.mass();
+        transform.position += rigidbody.velocity * delT;
 
         rigidbody.prev_rot = transform.rotation;
-        rigidbody.ang_vel += delT * rigidbody.torque / rigidbody.inertia();
-        transform.rotation += rigidbody.ang_vel * delT;
+        rigidbody.angular_velocity += delT * rigidbody.torque / rigidbody.inertia();
+        transform.rotation += rigidbody.angular_velocity * delT;
     }
 }
 void RigidbodySystem::deriveVelocities(float delT) {
@@ -39,10 +39,10 @@ void RigidbodySystem::deriveVelocities(float delT) {
         auto& transform = getComponent<Transform>(entity);
         if (rigidbody.isStatic)
             continue;
-        rigidbody.vel_pre_solve = rigidbody.vel;
-        rigidbody.vel = (transform.position - rigidbody.prev_pos) / delT;
-        rigidbody.ang_vel_pre_solve = rigidbody.ang_vel;
-        rigidbody.ang_vel = (transform.rotation - rigidbody.prev_rot) / delT;
+        rigidbody.vel_pre_solve = rigidbody.velocity;
+        rigidbody.velocity = (transform.position - rigidbody.prev_pos) / delT;
+        rigidbody.ang_vel_pre_solve = rigidbody.angular_velocity;
+        rigidbody.angular_velocity = (transform.rotation - rigidbody.prev_rot) / delT;
     }
 }
 }; // namespace emp

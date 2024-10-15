@@ -143,8 +143,8 @@ void Constraint::m_solvePointAnchor(float delta_time) {
     auto norm = normal(diff);
     auto c = length(diff);
 
-    auto damping_force = dot(rb.vel, norm) * damping * delta_time;
-    if (length(rb.vel) == 0.f) {
+    auto damping_force = dot(rb.velocity, norm) * damping * delta_time;
+    if (length(rb.velocity) == 0.f) {
         damping_force = 0.f;
     }
     calcPositionalCorrection(

@@ -8,7 +8,6 @@
 #include "graphics/vulkan/buffer.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
-#include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/register_scene_types.hpp"
 #include "scene_defs.hpp"
@@ -130,18 +129,20 @@ void App::run() {
 
     EMP_LOG(LogLevel::DEBUG) << "render systems...";
 
-    PipelineConfigInfo debug_shape_pipeline_config;
-    Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
-    debug_shape_pipeline_config.inputAssemblyInfo.topology =
-            VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-    m_debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(
-            device,
-            renderer.getSwapChainRenderPass(),
-            globalSetLayout->getDescriptorSetLayout(),
-            "assets/shaders/debug_shape.vert.spv",
-            "assets/shaders/debug_shape.frag.spv",
-            &debug_shape_pipeline_config
-    );
+    {
+        PipelineConfigInfo debug_shape_pipeline_config;
+        Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
+        debug_shape_pipeline_config.inputAssemblyInfo.topology =
+                VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        m_debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(
+                device,
+                renderer.getSwapChainRenderPass(),
+                globalSetLayout->getDescriptorSetLayout(),
+                "assets/shaders/debug_shape.vert.spv",
+                "assets/shaders/debug_shape.frag.spv",
+                &debug_shape_pipeline_config
+        );
+    }
     m_sprite_rend_sys = std::make_unique<SimpleRenderSystem>(
             device,
             renderer.getSwapChainRenderPass(),

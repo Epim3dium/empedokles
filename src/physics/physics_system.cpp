@@ -232,9 +232,9 @@ void PhysicsSystem::m_solveVelocities(
                 dot(pre_solve_relative_vel, constraint.normal);
 
         const auto contact_vel1 =
-                m_calcContactVel(rb1.vel, rb1.ang_vel, r1model);
+                m_calcContactVel(rb1.velocity, rb1.angular_velocity, r1model);
         const auto contact_vel2 =
-                m_calcContactVel(rb2.vel, rb2.ang_vel, r2model);
+                m_calcContactVel(rb2.velocity, rb2.angular_velocity, r2model);
         const auto relative_vel = contact_vel1 - contact_vel2;
         const auto normal_speed = dot(relative_vel, constraint.normal);
 
@@ -279,14 +279,14 @@ void PhysicsSystem::m_solveVelocities(
         if (!rb1.isStatic) {
             const auto delta_lin_vel = p / rb1.mass();
             const auto delta_ang_vel = perp_dot(r1model, p) / rb1.inertia();
-            rb1.vel += delta_lin_vel;
-            rb1.ang_vel += delta_ang_vel;
+            rb1.velocity += delta_lin_vel;
+            rb1.angular_velocity += delta_ang_vel;
         }
         if (!rb2.isStatic) {
             const auto delta_lin_vel = p / rb2.mass();
             const auto delta_ang_vel = perp_dot(r2model, p) / rb2.inertia();
-            rb2.vel -= delta_lin_vel;
-            rb2.ang_vel -= delta_ang_vel;
+            rb2.velocity -= delta_lin_vel;
+            rb2.angular_velocity -= delta_ang_vel;
         }
     }
 }
