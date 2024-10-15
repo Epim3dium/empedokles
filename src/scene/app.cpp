@@ -130,12 +130,18 @@ void App::run() {
                     << device.properties.limits.nonCoherentAtomSize;
 
     EMP_LOG(LogLevel::DEBUG) << "render systems...";
-    m_debugShape_rend_sys = std::make_unique<DebugShapeRenderSystem>(
+
+    PipelineConfigInfo debug_shape_pipeline_config;
+    Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
+    debug_shape_pipeline_config.inputAssemblyInfo.topology =
+            VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    m_debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(
             device,
             renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout(),
             "assets/shaders/debug_shape.vert.spv",
-            "assets/shaders/debug_shape.frag.spv"
+            "assets/shaders/debug_shape.frag.spv",
+            &debug_shape_pipeline_config
     );
     m_sprite_rend_sys = std::make_unique<SimpleRenderSystem>(
             device,
@@ -362,11 +368,10 @@ void App::renderFrame(
             animated_sprite_sys.updateBuffer(frame_index);
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
-                // simpleRenderSystem.render(frameInfo, *models_sys);
-                m_debugShape_rend_sys->render(frame_info, debugshape_sys);
 
-              sprite_sys.render(frame_info, *m_sprite_rend_sys);
-              animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
+                debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
+                sprite_sys.render(frame_info, *m_sprite_rend_sys);
+                animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
                 // m_sprite_rend_sys->render(frame_info, animated_sprite_sys.entities, 
                 //     [&animated_sprite_sys](Entity entity, int frameIndex) {
                 //         return animated_sprite_sys.getBufferInfoForGameObject(frameIndex, entity);

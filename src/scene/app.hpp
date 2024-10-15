@@ -53,8 +53,8 @@ protected:
     void forcePhysicsTickrate(const float tick_rate);
 
 private:
-    std::unique_ptr<DebugShapeRenderSystem> m_debugShape_rend_sys;
     std::unique_ptr<SimpleRenderSystem> m_sprite_rend_sys;
+    std::unique_ptr<SimpleRenderSystem> m_debugShape_rend_sys;
 
     // synchronization systems
     std::condition_variable m_priority_access;
