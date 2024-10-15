@@ -1,5 +1,6 @@
 #include "register_scene_types.hpp"
 #include "core/coordinator.hpp"
+#include "graphics/animated_sprite_system.hpp"
 #include "graphics/debug_shape.hpp"
 #include "graphics/debug_shape_system.hpp"
 #include "graphics/sprite.hpp"
@@ -25,6 +26,7 @@ void registerSceneTypes() {
     coordinator.registerComponent<Model>();
     coordinator.registerComponent<Texture>();
     coordinator.registerComponent<DebugShape>();
+
     coordinator.registerComponent<Sprite>();
     coordinator.registerComponent<AnimatedSprite>();
 }
@@ -38,6 +40,7 @@ void registerSceneSystems(Device& device) {
     coordinator.registerSystem<PhysicsSystem>();
 
     coordinator.registerSystem<SpriteSystem>(std::ref(device));
+    coordinator.registerSystem<AnimatedSpriteSystem>(std::ref(device));
     coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
     coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
 }

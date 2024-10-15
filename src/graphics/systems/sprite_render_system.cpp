@@ -96,7 +96,10 @@ void SpriteRenderSystem::createPipeline(
 }
 
 void SpriteRenderSystem::render(
-        FrameInfo& frameInfo, SpriteSystem& sprite_sys
+    FrameInfo& frameInfo,
+    const std::set<Entity>& entity_list,
+    std::function<VkDescriptorBufferInfo(Entity, int)> getBufInfo,
+    std::function<VkDescriptorImageInfo(Entity)> getDescImageInfo
 ) {
     pipeline->bind(frameInfo.commandBuffer);
 
@@ -111,13 +114,12 @@ void SpriteRenderSystem::render(
             nullptr
     );
 
-    for (auto e : sprite_sys.entities) {
-        auto sprite = sprite_sys.getComponent<Sprite>(e);
+    for (auto entity : entity_list) {
 
         // writing descriptor set each frame can slow performance
         // would be more efficient to implement some sort of caching
         auto buffer_info =
-                sprite_sys.getBufferInfoForGameObject(frameInfo.frameIndex, e);
+                getBufInfo(entity, frameInfo.frameIndex);
         VkDescriptorImageInfo image_info;
         VkDescriptorSet entity_desc_set;
 
@@ -127,7 +129,7 @@ void SpriteRenderSystem::render(
 
         desc_writer.writeBuffer(0, &buffer_info);
 
-        image_info = sprite.texture().getImageInfo();
+        image_info = getDescImageInfo(entity);
         desc_writer.writeImage(1, &image_info);
 
         desc_writer.build(entity_desc_set);

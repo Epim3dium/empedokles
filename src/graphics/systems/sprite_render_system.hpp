@@ -26,7 +26,12 @@ public:
     SpriteRenderSystem(const SpriteRenderSystem&) = delete;
     SpriteRenderSystem& operator=(const SpriteRenderSystem&) = delete;
 
-    void render(FrameInfo& frameInfo, SpriteSystem& model_sys);
+    void render(
+            FrameInfo& frameInfo,
+            const std::set<Entity>& entity_list,
+            std::function<VkDescriptorBufferInfo(Entity, int)> getBufInfo,
+            std::function<VkDescriptorImageInfo(Entity)> getDescImageInfo
+    );
 
 private:
     void createPipelineLayout(
