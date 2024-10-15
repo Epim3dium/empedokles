@@ -20,7 +20,8 @@ public:
             VkRenderPass renderPass,
             VkDescriptorSetLayout globalSetLayout,
             const char* frag_filename,
-            const char* vert_filename
+            const char* vert_filename,
+            PipelineConfigInfo* config = nullptr
     );
     ~SimpleRenderSystem();
     SimpleRenderSystem(const SimpleRenderSystem&) = delete;
@@ -40,7 +41,8 @@ private:
     void createPipeline(
             VkRenderPass renderPass,
             const char* frag_filename,
-            const char* vert_filename
+            const char* vert_filename,
+            PipelineConfigInfo* config = nullptr
     );
 
     Device& device;

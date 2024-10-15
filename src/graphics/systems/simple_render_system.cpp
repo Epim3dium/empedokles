@@ -20,11 +20,11 @@ SimpleRenderSystem::SimpleRenderSystem(
         VkRenderPass renderPass,
         VkDescriptorSetLayout globalSetLayout,
         const char* vert_filename,
-        const char* frag_filename
-)
-    : device{device} {
+        const char* frag_filename,
+        PipelineConfigInfo* config) : device{device} 
+{
     createPipelineLayout(globalSetLayout);
-    createPipeline(renderPass, vert_filename, frag_filename);
+    createPipeline(renderPass, vert_filename, frag_filename, config);
 }
 
 SimpleRenderSystem::~SimpleRenderSystem() {
@@ -77,10 +77,19 @@ void SimpleRenderSystem::createPipelineLayout(
 void SimpleRenderSystem::createPipeline(
         VkRenderPass renderPass,
         const char* vert_filename,
-        const char* frag_filename
+        const char* frag_filename,
+        PipelineConfigInfo* config
 ) {
     assert(pipeline_layout != nullptr &&
            "Cannot create pipeline before pipeline layout");
+    if(config != nullptr) {
+        config->renderPass = renderPass;
+        config->pipelineLayout = pipeline_layout;
+        pipeline = std::make_unique<Pipeline>(
+                device, vert_filename, frag_filename, *config
+        );
+        return;
+    }
 
     PipelineConfigInfo pipelineConfig{};
     Pipeline::defaultPipelineConfigInfo(pipelineConfig);
