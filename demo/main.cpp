@@ -16,6 +16,10 @@ class Demo : public App {
             }
             {
                 coordinator.getComponent<Rigidbody>(protagonist)->vel.x += controller.movementInPlane2D().x * 10.f;
+                auto& rb = *coordinator.getComponent<Rigidbody>(protagonist);
+                auto& animated = *coordinator.getComponent<AnimatedSprite>(protagonist);
+                bool isRunningLeft = rb.vel.x < 0.f;
+                animated.flipX = isRunningLeft;
             }
 
             if(controller.get(eKeyMappings::Ability1).pressed) {
@@ -32,15 +36,11 @@ class Demo : public App {
                 coordinator.addComponent(e, Material()); 
                 coordinator.addComponent(e, spr);
             }
-            coordinator.removeComponent<Sprite>(protagonist);
-            auto& anim = *coordinator.getComponent<AnimatedSprite>(protagonist);
-            anim.updateState(protagonist);
-            coordinator.addComponent<Sprite>(protagonist, anim.sprite());
         }
         void onRender(Device&, const FrameInfo& frame) override final {
         }
         void onSetup(Window& window, Device& device) override final {
-            controller.bind(eKeyMappings::Ability1, GLFW_KEY_SPACE);
+            controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
             // coordinator.addComponent(cube, Model("cube"));
             protagonist = coordinator.createEntity();
             mouse_entity = coordinator.createEntity();
@@ -56,7 +56,6 @@ class Demo : public App {
             coordinator.addComponent(protagonist, Collider(cube_model_shape)); 
             coordinator.addComponent(protagonist, rb); 
             coordinator.addComponent(protagonist, Material()); 
-            coordinator.addComponent(protagonist, spr);
             // for(int ii = 0; ii < 0; ii++)
             // for(int i = 0; i < 0; i++) {
             //     auto e = coordinator.createEntity();
@@ -74,18 +73,18 @@ class Demo : public App {
             auto def_size = vec2f(100.f, 100.f);
             AnimatedSprite::Builder build("idle", Sprite(Texture("idle"), def_size));
             Sprite running_sprite = Sprite(Texture("running"), {100.f, 100.f});
-            spr.hframes = 5;
-            spr.vframes = 2;
-            spr.frame = 9;
+            running_sprite.hframes = 5;
+            running_sprite.vframes = 2;
+            running_sprite.frame = 9;
             build.addNode("run", running_sprite); 
             build.addNode("jump", Sprite(Texture("jump-up"), def_size)); 
             build.addNode("fall", Sprite(Texture("jump-down"), def_size)); 
 
             build.addEdge("idle", "run", [](Entity owner) {
-                return abs(coordinator.getComponent<Rigidbody>(owner)->vel.x) > 0.f;
+                return abs(coordinator.getComponent<Rigidbody>(owner)->vel.x) > 10.f;
             });
             build.addEdge("run", "idle", [](Entity owner) {
-                return abs(coordinator.getComponent<Rigidbody>(owner)->vel.x) == 0.f;
+                return abs(coordinator.getComponent<Rigidbody>(owner)->vel.x) < 10.f;
             });
             coordinator.addComponent(protagonist, AnimatedSprite(build));
 
@@ -109,8 +108,7 @@ class Demo : public App {
                   {"../assets/textures/jumping.png", "jump-up"},
                   {"../assets/textures/falling.png", "jump-down"},
                   {"../assets/textures/standing.png", "idle"}
-                  }) {
-        }
+              }) {}
 };
 int main()
 {
