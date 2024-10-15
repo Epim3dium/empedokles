@@ -1,4 +1,5 @@
 #include "entity_manager.hpp"
+#include "debug/log.hpp"
 namespace emp {
 EntityManager::EntityManager() {
     // Initialize the queue with all possible entity IDs
@@ -15,10 +16,14 @@ Entity EntityManager::createEntity() {
     Entity id = m_available_entities.front();
     m_available_entities.pop();
     ++m_living_entity_count;
+    m_signatures[id].set(MAX_COMPONENTS - 1, 1);
 
     return id;
 }
 
+bool EntityManager::isEntityAlive(Entity entity) {
+    return m_signatures[entity].test(MAX_COMPONENTS - 1);
+}
 void EntityManager::destroyEntity(Entity entity) {
     assert(entity < MAX_ENTITIES && "Entity out of range.");
 
@@ -32,9 +37,11 @@ void EntityManager::destroyEntity(Entity entity) {
 
 void EntityManager::setSignature(Entity entity, Signature signature) {
     assert(entity < MAX_ENTITIES && "Entity out of range.");
+    bool was_alive = m_signatures[entity].test(MAX_COMPONENTS - 1);
 
     // Put this entity's signature into the array
     m_signatures[entity] = signature;
+    m_signatures[entity].set(MAX_COMPONENTS - 1, was_alive);
 }
 
 Signature EntityManager::getSignature(Entity entity) const {

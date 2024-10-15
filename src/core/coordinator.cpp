@@ -11,6 +11,9 @@ namespace emp {
     Entity Coordinator::createEntity() {
         return m_entity_manager->createEntity(); 
     }
+    bool Coordinator::isEntityAlive(Entity entity) const {
+        return m_entity_manager->isEntityAlive(entity); 
+    }
 
     void Coordinator::destroyEntity(Entity entity) {
         m_entity_manager->destroyEntity(entity);

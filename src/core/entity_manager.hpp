@@ -12,6 +12,7 @@ public:
     EntityManager();
 
     Entity createEntity();
+    bool isEntityAlive(Entity entity);
     void destroyEntity(Entity entity);
     void setSignature(Entity entity, Signature signature);
     Signature getSignature(Entity entity) const;

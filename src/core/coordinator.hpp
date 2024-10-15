@@ -11,7 +11,7 @@ public:
 
     // Entity methods
     Entity createEntity();
-
+    bool isEntityAlive(Entity entity) const;
     void destroyEntity(Entity entity);
 
     void destroy();
