@@ -3,6 +3,34 @@
 #include "debug/debug.hpp"
 #include "math/geometry_func.hpp"
 namespace emp {
+LayerMask Collider::collision_matrix[MAX_LAYERS];
+
+void Collider::listen(Entity listener, CallbackFunc callback) {
+    m_callbacks.push_back(callback);
+}
+void Collider::broadcastCollision(const CollisionInfo& info) const {
+    for(const auto& func : m_callbacks) {
+        func(info);
+    }
+}
+void Collider::disableCollision(Layer layer1, Layer layer2) {
+    LayerMask* mat = Collider::collision_matrix;
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+    mat[lesser] = mat[lesser] | LayerMask().set(major, true); 
+}
+void Collider::eableCollision(Layer layer1, Layer layer2) {
+    LayerMask* mat = Collider::collision_matrix;
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+
+    mat[lesser] = mat[lesser] & LayerMask().set().set(major, false); 
+}
+bool Collider::canCollideWith(Layer other) {
+    auto lesser = std::min(collider_layer, other);
+    auto major = std::max(collider_layer, other);
+    return !(collision_matrix[lesser] & LayerMask(false).set(major)).any();
+}
 // Collider::Collider(std::vector<vec2f> shape, emp::Transform* trans, bool
 // correctCOM) {
 //     auto MIA = calculateMassInertiaArea(shape);
