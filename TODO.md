@@ -1,16 +1,13 @@
 # 🎯 TODO:
 
 - collision
-    - collision triggers
     - more constraints
     - collision optimization
         - collision idle state
         - tighter locked critical section
 -graphics
     - basic animation system
-        - animated sprites
-        - finite state machine animated sprite switching
-    - render system abstraction
+        - tutrly moving animated sprites
     - add imgui
     - 2d lighting
 - core
@@ -32,6 +29,13 @@
 ---
 
 # ✅ DONE:
+-graphics
+    - render system abstraction
+    - basic animation system
+        - animated sprites
+        - finite state machine animated sprite switching
+- collision
+    - collision triggers
 - separate threads for rendering, physics and the rest
 - constraints as components
 - sprites (color, texRect, origin, render pipeline)
