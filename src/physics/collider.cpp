@@ -6,11 +6,16 @@ namespace emp {
 LayerMask Collider::collision_matrix[MAX_LAYERS];
 
 void Collider::listen(Entity listener, CallbackFunc callback) {
-    m_callbacks.push_back(callback);
+    m_callbacks.push_back({listener, callback});
 }
-void Collider::broadcastCollision(const CollisionInfo& info) const {
-    for(const auto& func : m_callbacks) {
-        func(info);
+void Collider::broadcastCollision(const CollisionInfo& info) {
+    for(int i = 0; i < m_callbacks.size(); i++) {
+        if(!coordinator.isEntityAlive(m_callbacks[i].first)) {
+            m_callbacks.erase(m_callbacks.begin() + i);
+            i--;
+            continue;
+        }
+        m_callbacks[i].second(info);
     }
 }
 void Collider::disableCollision(Layer layer1, Layer layer2) {

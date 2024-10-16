@@ -29,10 +29,10 @@ private:
     AABB m_aabb;
 
     static LayerMask collision_matrix[MAX_LAYERS];
-    std::vector< CallbackFunc > m_callbacks;
+    std::vector< std::pair<Entity, CallbackFunc> > m_callbacks;
 public:
     void listen(Entity listener, CallbackFunc callback);
-    void broadcastCollision(const CollisionInfo&) const;
+    void broadcastCollision(const CollisionInfo&);
 
     static void disableCollision(Layer layer1, Layer layer2);
     static void eableCollision(Layer layer1, Layer layer2);
