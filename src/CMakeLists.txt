@@ -16,6 +16,7 @@ set(SOURCE_FILES
 
     core/entity_manager.cpp
     core/coordinator.cpp
+    core/layer.cpp
 
     physics/constraint.cpp
     physics/collider.cpp
@@ -94,6 +95,7 @@ set(HEADER_FILES
     core/system_base.hpp
     core/system.hpp
     core/coordinator.hpp
+    core/layer.hpp
 
     templates/observer.hpp
     templates/set.hpp
