@@ -29,7 +29,7 @@ struct QueueFamilyIndices {
 class Device {
 public:
 #ifdef NDEBUG
-    const bool enableValidationLayers = false;
+    const bool enable_validation_layers = false;
 #else
     const bool enable_validation_layers = true;
 #endif
