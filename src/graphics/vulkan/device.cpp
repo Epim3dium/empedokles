@@ -2,9 +2,9 @@
 
 // std headers
 #include <cstring>
-#include <iostream>
 #include <set>
 #include <unordered_set>
+#include "debug/log.hpp"
 
 namespace emp {
 
@@ -15,7 +15,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData
 ) {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    std::cerr << "validation layer: " << pCallbackData->pMessage ;
 
     return VK_FALSE;
 }
@@ -120,7 +120,7 @@ void Device::pickPhysicalDevice() {
     if (deviceCount == 0) {
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
-    std::cout << "Device count: " << deviceCount << std::endl;
+    EMP_LOG(INFO) << "Device count: " << deviceCount;
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
 
@@ -136,7 +136,7 @@ void Device::pickPhysicalDevice() {
     }
 
     vkGetPhysicalDeviceProperties(m_physical_device, &properties);
-    std::cout << "physical device: " << properties.deviceName << std::endl;
+    EMP_LOG(INFO) << "physical device: " << properties.deviceName;
 }
 
 void Device::createLogicalDevice() {
@@ -309,17 +309,17 @@ void Device::hasGflwRequiredInstanceExtensions() {
             nullptr, &extensionCount, extensions.data()
     );
 
-    std::cout << "available extensions:" << std::endl;
+    EMP_LOG(DEBUG2) << "available extensions:" ;
     std::unordered_set<std::string> available;
     for (const auto& extension : extensions) {
-        std::cout << "\t" << extension.extensionName << std::endl;
+        EMP_LOG(DEBUG2) << "\t" << extension.extensionName ;
         available.insert(extension.extensionName);
     }
 
-    std::cout << "required extensions:" << std::endl;
+    EMP_LOG(INFO) << "required extensions:" ;
     auto requiredExtensions = getRequiredExtensions();
     for (const auto& required : requiredExtensions) {
-        std::cout << "\t" << required << std::endl;
+        EMP_LOG(INFO) << "\t" << required ;
         if (available.find(required) == available.end()) {
             throw std::runtime_error("Missing required glfw extension");
         }

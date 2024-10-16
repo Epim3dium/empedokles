@@ -8,6 +8,7 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include "debug/log.hpp"
 
 namespace emp {
 
@@ -450,19 +451,18 @@ VkPresentModeKHR SwapChain::chooseSwapPresentMode(
 ) {
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            std::cout << "Present mode: Mailbox" << std::endl;
+            EMP_LOG(INFO) << "Present mode: Mailbox";
             return availablePresentMode;
         }
     }
 
     // for (const auto &availablePresentMode : availablePresentModes) {
     //   if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-    //     std::cout << "Present mode: Immediate" << std::endl;
     //     return availablePresentMode;
     //   }
     // }
 
-    std::cout << "Present mode: V-Sync" << std::endl;
+    EMP_LOG(INFO) << "Present mode: V-Sync";
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 

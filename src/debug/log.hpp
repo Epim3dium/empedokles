@@ -71,7 +71,7 @@ public:
 };
 
 #ifndef FILELOG_MAX_LEVEL
-#define FILELOG_MAX_LEVEL DEBUG3
+#define FILELOG_MAX_LEVEL DEBUG2
 #endif
 
 #define EMP_LOG(level)                       \

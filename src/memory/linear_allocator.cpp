@@ -29,7 +29,6 @@ void* LinearAllocator::Allocate(size_t sz, size_t alignment) {
     assert((alignment & (alignment - 1)) == 0);
 
     void* ptr = std::align(alignment, sz, m_cur, m_free);
-    //std::cout << (uintptr_t)m_cur - (uintptr_t)m_start << std::endl;
 
     if (!ptr) {
         assert(false && "Linear allocator full!");
@@ -39,7 +38,6 @@ void* LinearAllocator::Allocate(size_t sz, size_t alignment) {
     m_free -= sz;
     m_cur = (void*)((uintptr_t)ptr+sz);
 
-    //std::cout << (uintptr_t)m_cur - (uintptr_t)m_start << std::endl;
 
     return ptr;
 }
