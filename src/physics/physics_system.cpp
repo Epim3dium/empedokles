@@ -46,8 +46,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
         float compliance
 ) {
     PenetrationConstraint result;
-    result.entity1 = e1;
-    result.entity2 = e2;
+    result.info.collider_entity = e1;
+    result.info.collidee_entity = e2;
 
     auto& trans1 = getComponent<Transform>(e1);
     auto& rb1 = getComponent<Rigidbody>(e1);
@@ -58,6 +58,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& rb2 = getComponent<Rigidbody>(e2);
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
+
+    if(!col1.canCollideWith(col2.collider_layer)) {
+        return {false};
+    }
 
     vec2f& pos1 = trans1.position;
     vec2f& pos2 = trans2.position;
@@ -103,8 +107,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     EMP_DEBUGCALL(debug_contactpoints.push_back(p1));
     EMP_DEBUGCALL(debug_contactpoints.push_back(p2));
 
-    result.normal = intersection.contact_normal;
-    result.penetration = penetration;
+    result.info.collision_normal = intersection.contact_normal;
+    result.info.penetration = penetration;
 
     // result.vel1_pre_solve = b1.vel;
     // result.vel2_pre_solve = b2.vel;
@@ -115,8 +119,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     const auto center_to_col_point2 = p2 - pos2;
     const auto radius1 = rotateVec(center_to_col_point1, -rot1);
     const auto radius2 = rotateVec(center_to_col_point2, -rot2);
-    result.radius1 = radius1;
-    result.radius2 = radius2;
+    result.info.collider_radius = radius1;
+    result.info.collidee_radius = radius2;
 
     auto positional_correction = calcPositionalCorrection(
             PositionalCorrectionInfo(
@@ -132,14 +136,14 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
             normal,
             delT
     );
+    float delta_lagrange = positional_correction.delta_lagrange;
     pos1 += positional_correction.pos1_correction;
     rot1 += positional_correction.rot1_correction;
     pos2 += positional_correction.pos2_correction;
     rot2 += positional_correction.rot2_correction;
 
-    float delta_lagrange = positional_correction.delta_lagrange;
 
-    result.normal_lagrange = delta_lagrange;
+    result.info.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
 
     auto delta_p1 = pos1 - rb1.prev_pos + rotateVec(radius1, rot1) -
@@ -201,13 +205,29 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
     }
     return result;
 }
+void PhysicsSystem::m_broadcastCollisionMessages(
+        const std::vector<PenetrationConstraint>& constraints
+) {
+    for(const auto& constraint : constraints) {
+        auto col_info = constraint.info;
+        auto& col1 = getComponent<Collider>(col_info.collider_entity);
+        auto& col2 = getComponent<Collider>(col_info.collidee_entity);
+        col1.broadcastCollision(col_info);
+
+        col_info.collision_normal *= -1.f;
+        col_info.relative_velocity*= -1.f;
+        std::swap(col_info.collider_entity, col_info.collidee_entity);
+        std::swap(col_info.collider_radius, col_info.collidee_radius);
+        col2.broadcastCollision(col_info);
+    }
+}
 // need to update colliders after
 void PhysicsSystem::m_solveVelocities(
         std::vector<PenetrationConstraint>& constraints, float delT
 ) {
-    for (const auto& constraint : constraints) {
-        const auto e1 = constraint.entity1;
-        const auto e2 = constraint.entity2;
+    for (auto& constraint : constraints) {
+        const auto e1 = constraint.info.collider_entity;
+        const auto e2 = constraint.info.collidee_entity;
 
         const auto& trans1 = getComponent<Transform>(e1);
         auto& rb1 = getComponent<Rigidbody>(e1);
@@ -217,8 +237,8 @@ void PhysicsSystem::m_solveVelocities(
 
         const auto restitution = constraint.restitution;
 
-        const auto r1model = rotateVec(constraint.radius1, trans1.rotation);
-        const auto r2model = rotateVec(constraint.radius2, trans2.rotation);
+        const auto r1model = rotateVec(constraint.info.collider_radius, trans1.rotation);
+        const auto r2model = rotateVec(constraint.info.collidee_radius, trans2.rotation);
 
         const auto pre_solve_contact_vel1 = m_calcContactVel(
                 rb1.vel_pre_solve, rb1.ang_vel_pre_solve, r1model
@@ -229,17 +249,18 @@ void PhysicsSystem::m_solveVelocities(
         const auto pre_solve_relative_vel =
                 pre_solve_contact_vel1 - pre_solve_contact_vel2;
         const auto pre_solve_normal_speed =
-                dot(pre_solve_relative_vel, constraint.normal);
+                dot(pre_solve_relative_vel, constraint.info.collision_normal);
 
         const auto contact_vel1 =
                 m_calcContactVel(rb1.velocity, rb1.angular_velocity, r1model);
         const auto contact_vel2 =
                 m_calcContactVel(rb2.velocity, rb2.angular_velocity, r2model);
         const auto relative_vel = contact_vel1 - contact_vel2;
-        const auto normal_speed = dot(relative_vel, constraint.normal);
+        constraint.info.relative_velocity = relative_vel;
+        const auto normal_speed = dot(relative_vel, constraint.info.collision_normal);
 
         const auto tangent_vel =
-                relative_vel - constraint.normal * normal_speed;
+                relative_vel - constraint.info.collision_normal * normal_speed;
         const auto tangent_speed = length(tangent_vel);
 
         vec2f p = {0, 0};
@@ -252,11 +273,11 @@ void PhysicsSystem::m_solveVelocities(
         );
         if (abs(restitution_speed) > 0.f) {
             const auto w1 =
-                    rb1.generalizedInverseMass(r1model, constraint.normal);
+                    rb1.generalizedInverseMass(r1model, constraint.info.collision_normal);
             const auto w2 =
-                    rb2.generalizedInverseMass(r2model, constraint.normal);
+                    rb2.generalizedInverseMass(r2model, constraint.info.collision_normal);
             const auto restitution_impulse = restitution_speed / (w1 + w2);
-            p += restitution_impulse * constraint.normal;
+            p += restitution_impulse * constraint.info.collision_normal;
         }
 
         const float sfriction = constraint.sfriction;
@@ -270,7 +291,7 @@ void PhysicsSystem::m_solveVelocities(
                     dfriction,
                     tangent_speed,
                     w1 + w2,
-                    constraint.normal_lagrange,
+                    constraint.info.normal_lagrange,
                     delT
             );
             p += friction_impulse * tangent;
@@ -303,10 +324,11 @@ void PhysicsSystem::m_step(
     const_sys.update(deltaTime);
     auto potential_pairs = m_broadPhase();
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);
-    ;
+    
     trans_sys.update();
     rb_sys.deriveVelocities(deltaTime);
     m_solveVelocities(penetrations, deltaTime);
+    m_broadcastCollisionMessages(penetrations);
 }
 void PhysicsSystem::update(
         TransformSystem& trans_sys,

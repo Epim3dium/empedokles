@@ -15,15 +15,8 @@ struct Constraint;
 class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     struct PenetrationConstraint {
         bool detected = false;
-        Entity entity1;
-        Entity entity2;
-        vec2f normal;
-        float penetration;
+        CollisionInfo info;
         // not rotated not translated (model space)
-        vec2f radius1;
-        // not rotated not translated (model space)
-        vec2f radius2;
-        float normal_lagrange;
         float sfriction;
         float dfriction;
         float restitution;
@@ -62,6 +55,9 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     // need to update colliders after
     void m_solveVelocities(
             std::vector<PenetrationConstraint>& constraints, float delT
+    );
+    void m_broadcastCollisionMessages(
+            const std::vector<PenetrationConstraint>& constraints
     );
     void m_step(
             TransformSystem& trans_sys,
