@@ -17,6 +17,24 @@ void KeyboardController::update(
     m_mouse_pos = {xpos, ypos};
     m_global_mouse_pos = transformPoint(camera_transform.global(), m_mouse_pos);
 
+    for (int button = 0; button < 8; button++) {
+        int state = glfwGetMouseButton(window.getGLFWwindow(), button);
+        if (state == GLFW_PRESS) {
+            if (!keys[button].held) {
+                keys[button].pressed = true;
+            } else {
+                keys[button].pressed = false;
+            }
+            keys[button].held = true;
+        } else if (state == GLFW_RELEASE) {
+            keys[button].held = false;
+            keys[button].pressed = false;
+            keys[button].released = true;
+        } else {
+            keys[button].released = false;
+            keys[button].pressed = false;
+        }
+    }
     for (int key = 32; key < 348; key++) {
         int state = glfwGetKey(window.getGLFWwindow(), key);
         if (state == GLFW_PRESS) {
