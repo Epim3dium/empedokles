@@ -59,7 +59,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
 
-    if(!col1.canCollideWith(col2.collider_layer)) {
+    if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
         return {false};
     }
 

@@ -18,6 +18,12 @@ void Collider::broadcastCollision(const CollisionInfo& info) {
         m_callbacks[i].second(info);
     }
 }
+bool Collider::canCollide(Layer layer1, Layer layer2) {
+    LayerMask* mat = Collider::collision_matrix;
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+    return mat[lesser].test(major) == false; 
+}
 void Collider::disableCollision(Layer layer1, Layer layer2) {
     LayerMask* mat = Collider::collision_matrix;
     auto lesser = std::min(layer1, layer2);
@@ -30,11 +36,6 @@ void Collider::eableCollision(Layer layer1, Layer layer2) {
     auto major= std::max(layer1, layer2);
 
     mat[lesser] = mat[lesser] & LayerMask().set().set(major, false); 
-}
-bool Collider::canCollideWith(Layer other) {
-    auto lesser = std::min(collider_layer, other);
-    auto major = std::max(collider_layer, other);
-    return !(collision_matrix[lesser] & LayerMask(false).set(major)).any();
 }
 // Collider::Collider(std::vector<vec2f> shape, emp::Transform* trans, bool
 // correctCOM) {

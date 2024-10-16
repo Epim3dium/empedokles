@@ -36,7 +36,7 @@ public:
 
     static void disableCollision(Layer layer1, Layer layer2);
     static void eableCollision(Layer layer1, Layer layer2);
-    bool canCollideWith(Layer other);
+    static bool canCollide(Layer layer1, Layer layer2);
     Layer collider_layer = 0;
     // potentially concave
     std::vector<vec2f> model_outline;
