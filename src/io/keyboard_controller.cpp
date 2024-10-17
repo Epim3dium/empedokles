@@ -12,8 +12,8 @@ void KeyboardController::update(
 ) {
     double xpos, ypos;
     glfwGetCursorPos(window.getGLFWwindow(), &xpos, &ypos);
-    xpos -= window.getExtent().width / 2.f;
-    ypos -= window.getExtent().height / 2.f;
+    xpos -= window.getSize().width / 2.f;
+    ypos -= window.getSize().height / 2.f;
     m_mouse_pos = {xpos, ypos};
     m_global_mouse_pos = transformPoint(camera_transform.global(), m_mouse_pos);
 

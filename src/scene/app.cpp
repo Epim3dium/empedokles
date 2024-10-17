@@ -212,8 +212,9 @@ void App::run() {
             );
 
 #if EMP_SCENE_2D
-            float width = window.getExtent().width;
-            float hegith = window.getExtent().height;
+            float width = window.getSize().width;
+            float height = window.getSize().height;
+            float min_size = std::fmin(width, height);
 
             camera.setOrthographicProjection(
                     -width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f

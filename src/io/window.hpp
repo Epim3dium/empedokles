@@ -26,6 +26,13 @@ public:
     VkExtent2D getExtent() const {
         return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
     }
+    struct Size {
+        int width;
+        int height;
+    };
+    Size getSize() const {
+        return {width, height};
+    }
 
     bool wasWindowResized() const {
         return framebufferResized;
@@ -45,9 +52,14 @@ private:
     static void framebufferResizeCallback(
             GLFWwindow* window, int width, int height
     );
+    static void windowResizeCallback(
+            GLFWwindow* window, int width, int height
+    );
 
     void initWindow();
 
+    int frame_buffer_width;
+    int frame_buffer_height;
     int width;
     int height;
     bool framebufferResized = false;

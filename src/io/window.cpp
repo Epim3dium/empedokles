@@ -3,6 +3,7 @@
 // std
 #include <stdexcept>
 #include <utility>
+#include "debug/log.hpp"
 
 namespace emp {
 
@@ -19,13 +20,17 @@ Window::~Window() {
 void Window::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     window = glfwCreateWindow(
             width, height, windowName.c_str(), nullptr, nullptr
     );
+    glfwGetFramebufferSize(window, &frame_buffer_width, &frame_buffer_height);
+    glfwGetWindowSize(window, &width, &height);
+
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    glfwSetWindowSizeCallback(window, windowResizeCallback);
 }
 
 void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) {
@@ -40,8 +45,16 @@ void Window::framebufferResizeCallback(
 ) {
     auto pwindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     pwindow->framebufferResized = true;
-    pwindow->width = width / 2;
-    pwindow->height = height / 2;
+    pwindow->frame_buffer_width = width;
+    pwindow->frame_buffer_height = height;
+}
+void Window::windowResizeCallback(
+        GLFWwindow* window, int width, int height
+) {
+    auto pwindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    pwindow->framebufferResized = true;
+    pwindow->width = width;
+    pwindow->height = height;
 }
 
 } // namespace emp
