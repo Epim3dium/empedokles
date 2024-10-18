@@ -5,9 +5,9 @@
     - collision optimization
         - collision idle state
         - tighter locked critical section
--graphics
+- graphics
     - basic animation system
-        - tutrly moving animated sprites
+        - truly moving animated sprites
     - add imgui
     - 2d lighting
 - core
@@ -23,13 +23,15 @@
 ---
 
 # ⚠️ ISSUES:
+- when spawing overlapping colliders they explode
 - weird error message when closing window
-- non resizable window
 - restitution unreliability
 ---
 
 # ✅ DONE:
--graphics
+
+- graphics
+    - resizable window
     - render system abstraction
     - basic animation system
         - animated sprites
