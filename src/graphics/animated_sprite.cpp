@@ -1,5 +1,15 @@
 #include "animated_sprite.hpp"
 namespace emp {
+MovingSprite MovingSprite::allFrames(Sprite sprite, float whole_time, bool isLooping) {
+    MovingSprite moving;
+    moving.isLooping = isLooping;
+    moving.sprite = sprite;
+    float single_frame_duration = whole_time / static_cast<float>(sprite.frameCount());
+    for(int i = 0; i < sprite.frameCount(); i++) {
+        moving.frames.push_back({i, single_frame_duration});
+    }
+    return moving;
+}
 AnimatedSprite::AnimatedSprite(const Builder& builder)
     : m_state_machine(builder.FSM_builder),
       m_moving_sprites(builder.moving_sprites) {
@@ -35,7 +45,7 @@ void AnimatedSprite::m_checkFrameSwitching(float delta_time) {
         m_current_anim_frame_idx %= max_frame_idx;
     }
     m_current_anim_frame_idx =
-            std::min(m_current_anim_frame_idx, max_frame_idx);
+            std::min(m_current_anim_frame_idx, max_frame_idx - 1);
 
     sprite.frame = frames[m_current_anim_frame_idx].frame;
 }

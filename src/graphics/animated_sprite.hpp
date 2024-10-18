@@ -17,6 +17,7 @@ struct MovingSprite {
     inline void add(int frame, float duration) {
         frames.push_back({frame, duration});
     }
+    static MovingSprite allFrames(Sprite sprite, float whole_time, bool isLoop = true);
     static MovingSprite singleFrame(Sprite sprite) {
         MovingSprite result;
         result.sprite = sprite;
