@@ -25,6 +25,8 @@ public:
 
     virtual void onUpdate(const float, Window&, KeyboardController&) {
     }
+    virtual void onFixedUpdate(const float, Window&, KeyboardController&) {
+    }
     virtual void onRender(Device&, const FrameInfo&) {
     }
     virtual void onSetup(Window&, Device&) {
