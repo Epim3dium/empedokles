@@ -6,7 +6,7 @@
 #include "graphics/sprite.hpp"
 #include "templates/finite_state_machine.hpp"
 namespace emp {
-struct SpriteFrames {
+struct MovingSprite {
     struct FrameDuration {
         int frame;
         float duration;
@@ -17,8 +17,8 @@ struct SpriteFrames {
     inline void add(int frame, float duration) {
         frames.push_back({frame, duration});
     }
-    static SpriteFrames singleFrame(Sprite sprite) {
-        SpriteFrames result;
+    static MovingSprite singleFrame(Sprite sprite) {
+        MovingSprite result;
         result.sprite = sprite;
         result.add(0, INFINITY);
         return result;
@@ -28,8 +28,11 @@ class AnimatedSprite {
     typedef FiniteStateMachine<std::string, Entity> StateMachine_t;
 
     StateMachine_t m_state_machine;
-    std::unordered_map<std::string, SpriteFrames> m_animation_frames;
-    int animation_frame = 0;
+    std::unordered_map<std::string, MovingSprite> m_moving_sprites;
+    int m_current_anim_frame_idx = 0;
+    float m_current_frame_lasted_sec = 0.f;
+    void m_processSpriteChange(std::string new_sprite_id);
+    void m_checkFrameSwitching(float delta_time);
 public:
     vec2f position_offset = vec2f(0, 0);
     bool flipX = false;
@@ -41,29 +44,25 @@ public:
         return m_state_machine.state();
     }
     Sprite& sprite() {
-        auto& all_frames = m_animation_frames.at(current_sprite_frame());
-        // auto frame_index = all_frames.frames[animation_frame].frame;
-        // all_frames.sprite.frame = frame_index;
-        return all_frames.sprite;
+        auto& moving_sprite = m_moving_sprites.at(current_sprite_frame());
+        return moving_sprite.sprite;
     }
     const Sprite& sprite() const {
-        auto& all_frames = m_animation_frames.at(current_sprite_frame());
-        return all_frames.sprite;
+        auto& moving_sprite = m_moving_sprites.at(current_sprite_frame());
+        return moving_sprite.sprite;
     }
-    void updateState(Entity e) {
-        m_state_machine.eval(e);
-    }
+    void updateState(Entity entity, float delta_time);
 
     class Builder {
         StateMachine_t::Builder FSM_builder;
-        std::unordered_map<std::string, SpriteFrames> animation_frames;
+        std::unordered_map<std::string, MovingSprite> moving_sprites;
     public:
-        Builder(std::string entry_point, const SpriteFrames& default_sprite) : FSM_builder(entry_point) {
-            animation_frames[entry_point] = default_sprite;
+        Builder(std::string entry_point, const MovingSprite& default_sprite) : FSM_builder(entry_point) {
+            moving_sprites[entry_point] = default_sprite;
         }
-        void addNode(std::string name, const SpriteFrames& sprite) {
+        void addNode(std::string name, const MovingSprite& sprite) {
             FSM_builder.addNode(name);
-            animation_frames[name] = sprite;
+            moving_sprites[name] = sprite;
         }
         void addEdge(std::string from, std::string to, auto trigger) {
             FSM_builder.addEdge(from, to, trigger);
@@ -71,7 +70,7 @@ public:
         friend AnimatedSprite;
     };
     AnimatedSprite() : m_state_machine({"undefined"}) {}
-    AnimatedSprite(const Builder& builder) : m_state_machine(builder.FSM_builder), m_animation_frames(builder.animation_frames) {}
+    AnimatedSprite(const Builder& builder) : m_state_machine(builder.FSM_builder), m_moving_sprites(builder.moving_sprites) {}
 };
 }; // namespace emp
 #endif

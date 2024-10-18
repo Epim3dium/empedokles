@@ -18,7 +18,7 @@ namespace emp {
 
         void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 
-        void updateTransitions();
+        void updateTransitions(float delta_time);
         void updateBuffer(int frameIndex);
         std::vector<std::unique_ptr<Buffer>> uboBuffers{
                 SwapChain::MAX_FRAMES_IN_FLIGHT

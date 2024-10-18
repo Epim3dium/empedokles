@@ -14,6 +14,9 @@ public:
     int vframes = 1;
     // number of columns in texture
     int hframes = 1;
+    inline int frameCount() const {
+        return vframes * hframes;
+    }
 
     int frame = 0;
 

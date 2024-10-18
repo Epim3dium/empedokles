@@ -365,7 +365,7 @@ void App::renderFrame(
             // models_sys->updateBuffer(frameIndex);
             debugshape_sys.updateBuffer(frame_index);
             sprite_sys.updateBuffer(frame_index);
-            animated_sprite_sys.updateTransitions();
+            animated_sprite_sys.updateTransitions(delta_time);
             animated_sprite_sys.updateBuffer(frame_index);
             {
                 renderer.beginSwapChainRenderPass(command_buffer);

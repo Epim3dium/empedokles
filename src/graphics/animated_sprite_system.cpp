@@ -42,9 +42,9 @@ namespace emp {
         }
     }
 
-    void AnimatedSpriteSystem::updateTransitions() {
+    void AnimatedSpriteSystem::updateTransitions(float delta_time) {
         for (auto entity : entities) {
-            getComponent<AnimatedSprite>(entity).updateState(entity);
+            getComponent<AnimatedSprite>(entity).updateState(entity, delta_time);
         }
     }
     void AnimatedSpriteSystem::updateBuffer(int frameIndex) {
