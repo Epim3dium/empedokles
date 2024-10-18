@@ -1,7 +1,9 @@
 #include "rigidbody.hpp"
 #include "core/coordinator.hpp"
+#include "math/geometry_func.hpp"
 #include "math/math_func.hpp"
 #include "physics/collider.hpp"
+#include <numeric>
 namespace emp {
 #define SQ(x) ((x) * (x))
 float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
@@ -14,9 +16,14 @@ void RigidbodySystem::updateMasses() {
         auto& rigidobdy = getComponent<Rigidbody>(entity);
         const auto collider = coordinator.getComponent<Collider>(entity);
         if (rigidobdy.useAutomaticMass && collider != nullptr) {
-            rigidobdy.real_mass = collider->area * rigidobdy.real_density;
-            rigidobdy.real_inertia =
-                    collider->inertia_dev_mass * rigidobdy.real_density;
+
+            auto model =  collider->transformed_outline;
+            vec2f avg = std::reduce(model.begin(), model.end()) / static_cast<float>(model.size());
+            for(auto& p : model) { p -= avg; }
+
+            auto MIA = calculateMassInertiaArea(collider->model_outline);
+            rigidobdy.real_mass = MIA.area * rigidobdy.real_density;
+            rigidobdy.real_inertia = MIA.MMOI * rigidobdy.real_density;
         }
     }
 }

@@ -92,8 +92,6 @@ void ColliderSystem::updateInstant(const Entity entity) {
 Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
     model_outline = shape;
     auto MIA = calculateMassInertiaArea(model_outline);
-    inertia_dev_mass = MIA.MMOI;
-    area = MIA.area;
     if (correctCOM) {
         for (auto& p : model_outline) {
             p -= MIA.centroid;

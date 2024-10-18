@@ -358,12 +358,6 @@ void PhysicsSystem::update(
     }
 }
 void PhysicsSystem::onEntityAdded(Entity entity) {
-    auto& rb = getComponent<Rigidbody>(entity);
-    if (!rb.useAutomaticMass)
-        return;
-    auto& col = getComponent<Collider>(entity);
-    rb.real_mass = col.area * rb.real_density;
-    rb.real_inertia = col.inertia_dev_mass * rb.real_density;
 }
 }; // namespace emp
 

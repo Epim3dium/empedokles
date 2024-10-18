@@ -45,9 +45,6 @@ public:
     std::vector<vec2f> transformed_outline;
     std::vector<ConvexVertexCloud> transformed_shape;
 
-    float area;
-    float inertia_dev_mass;
-
     AABB aabb() const {
         return m_aabb;
     }

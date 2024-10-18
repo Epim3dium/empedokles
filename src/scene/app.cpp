@@ -312,7 +312,7 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
                 m_priority_access.wait(lock);
             }
             m_isPhysics_waiting = false;
-
+            rigidbody_sys.updateMasses();
             physics_sys.update(
                     transform_sys,
                     collider_sys,
