@@ -39,8 +39,8 @@ public:
     void run();
 
 protected:
-    static constexpr int width = 1000;
-    static constexpr int height = 1000;
+    static constexpr int width = 800;
+    static constexpr int height = 800;
     KeyboardController controller;
 
     Window window;

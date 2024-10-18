@@ -107,7 +107,7 @@ public:
 #define EMP__HELPER_LOG_INTERVAL(level, time, uniquetp, uniquecanlog)     \
     static std::chrono::time_point<std::chrono::high_resolution_clock>    \
             uniquetp = std::chrono::high_resolution_clock::now();         \
-    static int uniquecanlog = 1;                                          \
+    static int uniquecanlog = 0;                                          \
     if (level > FILELOG_MAX_LEVEL)                                        \
         ;                                                                 \
     else if (level > Log::s_reporting_level)                              \
