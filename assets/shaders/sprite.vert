@@ -44,5 +44,11 @@ void main() {
     fragColor = sprite.color.xyz;
     vec2 uv_range = sprite.rect_max - sprite.rect_min;
     vec2 uv_scaled = vec2(uv.x * uv_range.x, uv.y * uv_range.y);
+    if(sprite.flip.x == 1) {
+        uv_scaled  = vec2(uv_range.x - uv_scaled.x, uv_scaled.y);
+    }
+    if(sprite.flip.y == 1) {
+        uv_scaled  = vec2(uv_scaled.x, uv_range.y - uv_scaled.y);
+    }
     fragUv = uv_scaled + sprite.rect_min;
 }

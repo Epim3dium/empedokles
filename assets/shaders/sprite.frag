@@ -36,12 +36,6 @@ layout (set = 1, binding = 1) uniform sampler2D diffuseTex;
 
 void main() {
     vec2 uv = fragUv;
-    if(sprite.flip.x == 1) {
-        uv.x = 1 - uv.x;
-    }
-    if(sprite.flip.y == 1) {
-        uv.y = 1 - uv.y;
-    }
     vec4 color = texture(diffuseTex, uv);
     if(color.a == 0) {
         discard;
