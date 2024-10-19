@@ -670,24 +670,6 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(
             vec2f axis_proj =
                     normal(vec2f(-axis_proj_perp.y, axis_proj_perp.x));
 
-            // very rare TODO: remove findClosestPointONRay from inner loop
-            if (incidentEdgeOwner == flipShapes &&
-                (cn == axis_proj || cn == -axis_proj)) {
-                auto closest_current = findClosestPointOnRay(
-                        incident_edge.first,
-                        incident_edge.second - incident_edge.first,
-                        contact_vertex
-                );
-                auto closest_potential = findClosestPointOnRay(
-                        poly1[a], poly1[b] - poly1[a], contact_vertex
-                );
-                if (qlen(closest_current - contact_vertex) >
-                    qlen(closest_potential - contact_vertex)) {
-                    incidentEdgeOwner = flipShapes;
-                    incident_edge = {poly1[a], poly1[b]};
-                }
-            }
-
             std::pair<float, vec2f> min_r1 = {INFINITY, {}},
                                     max_r1 = {-INFINITY, {}};
             for (int p = 0; p < poly1.size(); p++) {
@@ -707,17 +689,15 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(
             auto minmax = compMin(max_r1, max_r2).first;
             auto maxmin = compMax(min_r1, min_r2).first;
             auto current_overlap = minmax - maxmin;
-            if (current_overlap < overlap) {
+            if (current_overlap < overlap && maxmin == min_r2.first) {
                 overlap = current_overlap;
                 cn = axis_proj;
                 incidentEdgeOwner = flipShapes;
                 incident_edge.first = poly1[a];
                 incident_edge.second = poly1[b];
-                contact_vertex =
-                        (minmax == max_r2.first ? max_r2.second : min_r2.second
-                        );
+                contact_vertex = min_r2.second;
 
-                if ((minmax != max_r2.first) ^ flipShapes) {
+                if (!flipShapes) {
                     cn *= -1.f;
                 }
             }
@@ -735,7 +715,7 @@ IntersectionPolygonPolygonResult intersectPolygonPolygon(
             contact_vertex
     );
     auto cp1 = (incidentEdgeOwner ? contact_vertex : closest);
-    auto cp2 = (incidentEdgeOwner ? closest : contact_vertex);
+    auto cp2 = cp1;
     return {true, cn, overlap, cp1, cp2};
 }
 IntersectionPolygonPolygonResult intersectPolygonPolygon(
