@@ -69,6 +69,10 @@ void Collider::m_updateNewTransform(const Transform& transform) {
             transformed_shape[i][ii] =
                     transformPoint(transform.global(), poly[ii]);
         }
+        auto center = std::reduce(transformed_shape[i].begin(), transformed_shape[i].end()) / static_cast<float>(poly.size());
+        std::sort(transformed_shape[i].begin(), transformed_shape[i].end(), [&](vec2f a, vec2f b) {
+            return atan2(a.y - center.y, a.x - center.x) > atan2(b.y - center.y, b.x - center.x);
+        });
     }
     for (int i = 0; i < model_outline.size(); i++) {
         transformed_outline[i] =
