@@ -100,6 +100,9 @@ set(HEADER_FILES
     templates/observer.hpp
     templates/set.hpp
     templates/stack_linked_list.hpp
+    templates/disjoint_set.hpp
+    templates/free_list.hpp
+    templates/finite_state_machine.hpp
 
     debug/log.hpp
     debug/debug.hpp
