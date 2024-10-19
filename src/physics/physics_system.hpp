@@ -8,6 +8,7 @@
 #include "physics/constraint.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
+#include "templates/disjoint_set.hpp"
 
 #include <memory>
 namespace emp {
@@ -17,6 +18,8 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
         bool detected = false;
         CollisionInfo info;
         // not rotated not translated (model space)
+        bool isStatic1;
+        bool isStatic2;
         float sfriction;
         float dfriction;
         float restitution;
@@ -61,6 +64,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     );
     void m_applyGravity();
     void m_applyAirDrag();
+    void m_processSleep(float delta_time);
     void m_step(
             TransformSystem& trans_sys,
             ColliderSystem& col_sys,
@@ -70,6 +74,14 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     );
 
 public:
+    DisjointSet<MAX_ENTITIES> m_collision_islands;
+    std::bitset<MAX_ENTITIES> m_have_collided;
+    static constexpr float SLOW_VEL = 15.f;
+    static constexpr float DORMANT_TIME = 3.f;
+    float m_have_been_slow_for[MAX_ENTITIES] {0.f};
+    bool m_isDormant(Entity e);
+
+
     EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
     float gravity = 1.f;
     size_t substep_count = 8U;

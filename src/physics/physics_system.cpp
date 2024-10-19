@@ -74,6 +74,9 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
 
     if (rb1.isStatic && rb2.isStatic)
         return result;
+    result.isStatic1 = rb1.isStatic;
+    result.isStatic2 = rb2.isStatic;
+
     const float sfriction =
             0.5f * (mat1.static_friction + mat2.static_friction);
     const float dfriction =
@@ -197,11 +200,22 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
     std::vector<PenetrationConstraint> result;
     for (const auto [e1, e2, s1i, s2i] : pairs) {
         auto res = m_handleCollision(e1, s1i, e2, s2i, delT);
-        if (res.detected) {
-            col_sys.updateInstant(e1);
-            col_sys.updateInstant(e2);
-            result.push_back(res);
+        if (!res.detected) {
+            continue;
         }
+
+        if(!res.isStatic1) {
+            col_sys.updateInstant(e1);
+        }
+        if(!res.isStatic2) {
+            col_sys.updateInstant(e2);
+        }
+        if(!res.isStatic1 && !res.isStatic2) {
+            m_have_collided.set(e1);
+            m_have_collided.set(e2);
+            m_collision_islands.merge(e1, e2);
+        }
+        result.push_back(res);
     }
     return result;
 }
@@ -313,6 +327,9 @@ void PhysicsSystem::m_solveVelocities(
 }
 void PhysicsSystem::m_applyGravity() {
     for (const auto e : entities) {
+        if(m_isDormant(e)) {
+            continue;
+        }
         auto& rb = getComponent<Rigidbody>(e);
         if (!rb.isStatic) {
             rb.force += vec2f(0, gravity) * rb.mass();
@@ -321,6 +338,9 @@ void PhysicsSystem::m_applyGravity() {
 }
 void PhysicsSystem::m_applyAirDrag() {
     for (const auto e : entities) {
+        if(m_isDormant(e)) {
+            continue;
+        }
         auto& rb = getComponent<Rigidbody>(e);
         auto& material = getComponent<Material>(e);
         auto magnitude = dot(rb.velocity, rb.velocity);
@@ -333,25 +353,61 @@ void PhysicsSystem::m_applyAirDrag() {
         }
     }
 }
+void PhysicsSystem::m_processSleep(float delta_time) {
+    for (const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(rb.isStatic)
+            continue;
+        auto head = m_collision_islands.group(e);
+        if(length(rb.velocity) > SLOW_VEL) {
+            m_have_been_slow_for[head] = 0.f;
+        }
+        if(m_have_been_slow_for[head] == 0.f) {
+            m_have_been_slow_for[e] = 0.f;
+            m_collision_islands.isolate(e);
+        }
+    }
+    for(const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(rb.isStatic)
+            continue;
+        if(m_collision_islands.isHead(e)) {
+            m_have_been_slow_for[e] += delta_time;
+        }
+    }
+    for (const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(m_isDormant(e)) {
+            rb.isActive = false;
+            rb.velocity = {0.f, 0.f};
+        }else {
+            rb.isActive = true;
+        }
+    }
+}
+bool PhysicsSystem::m_isDormant(Entity e) {
+    return m_have_been_slow_for[m_collision_islands.group(e)] > DORMANT_TIME;
+}
 void PhysicsSystem::m_step(
         TransformSystem& trans_sys,
         ColliderSystem& col_sys,
         RigidbodySystem& rb_sys,
         ConstraintSystem& const_sys,
-        float deltaTime
+        float delta_time
 ) {
     m_applyGravity();
     m_applyAirDrag();
-    rb_sys.integrate(deltaTime);
+    m_processSleep(delta_time);
+    rb_sys.integrate(delta_time);
     trans_sys.update();
     col_sys.update();
-    const_sys.update(deltaTime);
+    const_sys.update(delta_time);
     auto potential_pairs = m_broadPhase();
-    auto penetrations = m_narrowPhase(col_sys, potential_pairs, deltaTime);
+    auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);
     
     trans_sys.update();
-    rb_sys.deriveVelocities(deltaTime);
-    m_solveVelocities(penetrations, deltaTime);
+    rb_sys.deriveVelocities(delta_time);
+    m_solveVelocities(penetrations, delta_time);
     m_broadcastCollisionMessages(penetrations);
 }
 void PhysicsSystem::update(
@@ -362,6 +418,7 @@ void PhysicsSystem::update(
         float delT
 ) {
     EMP_DEBUGCALL(debug_contactpoints.clear();)
+    m_have_collided.reset();
     for (int i = 0; i < substep_count; i++) {
         m_step(trans_sys,
                col_sys,
@@ -372,6 +429,11 @@ void PhysicsSystem::update(
             auto& rb = getComponent<Rigidbody>(e);
             rb.force = {0, 0};
             rb.torque = 0.f;
+        }
+    }
+    for(int e = 0; e < MAX_ENTITIES; e++) {
+        if(!m_have_collided.test(e) && !m_isDormant(e)) {
+            m_collision_islands.isolate(e);
         }
     }
 }
