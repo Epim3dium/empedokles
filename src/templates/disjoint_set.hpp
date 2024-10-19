@@ -8,6 +8,12 @@ template<std::size_t Size>
 struct DisjointSet {
     int parent[Size];
     int rank[Size] {0};
+    void isolate(int element) {
+        int group_head = group(element);
+        rank[group_head] -= 1;
+        rank[element] = 0;
+        parent[element] = element;
+    }
     int group(int element) {
         std::stack<int> to_correct;
         while(parent[element] != element) {
@@ -20,6 +26,9 @@ struct DisjointSet {
             to_correct.pop();
         }
         return element;
+    }
+    bool isHead(int element) {
+        return element == group(element);
     }
     void merge(int element1, int element2) {
         int group1 = group(element1);
