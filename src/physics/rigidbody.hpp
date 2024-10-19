@@ -9,6 +9,8 @@ public:
     bool isStatic = false;
     bool isRotationLocked = false;
 
+    bool isActive = true;
+
     float real_inertia = 1.f;
     float real_mass = 1.f;
     float real_density = 1.f;
