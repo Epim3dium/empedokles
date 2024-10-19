@@ -311,6 +311,28 @@ void PhysicsSystem::m_solveVelocities(
         }
     }
 }
+void PhysicsSystem::m_applyGravity() {
+    for (const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if (!rb.isStatic) {
+            rb.force += vec2f(0, gravity) * rb.mass();
+        }
+    }
+}
+void PhysicsSystem::m_applyAirDrag() {
+    for (const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        auto& material = getComponent<Material>(e);
+        auto magnitude = dot(rb.velocity, rb.velocity);
+        if(magnitude == 0.f) {
+            continue;
+        }
+        auto direction = -normal(rb.velocity);
+        if (!rb.isStatic) {
+            rb.force += direction * magnitude * material.air_friction;
+        }
+    }
+}
 void PhysicsSystem::m_step(
         TransformSystem& trans_sys,
         ColliderSystem& col_sys,
@@ -318,6 +340,8 @@ void PhysicsSystem::m_step(
         ConstraintSystem& const_sys,
         float deltaTime
 ) {
+    m_applyGravity();
+    m_applyAirDrag();
     rb_sys.integrate(deltaTime);
     trans_sys.update();
     col_sys.update();
@@ -338,12 +362,6 @@ void PhysicsSystem::update(
         float delT
 ) {
     EMP_DEBUGCALL(debug_contactpoints.clear();)
-    for (const auto e : entities) {
-        auto& rb = getComponent<Rigidbody>(e);
-        if (!rb.isStatic) {
-            rb.force += vec2f(0, gravity) * (float)substep_count * rb.mass();
-        }
-    }
     for (int i = 0; i < substep_count; i++) {
         m_step(trans_sys,
                col_sys,

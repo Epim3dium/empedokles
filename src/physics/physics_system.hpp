@@ -59,6 +59,8 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     void m_broadcastCollisionMessages(
             const std::vector<PenetrationConstraint>& constraints
     );
+    void m_applyGravity();
+    void m_applyAirDrag();
     void m_step(
             TransformSystem& trans_sys,
             ColliderSystem& col_sys,
