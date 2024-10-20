@@ -34,6 +34,37 @@ else()
     message(STATUS "Using glfw lib at: ${GLFW_LIB}")
 endif()
 
+# IMGUI
+# FetchContent to download and include ImGui
+include(FetchContent)
+# Add ImGui via FetchContent
+FetchContent_Declare(
+  ImGui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG v1.89.1  # You can specify the version you want to use here.
+)
+# Make sure the content is downloaded and available
+FetchContent_MakeAvailable(ImGui)
+
+add_library(imgui STATIC
+  ${imgui_SOURCE_DIR}/imgui.cpp
+  ${imgui_SOURCE_DIR}/imgui_draw.cpp
+  ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+  ${imgui_SOURCE_DIR}/imgui_tables.cpp
+  ${imgui_SOURCE_DIR}/imgui_demo.cpp
+
+  # Add Vulkan backend
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp  # Assuming GLFW is used
+)
+
+# Include the backend headers
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+
+# Link libraries (add glfw, and vulkan dependencies)
+target_link_libraries(imgui Vulkan::Vulkan glfw)
+
+
 #linking
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")
@@ -63,7 +94,7 @@ if (WIN32)
 
   target_link_libraries(
       ${PROJECT_NAME} 
-      glfw3 vulkan-1
+      glfw3 vulkan-1 imgui
   )
 elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
@@ -73,7 +104,7 @@ elseif (UNIX)
       ${STB_PATH} ${Vulkan_INCLUDE_DIRS}
     )
     target_link_libraries(
-        ${PROJECT_NAME} glfw ${Vulkan_LIBRARIES}
+        ${PROJECT_NAME} glfw ${Vulkan_LIBRARIES} imgui
     )
 endif()
 
