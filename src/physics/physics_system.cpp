@@ -174,7 +174,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
                 ),
                 sliding_len,
                 tangent,
-                delT
+                delT,
+                0.01f
         );
         pos1 += positional_correction.pos1_correction;
         rot1 += positional_correction.rot1_correction;

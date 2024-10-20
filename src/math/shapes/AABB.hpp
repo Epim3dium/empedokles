@@ -1,9 +1,6 @@
 #ifndef EMP_AABB_HPP
 #define EMP_AABB_HPP
 
-#include "SFML/Graphics/PrimitiveType.hpp"
-#include "SFML/Graphics/RenderTarget.hpp"
-#include "SFML/Graphics/RenderWindow.hpp"
 #include "math/math_defs.hpp"
 
 #include <cmath>
@@ -74,9 +71,6 @@ struct AABB {
         val.max.y = std::max(max.y, val.max.y);
         return val;
     }
-    friend void draw(sf::RenderWindow& rw, const AABB& aabb, sf::Color clr);
-    friend void drawFill(sf::RenderTarget& rw, const AABB& aabb, sf::Color clr);
-    friend void drawOutline(sf::RenderTarget& rw, const AABB& aabb, sf::Color clr);
 
     static AABB Expandable();
     static AABB CreateMinMax(vec2f min, vec2f max);

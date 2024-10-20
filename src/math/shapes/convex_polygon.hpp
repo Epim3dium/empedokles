@@ -69,10 +69,6 @@ public:
     static ConvexPolygon CreateRegular(vec2f pos, float rot, size_t count, float dist);
     static ConvexPolygon CreateFromAABB(const AABB& aabb);
     static ConvexPolygon CreateFromPoints(std::vector<vec2f> verticies);
-
-    friend void draw(sf::RenderWindow& rw, const ConvexPolygon& poly, sf::Color clr);
-    friend void drawFill(sf::RenderTarget& rw, const ConvexPolygon& poly, sf::Color clr);
-    friend void drawOutline(sf::RenderTarget& rw, const ConvexPolygon& poly, sf::Color clr);
 };
 
 }

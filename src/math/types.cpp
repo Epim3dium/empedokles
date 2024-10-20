@@ -1,7 +1,4 @@
 #include "types.hpp"
-#include "SFML/Graphics/PrimitiveType.hpp"
-#include "SFML/Graphics/RenderTarget.hpp"
-#include "SFML/System/Vector3.hpp"
 #include "math/geometry_func.hpp"
 
 #include <math.h>

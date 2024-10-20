@@ -2,6 +2,7 @@
 #define EMP_BROADPHASE_HPP
 #include <algorithm>
 #include <set>
+#include <map>
 #include <stack>
 #include <vector>
 #include "core/entity.hpp"
