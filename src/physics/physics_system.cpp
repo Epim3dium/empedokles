@@ -378,10 +378,9 @@ void PhysicsSystem::m_processSleep(float delta_time) {
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         if(m_isDormant(e)) {
-            rb.isActive = false;
-            rb.velocity = {0.f, 0.f};
+            rb.isSleeping = true;
         }else {
-            rb.isActive = true;
+            rb.isSleeping = false;
         }
     }
 }
