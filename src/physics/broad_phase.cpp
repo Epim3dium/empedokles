@@ -19,13 +19,16 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
         AABB aabb;
         size_t sub_shape_idx;
         Layer layer;
+        bool isNonMoving = false;
     };
     std::vector<Object> objects_sorted;
     for (auto itr = begin; itr != end; itr++) {
         auto& col = *coordinator.getComponent<Collider>(*itr);
+        auto& rb = *coordinator.getComponent<Rigidbody>(*itr);
         size_t i = 0;
         for (const auto& shape : col.transformed_shape) {
-            objects_sorted.push_back({*itr, AABB::CreateFromVerticies(shape), i, col.collider_layer}
+            objects_sorted.push_back(
+                    {*itr, AABB::CreateFromVerticies(shape), i, col.collider_layer, rb.isStatic || rb.isSleeping}
             );
             i++;
         }
@@ -52,17 +55,16 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
                     j--;
                 } else if (objects_sorted[i].owner !=
                            objects_sorted[opened[j]].owner) {
-                    if (isOverlappingAABBAABB(
-                                objects_sorted[i].aabb,
-                                objects_sorted[opened[j]].aabb
-                        )) {
-                        const auto& obj1 = objects_sorted[i];
-                        const auto& obj2 = objects_sorted[opened[j]];
+                    const auto& object_added = objects_sorted[i];
+                    const auto& object_opened = objects_sorted[opened[j]];
+                    if (isOverlappingAABBAABB( object_added.aabb, object_opened.aabb) &&
+                            object_added.isNonMoving + object_opened.isNonMoving != 2) 
+                    {
                         result.push_back(
-                                {obj1.owner,
-                                 obj2.owner,
-                                 obj1.sub_shape_idx,
-                                 obj2.sub_shape_idx}
+                                {object_added.owner,
+                                 object_opened.owner,
+                                 object_added.sub_shape_idx,
+                                 object_opened.sub_shape_idx}
                         );
                     }
                 }

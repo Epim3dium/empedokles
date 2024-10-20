@@ -30,7 +30,7 @@ void RigidbodySystem::updateMasses() {
 void RigidbodySystem::integrate(float delT) {
     for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
-        if(!rigidbody.isActive || rigidbody.isStatic)
+        if(rigidbody.isSleeping || rigidbody.isStatic)
             continue;
         auto& transform = getComponent<Transform>(entity);
         rigidbody.prev_pos = transform.position;
@@ -45,7 +45,7 @@ void RigidbodySystem::integrate(float delT) {
 void RigidbodySystem::deriveVelocities(float delT) {
     for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
-        if(!rigidbody.isActive || rigidbody.isStatic)
+        if(rigidbody.isSleeping || rigidbody.isStatic)
             continue;
         auto& transform = getComponent<Transform>(entity);
         rigidbody.vel_pre_solve = rigidbody.velocity;
