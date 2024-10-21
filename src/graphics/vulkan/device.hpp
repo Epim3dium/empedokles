@@ -1,6 +1,7 @@
 #ifndef EMP_DEVICE_HPP
 #define EMP_DEVICE_HPP
 
+#include "graphics/imgui/imgui_emp_impl.hpp"
 #include "io/window.hpp"
 
 // std lib headers
@@ -125,6 +126,10 @@ public:
     );
 
     VkPhysicalDeviceProperties properties{};
+#if EMP_USING_IMGUI 
+    ImGui_ImplVulkan_InitInfo getImGuiInitInfo() const;
+#endif
+
 
 private:
     void createInstance();

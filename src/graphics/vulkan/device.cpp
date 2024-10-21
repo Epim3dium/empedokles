@@ -7,6 +7,20 @@
 #include "debug/log.hpp"
 
 namespace emp {
+#if EMP_USING_IMGUI 
+ImGui_ImplVulkan_InitInfo Device::getImGuiInitInfo() const {
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = m_instance;
+	init_info.PhysicalDevice = m_physical_device;
+	init_info.Device = m_device;
+	init_info.Queue = m_graphics_queue;
+	init_info.DescriptorPool = ImGuiGetDescriptorPool(m_device);
+	init_info.MinImageCount = 3;
+	init_info.ImageCount = 3;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    return init_info;
+}
+#endif
 
 // local callback functions
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(

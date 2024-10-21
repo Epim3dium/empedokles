@@ -7,6 +7,7 @@
 
 // std
 #include <cassert>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -53,6 +54,7 @@ public:
 
     void endSwapChainRenderPass(VkCommandBuffer commandBuffer) const;
 
+    void submitImmediate(std::function<void(VkCommandBuffer cmd)>&& function);
 private:
     void createCommandBuffers();
 

@@ -3,14 +3,26 @@
 // std
 #include <array>
 #include <cassert>
+#include <functional>
 #include <stdexcept>
+#include "graphics/imgui/imgui_emp_impl.hpp"
 
 namespace emp {
+void Renderer::submitImmediate(std::function<void(VkCommandBuffer cmd)>&& function)
+{
+    auto cmd = device.beginSingleTimeCommands();
+	function(cmd);
+    device.endSingleTimeCommands(cmd);
+}
 
 Renderer::Renderer(Window& window, Device& device)
-    : window{window}, device{device} {
+    : window{window}, device{device} 
+{
     recreateSwapChain();
     createCommandBuffers();
+#if EMP_USING_IMGUI 
+    ImGuiSetup(device.getImGuiInitInfo(), window.getGLFWwindow(), device, *this, getSwapChainRenderPass());
+#endif
 }
 
 Renderer::~Renderer() {
@@ -151,12 +163,15 @@ void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) const {
+void Renderer::endSwapChainRenderPass(VkCommandBuffer command_buffer) const {
+#if EMP_USING_IMGUI 
+    ImGuiRender(command_buffer);
+#endif
     assert(isFrameStarted &&
            "Can't call endSwapChainRenderPass if frame is not in progress");
-    assert(commandBuffer == getCurrentCommandBuffer() &&
+    assert(command_buffer == getCurrentCommandBuffer() &&
            "Can't end render pass on command buffer from a different frame");
-    vkCmdEndRenderPass(commandBuffer);
+    vkCmdEndRenderPass(command_buffer);
 }
 
 } // namespace emp
