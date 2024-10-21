@@ -14,7 +14,7 @@ class Demo : public App {
         Entity protagonist;
         float isProtagonistGroundedSec = 0.f;
         static constexpr float cayote_time = 0.25f;
-        static constexpr float cube_side_len = 75.f;
+        static constexpr float cube_side_len = 35.f;
         std::vector<vec2f> unit_cube = {
                 vec2f(-1.f/2.f, -1.f/2.f),
                 vec2f(-1.f/2.f, 1.f/2.f),
@@ -116,7 +116,7 @@ void Demo::onSetup(Window& window, Device& device) {
     for (auto o : ops) {
         auto platform = coordinator.createEntity();
         coordinator.addComponent(
-                platform, Transform(o.first, o.second, {20.0f, 1.f})
+                platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
         );
         coordinator.addComponent(
                 platform, DebugShape(device, cube_model_shape)
@@ -282,7 +282,9 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         }
     }
 
-    if (controller.get(eKeyMappings::Ability1).pressed) {
+    static vec2f last_pos;
+    if (controller.get(eKeyMappings::Ability1).held && last_pos != vec2f(controller.global_mouse_pos())) {
+        last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(Texture("crate"), {cube_side_len, cube_side_len});
         Rigidbody rb;
         rb.useAutomaticMass = true;
