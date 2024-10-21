@@ -37,7 +37,7 @@ class Demo : public App {
                 glm::vec4(0, 0, 1, 1)
         );
         void setupAnimationForProtagonist();
-        void onRender(Device&, const FrameInfo& frame) override final { }
+        void onRender(Device&, const FrameInfo& frame) override final;
         void onSetup(Window& window, Device& device) override final;
         void onUpdate(const float delta_time, Window& window, KeyboardController& controller) override final;
         void onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller)override final;
@@ -219,6 +219,9 @@ void Demo::setupAnimationForProtagonist() {
     coordinator.addComponent(protagonist, anim_sprite);
 }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
+}
+void Demo::onRender(Device&, const FrameInfo& frame) {
+    ImGui::ShowDemoWindow();
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
