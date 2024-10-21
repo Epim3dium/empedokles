@@ -3,39 +3,109 @@
 #include "debug/debug.hpp"
 #include "math/geometry_func.hpp"
 namespace emp {
-LayerMask Collider::collision_matrix[MAX_LAYERS];
 
-void Collider::listen(Entity listener, CallbackFunc callback) {
-    m_callbacks.push_back({listener, callback});
+void CollisionInfo::flip() {
+    std::swap(collider_entity, collidee_entity);
+    std::swap(collider_radius, collidee_radius);
+    collision_normal *= -1.f;
+    relative_velocity *= -1.f;
 }
-void Collider::broadcastCollision(const CollisionInfo& info) {
-    for(int i = 0; i < m_callbacks.size(); i++) {
-        if(!coordinator.isEntityAlive(m_callbacks[i].first)) {
-            m_callbacks.erase(m_callbacks.begin() + i);
-            i--;
-            continue;
+
+ColliderSystem& ColliderSystem::onCollisionEnter(
+        Entity listener, Entity target, CollisionEnterCallback&& func
+) {
+    this->m_enter_callbacks[target].push_back(std::move(func));
+    return *this;
+}
+ColliderSystem& ColliderSystem::onCollisionExit(
+        Entity listener, Entity target, CollisionExitCallback&& func
+) {
+    this->m_exit_callbacks[target].push_back(std::move(func));
+    return *this;
+}
+void ColliderSystem::notifyOfCollision(Entity a, Entity b, CollisionInfo col_info) {
+    FitIntoOne hasher;
+    hasher.a = std::min(a, b);
+    hasher.b = std::max(a, b);
+    m_collisions_occured_this_frame[hasher.hash] = col_info;
+}
+
+void ColliderSystem::processCollisionNotifications() {
+    auto& this_frame = m_collisions_occured_this_frame;
+    auto& last_frame = m_collisions_occured_last_frame;
+
+    std::unordered_set<uint64_t> new_events;
+    std::unordered_set<uint64_t> this_frame_collisions;
+    for(auto it = this_frame.begin(); it != this_frame.end(); it++) {
+        this_frame_collisions.insert(it->first);
+        if(last_frame.contains(it->first)) {
+            //deleting all collisions that are still happening
+            last_frame.erase(it->first);
+        }else {
+            //keeping track of new collisions
+            new_events.insert(it->first);
         }
-        m_callbacks[i].second(info);
+    }
+    //by deleting all collisions that are still happening we are left with collisions that just ended
+    auto& ended_events = last_frame;
+    for(auto& ended : ended_events) {
+        FitIntoOne dehasher;
+        dehasher.hash = ended;
+        callAllOnExitCallbacksFor(dehasher.a, dehasher.b);
+        callAllOnExitCallbacksFor(dehasher.b, dehasher.a);
+    }
+    for(auto& event : new_events) {
+        FitIntoOne dehasher;
+        dehasher.hash = event;
+        auto& info = m_collisions_occured_this_frame.at(event);
+        assert(info.collider_entity == dehasher.a || info.collider_entity == dehasher.b);
+        assert(info.collidee_entity == dehasher.a || info.collidee_entity == dehasher.b);
+
+        callAllOnEnterCallbacksFor(info.collider_entity, info);
+        info.flip();
+        callAllOnEnterCallbacksFor(info.collider_entity, info);
+    }
+
+    m_collisions_occured_last_frame = this_frame_collisions;
+    m_collisions_occured_this_frame.clear();
+}
+void ColliderSystem::callAllOnEnterCallbacksFor(Entity e, const CollisionInfo& info) {
+    if(m_enter_callbacks.contains(e)) {
+        auto& callbacks = m_enter_callbacks.at(e);
+        for(auto callback : callbacks) {
+            callback(info);
+        }
     }
 }
-bool Collider::canCollide(Layer layer1, Layer layer2) {
-    LayerMask* mat = Collider::collision_matrix;
-    auto lesser = std::min(layer1, layer2);
-    auto major= std::max(layer1, layer2);
-    return mat[lesser].test(major) == false; 
+void ColliderSystem::callAllOnExitCallbacksFor(Entity e, Entity other) {
+    if(m_exit_callbacks.contains(e)) {
+        auto& callbacks = m_exit_callbacks.at(e);
+        for(auto callback : callbacks) {
+            callback(e, other);
+        }
+    }
 }
-void Collider::disableCollision(Layer layer1, Layer layer2) {
-    LayerMask* mat = Collider::collision_matrix;
-    auto lesser = std::min(layer1, layer2);
-    auto major= std::max(layer1, layer2);
-    mat[lesser] = mat[lesser] | LayerMask().set(major, true); 
-}
-void Collider::eableCollision(Layer layer1, Layer layer2) {
-    LayerMask* mat = Collider::collision_matrix;
-    auto lesser = std::min(layer1, layer2);
-    auto major= std::max(layer1, layer2);
+void notifyOfCollision(Entity a, Entity b);
 
-    mat[lesser] = mat[lesser] & LayerMask().set().set(major, false); 
+ColliderSystem::ColliderSystem() {
+    for(auto& layer : collision_matrix) {
+        layer.set();
+    }
+}
+bool ColliderSystem::canCollide(Layer layer1, Layer layer2) const {
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+    return collision_matrix[lesser].test(major) == true; 
+}
+void ColliderSystem::disableCollision(Layer layer1, Layer layer2) {
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+    collision_matrix[lesser] = collision_matrix[lesser] & LayerMask().set().set(major, false); 
+}
+void ColliderSystem::eableCollision(Layer layer1, Layer layer2) {
+    auto lesser = std::min(layer1, layer2);
+    auto major= std::max(layer1, layer2);
+    collision_matrix[lesser] = collision_matrix[lesser] | LayerMask().set(major, true); 
 }
 // Collider::Collider(std::vector<vec2f> shape, emp::Transform* trans, bool
 // correctCOM) {

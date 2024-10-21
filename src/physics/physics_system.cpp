@@ -59,9 +59,9 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
 
-    if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
-        return {false};
-    }
+    // if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
+    //     return {false};
+    // }
 
     vec2f& pos1 = trans1.position;
     vec2f& pos2 = trans2.position;
@@ -204,6 +204,7 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
         if (!res.detected) {
             continue;
         }
+        col_sys.notifyOfCollision(e1, e2, res.info);
 
         if(!res.isStatic1) {
             col_sys.updateInstant(e1);
@@ -227,13 +228,13 @@ void PhysicsSystem::m_broadcastCollisionMessages(
         auto col_info = constraint.info;
         auto& col1 = getComponent<Collider>(col_info.collider_entity);
         auto& col2 = getComponent<Collider>(col_info.collidee_entity);
-        col1.broadcastCollision(col_info);
+        // col1.broadcastCollision(col_info);
 
         col_info.collision_normal *= -1.f;
         col_info.relative_velocity*= -1.f;
         std::swap(col_info.collider_entity, col_info.collidee_entity);
         std::swap(col_info.collider_radius, col_info.collidee_radius);
-        col2.broadcastCollision(col_info);
+        // col2.broadcastCollision(col_info);
     }
 }
 // need to update colliders after
@@ -431,11 +432,12 @@ void PhysicsSystem::update(
             rb.torque = 0.f;
         }
     }
-    for(int e = 0; e < MAX_ENTITIES; e++) {
-        if(!m_have_collided.test(e) && !m_isDormant(e)) {
-            m_collision_islands.isolate(e);
-        }
-    }
+    col_sys.processCollisionNotifications();
+    // for(int e = 0; e < MAX_ENTITIES; e++) {
+    //     if(!m_have_collided.test(e) && !m_isDormant(e)) {
+    //         m_collision_islands.isolate(e);
+    //     }
+    // }
 }
 void PhysicsSystem::onEntityAdded(Entity entity) {
 }

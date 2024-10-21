@@ -42,9 +42,12 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
     );
 
     std::vector<int> opened_layers[MAX_LAYERS];
+    auto collider_sys = coordinator.getSystem<ColliderSystem>();
+    assert(collider_sys != nullptr);
+
     for (auto i = 0; i < objects_sorted.size(); ++i) {
         for(int layer_id = 0; layer_id < MAX_LAYERS; layer_id++) {
-            if(!Collider::canCollide(objects_sorted[i].layer, layer_id)) {
+            if(!collider_sys->canCollide(objects_sorted[i].layer, layer_id)) {
                 continue;
             }
             for (auto j = 0; j < opened_layers[layer_id].size(); ++j) {
