@@ -161,11 +161,14 @@ void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
     VkRect2D scissor{{0, 0}, swapChain->getSwapChainExtent()};
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+#if EMP_USING_IMGUI 
+    ImGuiRenderBegin();
+#endif
 }
 
 void Renderer::endSwapChainRenderPass(VkCommandBuffer command_buffer) const {
 #if EMP_USING_IMGUI 
-    ImGuiRender(command_buffer);
+    ImGuiRenderEnd(command_buffer);
 #endif
     assert(isFrameStarted &&
            "Can't call endSwapChainRenderPass if frame is not in progress");

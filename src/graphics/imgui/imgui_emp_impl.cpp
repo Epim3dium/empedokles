@@ -73,15 +73,12 @@ void ImGuiSetup(
     // ImGui_ImplVulkan_Shutdown();
 }
 
-void ImGuiRender(VkCommandBuffer commandBuffer) {
-    // New ImGui frame
+void ImGuiRenderBegin() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    // Your ImGui widgets go here
-    ImGui::ShowDemoWindow();
-
+}
+void ImGuiRenderEnd(VkCommandBuffer commandBuffer) {
     // Render ImGui frame
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);

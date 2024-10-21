@@ -15,6 +15,7 @@ void ImGuiSetup(
         Renderer& rend,
         VkRenderPass renderPass);
 VkDescriptorPool ImGuiGetDescriptorPool(VkDevice device);
-void ImGuiRender(VkCommandBuffer commandBuffer);
+void ImGuiRenderBegin();
+void ImGuiRenderEnd(VkCommandBuffer commandBuffer);
 };
 #endif //EMP_IMGUI_IMPL_HPP
