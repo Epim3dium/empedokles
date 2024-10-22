@@ -433,11 +433,14 @@ void PhysicsSystem::update(
         }
     }
     col_sys.processCollisionNotifications();
-    // for(int e = 0; e < MAX_ENTITIES; e++) {
-    //     if(!m_have_collided.test(e) && !m_isDormant(e)) {
-    //         m_collision_islands.isolate(e);
-    //     }
-    // }
+    m_separateNonColliding();
+}
+void PhysicsSystem::m_separateNonColliding() {
+    for(int e = 0; e < MAX_ENTITIES; e++) {
+        if(!m_have_collided.test(e) && !m_isDormant(e)) {
+            m_collision_islands.isolate(e);
+        }
+    }
 }
 void PhysicsSystem::onEntityAdded(Entity entity) {
 }

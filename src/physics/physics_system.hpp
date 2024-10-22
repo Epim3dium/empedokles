@@ -65,6 +65,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     void m_applyGravity();
     void m_applyAirDrag();
     void m_processSleep(float delta_time);
+    void m_separateNonColliding();
     void m_step(
             TransformSystem& trans_sys,
             ColliderSystem& col_sys,
