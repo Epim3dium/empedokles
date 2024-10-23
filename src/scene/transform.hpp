@@ -9,12 +9,16 @@ namespace emp {
 class TransformSystem;
 class Transform {
     TransformMatrix m_local_transform;
-    TransformMatrix m_parents_global_transform;
+    TransformMatrix m_parents_global_transform = TransformMatrix(1.f);
     TransformMatrix m_global_transform;
 
     void m_updateLocalTransform();
 
+    Entity m_parent_entity;
+    std::vector<Entity> m_children_entities;
 public:
+    const Entity parent() const { return m_parent_entity; }
+    const std::vector<Entity>& children() const { return m_children_entities; }
     vec2f position = vec2f(0.f, 0.f);
     float rotation = 0.f;
     vec2f scale = vec2f(0.f, 0.f);
@@ -31,15 +35,27 @@ public:
     }
     Transform() {
     }
-    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f})
-        : position(pos), rotation(rot), scale(s) {
+    Transform(
+            Entity parent,
+            vec2f pos,
+            float rot = 0.f,
+            vec2f s = {1.f, 1.f}
+    )
+        : position(pos), rotation(rot), scale(s), m_parent_entity(parent)
+    {
         m_updateLocalTransform();
     }
+    Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f})
+          : Transform(coordinator.world(), pos, rot, s) {}
+
     friend TransformSystem;
 };
 class TransformSystem : public System<Transform> {
 public:
     void update();
+    void onEntityRemoved(Entity entity) override final;
+    void onEntityAdded(Entity entity) override final;
+    
 };
 }; // namespace emp
 #endif

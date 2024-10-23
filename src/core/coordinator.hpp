@@ -6,7 +6,9 @@
 #include "system_manager.hpp"
 namespace emp {
 class Coordinator {
+    Entity m_world;
 public:
+    const Entity world() const;
     void init();
 
     // Entity methods
