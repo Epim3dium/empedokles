@@ -100,18 +100,18 @@ void App::setupECS() {
     registerSceneSystems(device);
 }
 void App::run() {
-    EMP_LOG(LogLevel::DEBUG) << "start running ...";
-    EMP_LOG(LogLevel::DEBUG) << "ECS...";
+    EMP_LOG(LogLevel::INFO) << "start running ...";
+    EMP_LOG(LogLevel::INFO) << "ECS...";
     setupECS();
 
-    EMP_LOG(LogLevel::DEBUG) << "assets...";
+    EMP_LOG(LogLevel::INFO) << "assets...";
 
     Sprite::init(device);
     loadAssets();
-    EMP_LOG(LogLevel::DEBUG) << "users onSetup...";
+    EMP_LOG(LogLevel::INFO) << "users onSetup...";
     onSetup(window, device);
 
-    EMP_LOG(LogLevel::DEBUG) << "ubo buffers...";
+    EMP_LOG(LogLevel::INFO) << "ubo buffers...";
     auto uboBuffers = m_setupGlobalUBOBuffers();
     auto globalSetLayout = DescriptorSetLayout::Builder(device)
                                    .addBinding(
@@ -127,7 +127,7 @@ void App::run() {
     EMP_LOG(DEBUG3) << "atom size: "
                     << device.properties.limits.nonCoherentAtomSize;
 
-    EMP_LOG(LogLevel::DEBUG) << "render systems...";
+    EMP_LOG(LogLevel::INFO) << "render systems...";
 
     {
         PipelineConfigInfo debug_shape_pipeline_config;
@@ -165,6 +165,9 @@ void App::run() {
     auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
     auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
 
+#if EMP_ENABLE_RENDER_THREAD || EMP_ENABLE_PHYSICS_THREAD
+    EMP_LOG(LogLevel::INFO) << "creating threads...";
+#endif
 #if EMP_ENABLE_RENDER_THREAD
     auto rendering_thread =
             createRenderThread(camera, global_descriptor_sets, uboBuffers);
@@ -177,7 +180,10 @@ void App::run() {
     while (isAppRunning) {
 #if EMP_ENABLE_RENDER_THREAD
         std::unique_lock<std::mutex> lock(m_coordinator_access_mutex);
-        while (m_isRenderer_waiting || m_isPhysics_waiting) {
+        Stopwatch waiting_clock;
+        while ((m_isRenderer_waiting || m_isPhysics_waiting) &&
+               waiting_clock.getElapsedTime() < 1.f / m_physics_tick_rate) 
+        {
             m_priority_access.wait(lock);
         }
 #endif
