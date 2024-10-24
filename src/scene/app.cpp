@@ -402,8 +402,14 @@ GlobalUbo App::m_updateUBO(
 
 void App::loadAssets() {
     for (auto tex : m_textures_to_load) {
-        Texture::create(device, tex.filename, tex.id);
-        EMP_LOG(LogLevel::DEBUG) << "loaded texture: " << tex.id;
+        try {
+            Texture::create(device, tex.filename, tex.id);
+            EMP_LOG(LogLevel::DEBUG) << "loaded texture: " << tex.id;
+        } catch(std::runtime_error& e) {
+            EMP_LOG(LogLevel::WARNING) << "failure while loading textures: " << e.what();
+        } catch(...) {
+            EMP_LOG(LogLevel::WARNING) << "undefined error when loading textures";
+        }
     }
     m_textures_to_load.clear();
     for (auto model : m_models_to_load) {
