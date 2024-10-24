@@ -127,26 +127,26 @@ void ColliderSystem::eableCollision(Layer layer1, Layer layer2) {
 // }
 AABB Collider::m_calcAABB() const {
     auto result = AABB::Expandable();
-    for (const auto& p : transformed_outline) {
+    for (const auto& p : m_transformed_outline) {
         result.expandToContain(p);
     }
     return result;
 }
 void Collider::m_updateNewTransform(const Transform& transform) {
-    for (int i = 0; i < model_shape.size(); i++) {
-        auto& poly = model_shape[i];
+    for (int i = 0; i < m_model_shape.size(); i++) {
+        auto& poly = m_model_shape[i];
         for (int ii = 0; ii < poly.size(); ii++) {
-            transformed_shape[i][ii] =
+            m_transformed_shape[i][ii] =
                     transformPoint(transform.global(), poly[ii]);
         }
-        auto center = std::reduce(transformed_shape[i].begin(), transformed_shape[i].end()) / static_cast<float>(poly.size());
-        std::sort(transformed_shape[i].begin(), transformed_shape[i].end(), [&](vec2f a, vec2f b) {
+        auto center = std::reduce(m_transformed_shape[i].begin(), m_transformed_shape[i].end()) / static_cast<float>(poly.size());
+        std::sort(m_transformed_shape[i].begin(), m_transformed_shape[i].end(), [&](vec2f a, vec2f b) {
             return atan2(a.y - center.y, a.x - center.x) > atan2(b.y - center.y, b.x - center.x);
         });
     }
-    for (int i = 0; i < model_outline.size(); i++) {
-        transformed_outline[i] =
-                transformPoint(transform.global(), model_outline[i]);
+    for (int i = 0; i < m_model_outline.size(); i++) {
+        m_transformed_outline[i] =
+                transformPoint(transform.global(), m_model_outline[i]);
     }
     m_aabb = m_calcAABB();
 }
@@ -164,17 +164,17 @@ void ColliderSystem::updateInstant(const Entity entity) {
     collider.m_updateNewTransform(transform);
 }
 Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
-    model_outline = shape;
-    auto MIA = calculateMassInertiaArea(model_outline);
+    m_model_outline = shape;
+    auto MIA = calculateMassInertiaArea(m_model_outline);
     if (correctCOM) {
-        for (auto& p : model_outline) {
+        for (auto& p : m_model_outline) {
             p -= MIA.centroid;
         }
     }
-    transformed_outline = model_outline;
+    m_transformed_outline = m_model_outline;
 
-    auto triangles = triangulateAsVector(model_outline);
-    model_shape = mergeToConvex(triangles);
-    transformed_shape = model_shape;
+    auto triangles = triangulateAsVector(m_model_outline);
+    m_model_shape = mergeToConvex(triangles);
+    m_transformed_shape = m_model_shape;
 }
 }; // namespace emp

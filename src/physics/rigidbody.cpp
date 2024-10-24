@@ -6,6 +6,13 @@
 #include <numeric>
 namespace emp {
 #define SQ(x) ((x) * (x))
+Rigidbody::Rigidbody(
+    bool is_static, bool is_rot_locked, bool use_automatic_mass, float density)
+    : isStatic(is_static),
+      isRotationLocked(is_rot_locked),
+      useAutomaticMass(use_automatic_mass),
+      real_density(density) {
+}
 float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
     if (isStatic)
         return 0.f;
@@ -17,11 +24,11 @@ void RigidbodySystem::updateMasses() {
         const auto collider = coordinator.getComponent<Collider>(entity);
         if (rigidobdy.useAutomaticMass && collider != nullptr) {
 
-            auto model =  collider->transformed_outline;
+            auto model =  collider->transformed_outline();
             vec2f avg = std::reduce(model.begin(), model.end()) / static_cast<float>(model.size());
             for(auto& p : model) { p -= avg; }
 
-            auto MIA = calculateMassInertiaArea(collider->model_outline);
+            auto MIA = calculateMassInertiaArea(collider->model_outline());
             rigidobdy.real_mass = MIA.area * rigidobdy.real_density;
             rigidobdy.real_inertia = MIA.MMOI * rigidobdy.real_density;
         }
@@ -48,9 +55,9 @@ void RigidbodySystem::deriveVelocities(float delT) {
         if(rigidbody.isSleeping || rigidbody.isStatic)
             continue;
         auto& transform = getComponent<Transform>(entity);
-        rigidbody.vel_pre_solve = rigidbody.velocity;
+        rigidbody.velocity_pre_solve = rigidbody.velocity;
         rigidbody.velocity = (transform.position - rigidbody.prev_pos) / delT;
-        rigidbody.ang_vel_pre_solve = rigidbody.angular_velocity;
+        rigidbody.ang_velocity_pre_solve = rigidbody.angular_velocity;
         rigidbody.angular_velocity = (transform.rotation - rigidbody.prev_rot) / delT;
     }
 }

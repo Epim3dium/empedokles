@@ -30,16 +30,31 @@ private:
     AABB m_calcAABB() const;
     AABB m_aabb;
 
+    // potentially concave
+    std::vector<vec2f> m_model_outline;
+    std::vector<ConvexVertexCloud> m_model_shape;
+
+    std::vector<vec2f> m_transformed_outline;
+    std::vector<ConvexVertexCloud> m_transformed_shape;
+
 public:
     Layer collider_layer = 0;
-    // potentially concave
-    std::vector<vec2f> model_outline;
-    std::vector<ConvexVertexCloud> model_shape;
 
-    std::vector<vec2f> transformed_outline;
-    std::vector<ConvexVertexCloud> transformed_shape;
+    inline const std::vector<vec2f>& model_outline() const {
+        return m_model_outline;
+    }
+    inline const std::vector<ConvexVertexCloud>& model_shape() const {
+        return m_model_shape;
+    }
 
-    AABB aabb() const {
+    inline const std::vector<vec2f>& transformed_outline() const {
+        return m_transformed_outline;
+    }
+    inline const std::vector<ConvexVertexCloud>& transformed_shape() const {
+        return m_transformed_shape;
+    }
+
+    inline AABB aabb() const {
         return m_aabb;
     }
     Collider() {
@@ -68,6 +83,7 @@ private:
     std::unordered_map<uint64_t, CollisionInfo> m_collisions_occured_this_frame;
     std::unordered_map<Entity, std::vector<CollisionEnterCallback>> m_enter_callbacks;
     std::unordered_map<Entity, std::vector<CollisionExitCallback>> m_exit_callbacks;
+
     void callAllOnEnterCallbacksFor(Entity e, const CollisionInfo& info);
     void callAllOnExitCallbacksFor(Entity e, Entity other);
 public:

@@ -87,8 +87,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.dfriction = dfriction;
     result.restitution = restitution;
 
-    const auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
-    const auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
+    const auto& intersectingShape1 = col1.transformed_shape()[convexIdx1];
+    const auto& intersectingShape2 = col2.transformed_shape()[convexIdx2];
     auto intersection =
             intersectPolygonPolygon(intersectingShape1, intersectingShape2);
     result.detected = intersection.detected;
@@ -149,10 +149,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.info.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
 
-    auto delta_p1 = pos1 - rb1.prev_pos + rotateVec(radius1, rot1) -
-                    rotateVec(radius1, rb1.prev_rot);
-    auto delta_p2 = pos2 - rb2.prev_pos + rotateVec(radius2, rot2) -
-                    rotateVec(radius2, rb2.prev_rot);
+    auto delta_p1 = pos1 - rb1.previous_position() + rotateVec(radius1, rot1) -
+                    rotateVec(radius1, rb1.previous_rotation());
+    auto delta_p2 = pos2 - rb2.previous_position() + rotateVec(radius2, rot2) -
+                    rotateVec(radius2, rb2.previous_rotation());
     auto delta_p = delta_p1 - delta_p2;
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
@@ -257,10 +257,10 @@ void PhysicsSystem::m_solveVelocities(
         const auto r2model = rotateVec(constraint.info.collidee_radius, trans2.rotation);
 
         const auto pre_solve_contact_vel1 = m_calcContactVel(
-                rb1.vel_pre_solve, rb1.ang_vel_pre_solve, r1model
+                rb1.previous_velocity() , rb1.previous_angular_velocity(), r1model
         );
         const auto pre_solve_contact_vel2 = m_calcContactVel(
-                rb2.vel_pre_solve, rb2.ang_vel_pre_solve, r2model
+                rb2.previous_velocity(), rb2.previous_angular_velocity(), r2model
         );
         const auto pre_solve_relative_vel =
                 pre_solve_contact_vel1 - pre_solve_contact_vel2;
