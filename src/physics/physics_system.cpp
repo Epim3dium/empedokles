@@ -379,10 +379,15 @@ void PhysicsSystem::m_processSleep(float delta_time) {
     }
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
+        auto& col = getComponent<Collider>(e);
+        if(rb.isStatic)
+            continue;
         if(m_isDormant(e)) {
             rb.isSleeping = true;
+            col.isNonMoving = true;
         }else {
             rb.isSleeping = false;
+            col.isNonMoving = false;
         }
     }
 }

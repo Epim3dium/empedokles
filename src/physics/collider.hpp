@@ -39,6 +39,7 @@ private:
 
 public:
     Layer collider_layer = 0;
+    bool isNonMoving = true;
 
     inline const std::vector<vec2f>& model_outline() const {
         return m_model_outline;

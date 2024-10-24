@@ -24,11 +24,10 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
     std::vector<Object> objects_sorted;
     for (auto itr = begin; itr != end; itr++) {
         auto& col = *coordinator.getComponent<Collider>(*itr);
-        auto& rb = *coordinator.getComponent<Rigidbody>(*itr);
         size_t i = 0;
         for (const auto& shape : col.transformed_shape()) {
             objects_sorted.push_back(
-                    {*itr, AABB::CreateFromVerticies(shape), i, col.collider_layer, rb.isStatic || rb.isSleeping}
+                    {*itr, AABB::CreateFromVerticies(shape), i, col.collider_layer, col.isNonMoving}
             );
             i++;
         }

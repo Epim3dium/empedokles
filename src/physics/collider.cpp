@@ -51,6 +51,13 @@ void ColliderSystem::processCollisionNotifications() {
     for(auto& ended : ended_events) {
         FitIntoOne dehasher;
         dehasher.hash = ended;
+        auto isAsleeping = getComponent<Collider>(dehasher.a).isNonMoving;
+        auto isBsleeping = getComponent<Collider>(dehasher.b).isNonMoving;
+        if(isAsleeping && isBsleeping) {
+            this_frame_collisions.insert(dehasher.hash);
+            continue;
+        }
+
         callAllOnExitCallbacksFor(dehasher.a, dehasher.b);
         callAllOnExitCallbacksFor(dehasher.b, dehasher.a);
     }
