@@ -3,22 +3,19 @@
 - collision
     - more constraints
     - collision optimization
-        - collision idle state
         - tighter locked critical section
 - graphics
-    - basic animation system
-        - truly moving animated sprites
-    - add imgui
+    - expand imgui editor
     - 2d lighting
 - core
-    - reconsider global coordinator
     - message bus
     - command terminal
-
 
 ---
 
 # 📌 DOING:
+- core
+    - reconsider global coordinator
 
 ---
 
@@ -30,6 +27,13 @@
 
 # ✅ DONE:
 
+- graphics
+    - basic animation system
+        - truly moving animated sprites
+    - add imgui
+- collision
+    - collision optimization
+        - collision idle state
 - graphics
     - resizable window
     - render system abstraction
