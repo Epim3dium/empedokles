@@ -1,0 +1,11 @@
+#version 450
+layout(local_size_x = 64) in;
+
+layout(binding = 0) buffer DataBuffer {
+    float data[];
+};
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    data[index] *= data[index];
+}
