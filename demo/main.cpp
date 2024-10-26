@@ -203,47 +203,11 @@ void Demo::onSetup(Window& window, Device& device) {
     std::vector<float> inputData(dataCount, 2.0f);  // Sample input data: all values set to 2.0
 
     // Create buffer
-    VkBuffer dataBuffer;
-    VkDeviceMemory dataBufferMemory;
+    Buffer dataBuffer(device, sizeof(float), dataCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = bufferSize;
-    bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    vkCreateBuffer(device.device(), &bufferInfo, nullptr, &dataBuffer);
-
-    // Allocate memory for buffer
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device.device(), dataBuffer, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = device.findMemoryType(memRequirements.memoryTypeBits, 
-                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    vkAllocateMemory(device.device(), &allocInfo, nullptr, &dataBufferMemory);
-    vkBindBufferMemory(device.device(), dataBuffer, dataBufferMemory, 0);
-
-    // Map memory and upload data
-    void* mappedMemory;
-    vkMapMemory(device.device(), dataBufferMemory, 0, bufferSize, 0, &mappedMemory);
-    memcpy(mappedMemory, inputData.data(), bufferSize);
-    vkUnmapMemory(device.device(), dataBufferMemory);
-
-    // Load compute shader
-    auto shaderCode = readShaderFile("../assets/shaders/compute.comp.spv");
-
-    VkShaderModuleCreateInfo shaderModuleInfo{};
-    shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleInfo.codeSize = shaderCode.size();
-    shaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
-
-    VkShaderModule computeShaderModule;
-    vkCreateShaderModule(device.device(), &shaderModuleInfo, nullptr, &computeShaderModule);
-
+    dataBuffer.map();
+    memcpy(dataBuffer.getMappedMemory(), inputData.data(), bufferSize);
+    dataBuffer.unmap();
     // Create descriptor set layout
     VkDescriptorSetLayoutBinding layoutBinding{};
     layoutBinding.binding = 0;
@@ -268,20 +232,9 @@ void Demo::onSetup(Window& window, Device& device) {
     VkPipelineLayout pipelineLayout;
     vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 
-    // Create compute pipeline
-    VkPipelineShaderStageCreateInfo shaderStageInfo{};
-    shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    shaderStageInfo.module = computeShaderModule;
-    shaderStageInfo.pName = "main";
-
-    VkComputePipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    pipelineInfo.stage = shaderStageInfo;
-    pipelineInfo.layout = pipelineLayout;
-
-    VkPipeline computePipeline;
-    vkCreateComputePipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &computePipeline);
+    PipelineConfigInfo config;
+    config.pipelineLayout = pipelineLayout;
+    Pipeline compute_pipeline(device, "../assets/shaders/compute.comp.spv", config);
 
     // Descriptor pool and set allocation
     VkDescriptorPoolSize poolSize{};
@@ -307,7 +260,7 @@ void Demo::onSetup(Window& window, Device& device) {
     vkAllocateDescriptorSets(device.device(), &allocInfoDS, &descriptorSet);
 
     VkDescriptorBufferInfo bufferInfoDS{};
-    bufferInfoDS.buffer = dataBuffer;
+    bufferInfoDS.buffer = dataBuffer.getBuffer();
     bufferInfoDS.offset = 0;
     bufferInfoDS.range = bufferSize;
 
@@ -324,7 +277,7 @@ void Demo::onSetup(Window& window, Device& device) {
 
     auto commandBuffer = device.beginSingleTimeCommands();
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+    compute_pipeline.bind(commandBuffer);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
     vkCmdDispatch(commandBuffer, (dataCount + 63) / 64, 1, 1); // Dispatch work
 
@@ -332,13 +285,13 @@ void Demo::onSetup(Window& window, Device& device) {
     device.endSingleTimeCommands(commandBuffer);
 
     // Map memory again to read back data
-    vkMapMemory(device.device(), dataBufferMemory, 0, bufferSize, 0, &mappedMemory);
-    float* resultData = reinterpret_cast<float*>(mappedMemory);
+    dataBuffer.map();
+    float* resultData = reinterpret_cast<float*>(dataBuffer.getMappedMemory());
     EMP_LOG_DEBUG << "!";
     for (size_t i = 0; i < dataCount; ++i) {
         std::cout << "Result " << i << ": " << resultData[i] << std::endl;
     }
-    vkUnmapMemory(device.device(), dataBufferMemory);
+    dataBuffer.unmap();
     exit(1);
 
     // Cleanup omitted for brevity

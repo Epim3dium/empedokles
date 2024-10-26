@@ -38,22 +38,22 @@ public:
             const std::string& fragFilepath,
             const PipelineConfigInfo& configInfo
     );
+    Pipeline(Device& device, const std::string& computeFilepath, const PipelineConfigInfo& configInfo);
 
     ~Pipeline();
-
     Pipeline(const Pipeline&) = delete;
-
     Pipeline& operator=(const Pipeline&) = delete;
-
     void bind(VkCommandBuffer commandBuffer);
 
     static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
-
     static void enableAlphaBlending(PipelineConfigInfo& configInfo);
-
 private:
     static std::vector<char> readFile(const std::string& filepath);
 
+    void createComputePipeline(
+            const std::string& computeFilepath,
+            const PipelineConfigInfo& configInfo
+    );
     void createGraphicsPipeline(
             const std::string& vertFilepath,
             const std::string& fragFilepath,
@@ -65,9 +65,10 @@ private:
     );
 
     Device& m_device;
-    VkPipeline m_graphics_pipeline{};
+    VkPipeline m_pipeline{};
     VkShaderModule m_vert_shader_module{};
     VkShaderModule m_frag_shader_module{};
+    VkShaderModule m_compute_shader_module{};
 };
 } // namespace emp
 

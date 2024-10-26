@@ -1,5 +1,6 @@
 #include "pipeline.hpp"
 
+#include "debug/log.hpp"
 #include "graphics/model.hpp"
 
 // std
@@ -8,9 +9,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#ifndef ENGINE_DIR
-#define ENGINE_DIR "../"
-#endif
 
 namespace emp {
 
@@ -23,17 +21,59 @@ Pipeline::Pipeline(
     : m_device{device} {
     createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 }
+Pipeline::Pipeline(Device& device,
+    const std::string& computeFilepath,
+    const PipelineConfigInfo& configInfo) : m_device{device} 
+{
+    createComputePipeline(computeFilepath, configInfo);
+}
+void Pipeline::createComputePipeline(
+        const std::string& computeFilepath,
+        const PipelineConfigInfo& configInfo
+) {
+    assert(configInfo.pipelineLayout != VK_NULL_HANDLE &&
+           "Cannot create graphics pipeline: no pipelineLayout provided in "
+           "configInfo");
+
+    auto computeCode = readFile(computeFilepath);
+
+    createShaderModule(computeCode, &m_compute_shader_module);
+
+    VkPipelineShaderStageCreateInfo shaderStageInfo{};
+    shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    shaderStageInfo.module = m_compute_shader_module;
+    shaderStageInfo.pName = "main";
+
+    auto& bindingDescriptions = configInfo.bindingDescriptions;
+    auto& attributeDescriptions = configInfo.attributeDescriptions;
+
+    VkComputePipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    pipelineInfo.stage = shaderStageInfo;
+    pipelineInfo.layout = configInfo.pipelineLayout;
+
+    if (vkCreateComputePipelines(m_device.device(),
+            VK_NULL_HANDLE,
+            1,
+            &pipelineInfo,
+            nullptr,
+            &m_pipeline)) {
+        throw std::runtime_error("failed to create graphics pipeline");
+    }
+}
 
 Pipeline::~Pipeline() {
     vkDestroyShaderModule(m_device.device(), m_vert_shader_module, nullptr);
     vkDestroyShaderModule(m_device.device(), m_frag_shader_module, nullptr);
-    vkDestroyPipeline(m_device.device(), m_graphics_pipeline, nullptr);
+    vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
 std::vector<char> Pipeline::readFile(const std::string& filepath) {
-    std::string enginePath = ENGINE_DIR + filepath;
+    std::string enginePath = filepath;
     std::ifstream file{enginePath, std::ios::ate | std::ios::binary};
 
+    EMP_LOG_DEBUG << filepath;
     if (!file.is_open()) {
         throw std::runtime_error("failed to open file: " + enginePath);
     }
@@ -124,7 +164,7 @@ void Pipeline::createGraphicsPipeline(
                 1,
                 &pipelineInfo,
                 nullptr,
-                &m_graphics_pipeline
+                &m_pipeline
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline");
     }
@@ -147,9 +187,15 @@ void Pipeline::createShaderModule(
 }
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
-    vkCmdBindPipeline(
-            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphics_pipeline
-    );
+    if(m_compute_shader_module != VK_NULL_HANDLE) {
+        vkCmdBindPipeline(
+                commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline
+        );
+    }else {
+        vkCmdBindPipeline(
+                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline
+        );
+    }
 }
 
 void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo) {

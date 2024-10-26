@@ -138,8 +138,8 @@ void App::run() {
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
-                "assets/shaders/debug_shape.vert.spv",
-                "assets/shaders/debug_shape.frag.spv",
+                "../assets/shaders/debug_shape.vert.spv",
+                "../assets/shaders/debug_shape.frag.spv",
                 &debug_shape_pipeline_config
         );
     }
@@ -147,8 +147,8 @@ void App::run() {
             device,
             renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout(),
-            "assets/shaders/sprite.vert.spv",
-            "assets/shaders/sprite.frag.spv"
+            "../assets/shaders/sprite.vert.spv",
+            "../assets/shaders/sprite.frag.spv"
     );
     Camera camera{};
 
