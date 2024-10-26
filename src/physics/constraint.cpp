@@ -119,7 +119,6 @@ Constraint Constraint::createPointAnchor(
     result.point_anchor.pinch_point_model =
             rotate(pinch_point_rotated, -rigid_trans.rotation);
     auto rp = result.point_anchor.relative_position;
-    EMP_LOG_DEBUG << rp.x << "\t" << rp.y << "\n";
 
     return result;
 }

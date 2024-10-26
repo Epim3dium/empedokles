@@ -140,9 +140,7 @@ public:
     }
     Texture() : m_id("default") {
     }
-    Texture(std::string model_id) : m_id(model_id) {
-        assert(isLoaded(model_id) && "texture must be first created");
-    }
+    Texture(std::string model_id);
 };
 
 } // namespace emp

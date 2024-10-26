@@ -12,9 +12,13 @@ class Demo : public App {
     public:
         Entity mouse_entity;
         Entity protagonist;
-        float isProtagonistGroundedSec = 0.f;
+
+        
+        float protagonist_speed = 600.f;
+        Entity isProtagonistGrounded;
+        float isProtagonistGroundedSec;
         static constexpr float cayote_time = 0.25f;
-        static constexpr float cube_side_len = 35.f;
+        static constexpr float cube_side_len = 75.f;
         std::vector<vec2f> unit_cube = {
                 vec2f(-1.f/2.f, -1.f/2.f),
                 vec2f(-1.f/2.f, 1.f/2.f),
@@ -55,7 +59,6 @@ class Demo : public App {
                 }) {}
 };
 void Demo::onSetup(Window& window, Device& device) {
-    // Collider::disableCollision(PLAYER, ITEM);
     controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
     controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
 
@@ -71,6 +74,26 @@ void Demo::onSetup(Window& window, Device& device) {
 
     // coordinator.addComponent(cube, Model("cube"));
     protagonist = coordinator.createEntity();
+
+    coordinator.getSystem<ColliderSystem>()
+        ->onCollisionEnter(protagonist,
+            protagonist,
+            [&](const CollisionInfo& info) {
+                auto ang = angle(info.collision_normal, vec2f(0, 1));
+                if (cos(ang) > -M_PI / 4.f) {
+                    return;
+                }
+                isProtagonistGrounded = info.collidee_entity;
+                EMP_LOG_DEBUG << "grounded: " << isProtagonistGrounded;
+            })
+        .onCollisionExit(
+            protagonist, protagonist, [&](Entity me, Entity other) {
+                if (other == isProtagonistGrounded || isProtagonistGrounded == false) {
+                    isProtagonistGrounded = false;
+                    EMP_LOG_DEBUG << "ungrounded";
+                }
+            });
+
     mouse_entity = coordinator.createEntity();
     coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
@@ -87,11 +110,6 @@ void Demo::onSetup(Window& window, Device& device) {
         };
         auto col = Collider(protagonist_shape);
         col.collider_layer = PLAYER;
-        col.listen(protagonist, [&](const CollisionInfo& ci) {
-            if(dot(ci.collision_normal, vec2f(0.f, -1.f)) > 0.5f) {
-                isProtagonistGroundedSec = 0.f;
-            }
-        });
 
         coordinator.addComponent(protagonist, col);
         coordinator.addComponent(protagonist, rb);
@@ -205,7 +223,7 @@ void Demo::setupAnimationForProtagonist() {
                    25.f;
         };
         auto hasFallen = [&](Entity owner) {
-            return isProtagonistGroundedSec < cayote_time;
+            return isProtagonistGrounded != false;
         };
         build.addEdge("idle", "fall", isFalling);
         build.addEdge("run", "fall", isFalling);
@@ -225,9 +243,12 @@ void Demo::onRender(Device&, const FrameInfo& frame) {
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
-    isProtagonistGroundedSec += delta_time;
+    EMP_LOG_INTERVAL(DEBUG2, 3.f) << "{main thread}: " << 1.f / delta_time;
     auto& phy_sys = *coordinator.getSystem<PhysicsSystem>();
-    for(auto e : phy_sys.entities) {
+    for(auto e : phy_sys.getEntities()) {
+        if(!coordinator.getComponent<DebugShape>(e)) {
+            continue;
+        }
         if(phy_sys.m_isDormant(e)) {
             coordinator.getComponent<DebugShape>(e)->fill_color = {1, 0, 0, 1};
         }else {
@@ -239,7 +260,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         coordinator.getComponent<Transform>(m)->scale = {1, 1};
     }
     int i = 0;
-    for(auto entity : phy_sys.entities) {
+    for(auto entity : phy_sys.getEntities()) {
         if(i == markers_count) {
             break;
         }
@@ -262,12 +283,20 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
                 controller.global_mouse_pos();
     }
     if(coordinator.isEntityAlive(protagonist)){
+        isProtagonistGroundedSec += delta_time;
+        if(isProtagonistGrounded) {
+            isProtagonistGroundedSec = 0.f;
+        } 
         if(coordinator.isEntityAlive(protagonist)){
             coordinator.getComponent<Rigidbody>(protagonist)->velocity.x +=
-                    controller.movementInPlane2D().x * 600.f * delta_time;
+                    controller.movementInPlane2D().x *
+                    (protagonist_speed / 2.f + protagonist_speed / 2.f *
+                            (isProtagonistGrounded != false)) *
+                    delta_time;
             auto& rb = *coordinator.getComponent<Rigidbody>(protagonist);
             if (controller.get(eKeyMappings::Jump).pressed && isProtagonistGroundedSec < cayote_time) {
                 isProtagonistGroundedSec = cayote_time;
+                isProtagonistGrounded = false;
                 vec2f direction = vec2f(0, -10);
                 direction.x = controller.movementInPlane2D().x;
                 direction = normal(direction);

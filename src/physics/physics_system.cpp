@@ -59,9 +59,9 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
 
-    if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
-        return {false};
-    }
+    // if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
+    //     return {false};
+    // }
 
     vec2f& pos1 = trans1.position;
     vec2f& pos2 = trans2.position;
@@ -87,8 +87,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.dfriction = dfriction;
     result.restitution = restitution;
 
-    const auto& intersectingShape1 = col1.transformed_shape[convexIdx1];
-    const auto& intersectingShape2 = col2.transformed_shape[convexIdx2];
+    const auto& intersectingShape1 = col1.transformed_shape()[convexIdx1];
+    const auto& intersectingShape2 = col2.transformed_shape()[convexIdx2];
     auto intersection =
             intersectPolygonPolygon(intersectingShape1, intersectingShape2);
     result.detected = intersection.detected;
@@ -149,10 +149,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.info.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
 
-    auto delta_p1 = pos1 - rb1.prev_pos + rotateVec(radius1, rot1) -
-                    rotateVec(radius1, rb1.prev_rot);
-    auto delta_p2 = pos2 - rb2.prev_pos + rotateVec(radius2, rot2) -
-                    rotateVec(radius2, rb2.prev_rot);
+    auto delta_p1 = pos1 - rb1.previous_position() + rotateVec(radius1, rot1) -
+                    rotateVec(radius1, rb1.previous_rotation());
+    auto delta_p2 = pos2 - rb2.previous_position() + rotateVec(radius2, rot2) -
+                    rotateVec(radius2, rb2.previous_rotation());
     auto delta_p = delta_p1 - delta_p2;
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
@@ -204,6 +204,7 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
         if (!res.detected) {
             continue;
         }
+        col_sys.notifyOfCollision(e1, e2, res.info);
 
         if(!res.isStatic1) {
             col_sys.updateInstant(e1);
@@ -227,13 +228,13 @@ void PhysicsSystem::m_broadcastCollisionMessages(
         auto col_info = constraint.info;
         auto& col1 = getComponent<Collider>(col_info.collider_entity);
         auto& col2 = getComponent<Collider>(col_info.collidee_entity);
-        col1.broadcastCollision(col_info);
+        // col1.broadcastCollision(col_info);
 
         col_info.collision_normal *= -1.f;
         col_info.relative_velocity*= -1.f;
         std::swap(col_info.collider_entity, col_info.collidee_entity);
         std::swap(col_info.collider_radius, col_info.collidee_radius);
-        col2.broadcastCollision(col_info);
+        // col2.broadcastCollision(col_info);
     }
 }
 // need to update colliders after
@@ -256,10 +257,10 @@ void PhysicsSystem::m_solveVelocities(
         const auto r2model = rotateVec(constraint.info.collidee_radius, trans2.rotation);
 
         const auto pre_solve_contact_vel1 = m_calcContactVel(
-                rb1.vel_pre_solve, rb1.ang_vel_pre_solve, r1model
+                rb1.previous_velocity() , rb1.previous_angular_velocity(), r1model
         );
         const auto pre_solve_contact_vel2 = m_calcContactVel(
-                rb2.vel_pre_solve, rb2.ang_vel_pre_solve, r2model
+                rb2.previous_velocity(), rb2.previous_angular_velocity(), r2model
         );
         const auto pre_solve_relative_vel =
                 pre_solve_contact_vel1 - pre_solve_contact_vel2;
@@ -378,10 +379,15 @@ void PhysicsSystem::m_processSleep(float delta_time) {
     }
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
+        auto& col = getComponent<Collider>(e);
+        if(rb.isStatic)
+            continue;
         if(m_isDormant(e)) {
             rb.isSleeping = true;
+            col.isNonMoving = true;
         }else {
             rb.isSleeping = false;
+            col.isNonMoving = false;
         }
     }
 }
@@ -431,6 +437,10 @@ void PhysicsSystem::update(
             rb.torque = 0.f;
         }
     }
+    col_sys.processCollisionNotifications();
+    m_separateNonColliding();
+}
+void PhysicsSystem::m_separateNonColliding() {
     for(int e = 0; e < MAX_ENTITIES; e++) {
         if(!m_have_collided.test(e) && !m_isDormant(e)) {
             m_collision_islands.isolate(e);

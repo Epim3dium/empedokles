@@ -5,9 +5,12 @@
 #include "core/component.hpp"
 #include "core/entity.hpp"
 namespace emp {
+struct SystemManager;
 class SystemBase {
 public:
-    std::set<Entity> entities;
+    const std::set<Entity>& getEntities() {
+        return entities;
+    }
     virtual void onEntityRemoved(Entity entity) {
     }
     virtual void onEntityAdded(Entity entity) {
@@ -20,7 +23,9 @@ public:
     virtual ~SystemBase() {
     }
 
+    friend SystemManager;
 protected:
+    std::set<Entity> entities;
     SystemBase() {
     }
 };

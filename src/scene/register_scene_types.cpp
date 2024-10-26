@@ -43,5 +43,6 @@ void registerSceneSystems(Device& device) {
     coordinator.registerSystem<AnimatedSpriteSystem>(std::ref(device));
     coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
     coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
+    coordinator.addComponent(coordinator.world(), Transform(vec2f(0, 0), 0.f, {1.f, 1.f}));
 }
 } // namespace emp

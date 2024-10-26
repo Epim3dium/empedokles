@@ -1,5 +1,6 @@
 #ifndef EMP_COLLIDER_HPP
 #define EMP_COLLIDER_HPP
+#include <unordered_set>
 #include <vector>
 #include "core/layer.hpp"
 #include "core/system.hpp"
@@ -19,6 +20,7 @@ struct CollisionInfo {
     vec2f collision_normal;
     vec2f collider_radius;
     vec2f collidee_radius;
+    void flip();
 };
 struct Collider {
     typedef std::vector<vec2f> ConvexVertexCloud;
@@ -28,24 +30,32 @@ private:
     AABB m_calcAABB() const;
     AABB m_aabb;
 
-    static LayerMask collision_matrix[MAX_LAYERS];
-    std::vector< std::pair<Entity, CallbackFunc> > m_callbacks;
-public:
-    void listen(Entity listener, CallbackFunc callback);
-    void broadcastCollision(const CollisionInfo&);
-
-    static void disableCollision(Layer layer1, Layer layer2);
-    static void eableCollision(Layer layer1, Layer layer2);
-    static bool canCollide(Layer layer1, Layer layer2);
-    Layer collider_layer = 0;
     // potentially concave
-    std::vector<vec2f> model_outline;
-    std::vector<ConvexVertexCloud> model_shape;
+    std::vector<vec2f> m_model_outline;
+    std::vector<ConvexVertexCloud> m_model_shape;
 
-    std::vector<vec2f> transformed_outline;
-    std::vector<ConvexVertexCloud> transformed_shape;
+    std::vector<vec2f> m_transformed_outline;
+    std::vector<ConvexVertexCloud> m_transformed_shape;
 
-    AABB aabb() const {
+public:
+    Layer collider_layer = 0;
+    bool isNonMoving = true;
+
+    inline const std::vector<vec2f>& model_outline() const {
+        return m_model_outline;
+    }
+    inline const std::vector<ConvexVertexCloud>& model_shape() const {
+        return m_model_shape;
+    }
+
+    inline const std::vector<vec2f>& transformed_outline() const {
+        return m_transformed_outline;
+    }
+    inline const std::vector<ConvexVertexCloud>& transformed_shape() const {
+        return m_transformed_shape;
+    }
+
+    inline AABB aabb() const {
         return m_aabb;
     }
     Collider() {
@@ -53,11 +63,49 @@ public:
     Collider(std::vector<vec2f> shape, bool correctCOM = false);
     friend ColliderSystem;
 };
+
 // system for updating transfomred collider shapes
 class ColliderSystem : public System<Transform, Collider> {
 public:
+    typedef std::function<void(const CollisionInfo&)> CollisionEnterCallback;
+    typedef std::function<void(Entity, Entity)> CollisionExitCallback;
+private:
+    LayerMask collision_matrix[MAX_LAYERS];
+    union FitIntoOne {
+        struct {
+            //always lower
+            Entity a;
+            //always higher 
+            Entity b;
+        };
+        uint64_t hash;
+    };
+    std::unordered_set<uint64_t> m_collisions_occured_last_frame;
+    std::unordered_map<uint64_t, CollisionInfo> m_collisions_occured_this_frame;
+    std::unordered_map<Entity, std::vector<CollisionEnterCallback>> m_enter_callbacks;
+    std::unordered_map<Entity, std::vector<CollisionExitCallback>> m_exit_callbacks;
+
+    void callAllOnEnterCallbacksFor(Entity e, const CollisionInfo& info);
+    void callAllOnExitCallbacksFor(Entity e, Entity other);
+public:
+
+    ColliderSystem& onCollisionEnter(
+            Entity listener, Entity target, CollisionEnterCallback&& func
+    );
+    ColliderSystem& onCollisionExit(
+            Entity listener, Entity target, CollisionExitCallback&& func
+    );
+
+    void processCollisionNotifications();
+    void notifyOfCollision(Entity a, Entity b, CollisionInfo col_info);
+
     void update();
     void updateInstant(const Entity e);
+
+    void disableCollision(Layer layer1, Layer layer2);
+    void eableCollision(Layer layer1, Layer layer2);
+    bool canCollide(Layer layer1, Layer layer2) const;
+    ColliderSystem();
 };
 }; // namespace emp
 #endif

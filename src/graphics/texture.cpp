@@ -1,6 +1,7 @@
 #include "texture.hpp"
 #include <iostream>
 #include "vulkan/buffer.hpp"
+#include "debug/log.hpp"
 
 // libs
 #define STB_IMAGE_IMPLEMENTATION
@@ -11,6 +12,12 @@
 #include <stdexcept>
 
 namespace emp {
+Texture::Texture(std::string model_id) : m_id(model_id) {
+    if(!isLoaded(model_id)) {
+        EMP_LOG(LogLevel::WARNING) << "texture: " << model_id << " was not loaded, defaulting";
+        m_id = "default";
+    }
+}
 std::unordered_map<std::string, std::unique_ptr<TextureAsset>>
         Texture::m_tex_table;
 TextureAsset::TextureAsset(Device& device, const std::string& textureFilepath)
