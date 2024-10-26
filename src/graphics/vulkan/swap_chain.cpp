@@ -133,7 +133,8 @@ VkResult SwapChain::submitCommandBuffers(
                 1,
                 &submitInfo,
                 m_in_flight_fences[m_current_frame]
-        ) != VK_SUCCESS) {
+        ) != VK_SUCCESS) 
+    {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 

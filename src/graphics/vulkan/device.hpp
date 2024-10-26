@@ -108,6 +108,13 @@ public:
             uint32_t height,
             uint32_t layerCount
     );
+    void copyImageToBuffer(
+            VkImage image,
+            VkBuffer buffer,
+            uint32_t width,
+            uint32_t height,
+            uint32_t layerCount
+    );
 
     void createImageWithInfo(
             const VkImageCreateInfo& imageInfo,

@@ -548,6 +548,28 @@ void Device::copyBuffer(
     endSingleTimeCommands(command_buffer);
 }
 
+void Device::copyImageToBuffer(
+    VkImage image,
+        VkBuffer buffer,
+        uint32_t width,
+        uint32_t height,
+        uint32_t layerCount
+) {
+    VkCommandBuffer command_buffer = beginSingleTimeCommands();
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;  // Tightly packed
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = layerCount;
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {width, height, 1};
+
+    vkCmdCopyImageToBuffer(command_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1, &region);
+    endSingleTimeCommands(command_buffer);
+}
 void Device::copyBufferToImage(
         VkBuffer buffer,
         VkImage image,

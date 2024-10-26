@@ -140,6 +140,31 @@ void TextureAsset::updateDescriptor() {
     mDescriptor.imageLayout = mTextureLayout;
 }
 
+std::vector<TextureAsset::Pixel> TextureAsset::getPixelsFromGPU() {
+    VkDeviceSize imageSize = getExtent().width * getExtent().height;
+    constexpr std::size_t pixel_size = sizeof(stbi_uc) * 4U;
+    auto command_buffer = mDevice.beginSingleTimeCommands();
+    transitionLayout(command_buffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    mDevice.endSingleTimeCommands(command_buffer);
+
+    Buffer stagingBuffer{
+            mDevice,
+            pixel_size,
+            static_cast<uint32_t>(imageSize),
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+    };
+    mDevice.copyImageToBuffer(getImage(), stagingBuffer.getBuffer(), getExtent().width, getExtent().height, 1);
+    stagingBuffer.map();
+
+    static_assert(std::is_same<unsigned char, stbi_uc>::value);
+    static_assert(sizeof(Pixel) == pixel_size);
+
+    std::vector<Pixel> pixels(imageSize);
+    std::memcpy(pixels.data(), stagingBuffer.getMappedMemory(), imageSize * sizeof(Pixel));
+    return pixels;
+}
 void TextureAsset::createTextureImage(const std::string& filepath) {
     int texWidth, texHeight, texChannels;
     // stbi_set_flip_vertically_on_load(1);  // todo determine why texture

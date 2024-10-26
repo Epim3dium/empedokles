@@ -78,6 +78,13 @@ public:
             VkImageLayout oldLayout,
             VkImageLayout newLayout
     );
+    struct Pixel {
+        unsigned char red;
+        unsigned char green;
+        unsigned char blue;
+        unsigned char alpha;
+    };
+    std::vector<Pixel> getPixelsFromGPU();
 
     static std::unique_ptr<TextureAsset> createTextureFromFile(
             Device& device, const std::string& filepath
