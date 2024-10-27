@@ -205,80 +205,63 @@ void Demo::onSetup(Window& window, Device& device) {
     // Create buffer
     Buffer dataBuffer(device, sizeof(float), dataCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    dataBuffer.map();
-    memcpy(dataBuffer.getMappedMemory(), inputData.data(), bufferSize);
-    dataBuffer.unmap();
+    {
+        dataBuffer.map();
+        memcpy(dataBuffer.getMappedMemory(), inputData.data(), bufferSize);
+        dataBuffer.unmap();
+    }
     // Create descriptor set layout
-    VkDescriptorSetLayoutBinding layoutBinding{};
-    layoutBinding.binding = 0;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &layoutBinding;
-
-    VkDescriptorSetLayout descriptorSetLayout;
-    vkCreateDescriptorSetLayout(device.device(), &layoutInfo, nullptr, &descriptorSetLayout);
-
-    // Create pipeline layout
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-
-    VkPipelineLayout pipelineLayout;
-    vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
-
-    PipelineConfigInfo config;
-    config.pipelineLayout = pipelineLayout;
-    Pipeline compute_pipeline(device, "../assets/shaders/compute.comp.spv", config);
+    auto layoutBinding = DescriptorSetLayout::Builder(device)
+                             .addBinding(0,
+                                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                 VK_SHADER_STAGE_COMPUTE_BIT)
+                             .build();
 
     // Descriptor pool and set allocation
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSize.descriptorCount = 1;
+    auto compute_pool = DescriptorPool::Builder(device)
+                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(
+                                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                 1
+                         )
+                         .build();
 
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.maxSets = 1;
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes = &poolSize;
+    VkPipelineLayout pipelineLayout{};
+    PipelineConfigInfo config;
+    {
+        // Create pipeline layout
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 1;
+        auto layouts = layoutBinding->getDescriptorSetLayout();
+        pipelineLayoutInfo.pSetLayouts = &layouts;
 
-    VkDescriptorPool descriptorPool;
-    vkCreateDescriptorPool(device.device(), &poolInfo, nullptr, &descriptorPool);
+        vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 
-    VkDescriptorSetAllocateInfo allocInfoDS{};
-    allocInfoDS.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfoDS.descriptorPool = descriptorPool;
-    allocInfoDS.descriptorSetCount = 1;
-    allocInfoDS.pSetLayouts = &descriptorSetLayout;
+        config.pipelineLayout = pipelineLayout;
+    }
+    Pipeline compute_pipeline(device, "../assets/shaders/compute.comp.spv", config);
 
-    VkDescriptorSet descriptorSet;
-    vkAllocateDescriptorSets(device.device(), &allocInfoDS, &descriptorSet);
 
-    VkDescriptorBufferInfo bufferInfoDS{};
-    bufferInfoDS.buffer = dataBuffer.getBuffer();
-    bufferInfoDS.offset = 0;
-    bufferInfoDS.range = bufferSize;
+    VkDescriptorSet descriptor_set;
+    {
+        VkDescriptorBufferInfo bufferInfoDS{};
+        bufferInfoDS.buffer = dataBuffer.getBuffer();
+        bufferInfoDS.offset = 0;
+        bufferInfoDS.range = bufferSize;
 
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = descriptorSet;
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfoDS;
-
-    vkUpdateDescriptorSets(device.device(), 1, &descriptorWrite, 0, nullptr);
+        DescriptorWriter(*layoutBinding, *compute_pool)
+                .writeBuffer(0, &bufferInfoDS)
+                .build(descriptor_set);
+    }
 
     auto commandBuffer = device.beginSingleTimeCommands();
 
     compute_pipeline.bind(commandBuffer);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        pipelineLayout, 0, 1,
+        &descriptor_set, 0, nullptr);
     vkCmdDispatch(commandBuffer, (dataCount + 63) / 64, 1, 1); // Dispatch work
 
     // End, submit and retrieve data
