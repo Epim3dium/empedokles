@@ -19,11 +19,13 @@ struct SwapChainSupportDetails {
 struct QueueFamilyIndices {
     uint32_t graphicsFamily{};
     uint32_t presentFamily{};
+    uint32_t computeFamily{};
     bool graphicsFamilyHasValue = false;
     bool presentFamilyHasValue = false;
+    bool computeFamilyHasValue = false;
 
     bool isComplete() const {
-        return graphicsFamilyHasValue && presentFamilyHasValue;
+        return graphicsFamilyHasValue && presentFamilyHasValue && computeFamilyHasValue;
     }
 };
 
@@ -49,7 +51,7 @@ public:
     Device& operator=(Device&&) = delete;
 
     VkCommandPool getCommandPool() {
-        return m_command_pool;
+        return m_graphics_command_pool;
     }
 
     VkDevice device() {
@@ -96,8 +98,10 @@ public:
     );
 
     VkCommandBuffer beginSingleTimeCommands();
-
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+    VkCommandBuffer beginSingleTimeComputeCommands();
+    void endSingleTimeComputeCommands(VkCommandBuffer commandBuffer);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -149,7 +153,7 @@ private:
 
     void createLogicalDevice();
 
-    void createCommandPool();
+    void createCommandPools();
 
     // helper functions
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -174,10 +178,13 @@ private:
     VkDebugUtilsMessengerEXT m_debug_messenger{};
     VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
     Window& m_window;
-    VkCommandPool m_command_pool{};
+
+    VkCommandPool m_graphics_command_pool{};
+    VkCommandPool m_compute_command_pool{};
 
     VkDevice m_device{};
     VkSurfaceKHR m_surface{};
+    VkQueue m_compute_queue{};
     VkQueue m_graphics_queue{};
     VkQueue m_present_queue{};
 
