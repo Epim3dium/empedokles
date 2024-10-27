@@ -67,6 +67,15 @@ class Demo : public App {
                 glm::vec4(1, 0, 0, 1),
                 glm::vec4(0, 0, 1, 1)
         );
+
+        std::unique_ptr<DescriptorSetLayout> layoutBinding;
+        std::unique_ptr<DescriptorPool> compute_pool;
+        const size_t dataCount = 1'000'000;
+        VkDescriptorSet descriptor_set;
+        VkPipelineLayout pipelineLayout{};
+        std::unique_ptr<Pipeline> compute_pipeline;
+        std::unique_ptr<Buffer> dataBuffer;
+        std::vector<float> inputData;
         void setupAnimationForProtagonist();
         void onRender(Device&, const FrameInfo& frame) override final;
         void onSetup(Window& window, Device& device) override final;
@@ -86,198 +95,177 @@ class Demo : public App {
                 }) {}
 };
 void Demo::onSetup(Window& window, Device& device) {
-    // {
-    //     auto& tex = Texture("invalid").texture();
-    //     auto pixels = tex.getPixelsFromGPU();
-    //     auto h = tex.getExtent().height;
-    //     auto w = tex.getExtent().width;
-    //     for(int i = 0; i < h; i += 1) {
-    //         for(int ii = 0; ii < w; ii += 1) {
-    //             auto r = (int)(pixels)[i * w + ii].red;
-    //             auto g = (int)(pixels)[i * w + ii].green;
-    //             auto b = (int)(pixels)[i * w + ii].blue;
-    //             std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
-    //             std::cout << "\u2588";
-    //         }
-    //         std::cout << '\n';
-    //     }
-    //     std::cout << "\033[0m";
-    // }
-    // controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
-    // controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
-    //
-    // controller.bind(eKeyMappings::LookUp, GLFW_KEY_W);
-    // controller.bind(eKeyMappings::LookDown, GLFW_KEY_S);
-    // controller.bind(eKeyMappings::LookLeft, GLFW_KEY_D);
-    // controller.bind(eKeyMappings::LookRight, GLFW_KEY_A);
-    //
-    // controller.bind(eKeyMappings::MoveUp, GLFW_KEY_UP);
-    // controller.bind(eKeyMappings::MoveDown, GLFW_KEY_DOWN);
-    // controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
-    // controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
-    //
-    // // coordinator.addComponent(cube, Model("cube"));
-    // protagonist = coordinator.createEntity();
-    //
-    // coordinator.getSystem<ColliderSystem>()
-    //     ->onCollisionEnter(protagonist,
-    //         protagonist,
-    //         [&](const CollisionInfo& info) {
-    //             auto ang = angle(info.collision_normal, vec2f(0, 1));
-    //             if (cos(ang) > -M_PI / 4.f) {
-    //                 return;
-    //             }
-    //             isProtagonistGrounded = info.collidee_entity;
-    //             EMP_LOG_DEBUG << "grounded: " << isProtagonistGrounded;
-    //         })
-    //     .onCollisionExit(
-    //         protagonist, protagonist, [&](Entity me, Entity other) {
-    //             if (other == isProtagonistGrounded || isProtagonistGrounded == false) {
-    //                 isProtagonistGrounded = false;
-    //                 EMP_LOG_DEBUG << "ungrounded";
-    //             }
-    //         });
-    //
-    // mouse_entity = coordinator.createEntity();
-    // coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
-    //
-    // {
-    //     Rigidbody rb;
-    //     rb.useAutomaticMass = true;
-    //     rb.isRotationLocked = true;
-    //     coordinator.addComponent(protagonist, Transform(vec2f(), 0.f));
-    //     std::vector<vec2f> protagonist_shape = {
-    //             vec2f(-100.f/4, -100.f/1.5),
-    //             vec2f(-100.f/4, 100.f/1.5),
-    //             vec2f(100.f/4, 100.f/1.5),
-    //             vec2f(100.f/4, -100.f/1.5)
-    //     };
-    //     auto col = Collider(protagonist_shape);
-    //     col.collider_layer = PLAYER;
-    //
-    //     coordinator.addComponent(protagonist, col);
-    //     coordinator.addComponent(protagonist, rb);
-    //
-    //     auto mat = Material(); 
-    //     coordinator.addComponent(protagonist, mat);
-    //
-    //     auto db_shape = DebugShape(device, protagonist_shape, glm::vec4(1, 1, 1, 1));
-    //     coordinator.addComponent(protagonist, db_shape);
-    //
-    //
-    //     setupAnimationForProtagonist();
-    // }
-    //
-    // std::pair<vec2f, float> ops[4] = {
-    //         {vec2f(0.f, 400.0f), 0.f},
-    //         {vec2f(400.f, 0.0f), M_PI / 2.f},
-    //         {vec2f(0.f, -400.0f), 0.f},
-    //         {vec2f(-400.f, 0.0f), M_PI / 2.f}
-    // };
-    // debug_cube_shape.fill_color = glm::vec4(1, 1, 1, 1);
-    // for (auto o : ops) {
-    //     auto platform = coordinator.createEntity();
-    //     coordinator.addComponent(
-    //             platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
-    //     );
-    //     coordinator.addComponent(
-    //             platform, DebugShape(device, cube_model_shape)
-    //     );
-    //     auto col = Collider(cube_model_shape);
-    //     col.collider_layer = GROUND;
-    //     coordinator.addComponent(platform, col);
-    //     coordinator.addComponent(platform, Rigidbody{true});
-    //     coordinator.addComponent(platform, Material());
-    // }
-    // for (auto& marker : markers) {
-    //     marker = coordinator.createEntity();
-    //     coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
-    //     coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
-    // }
-    // debug_cube_shape.fill_color = glm::vec4(1, 1, 0, 1);
-    //
-    // coordinator.getSystem<PhysicsSystem>()->gravity = 1000.f;
-    // coordinator.getSystem<PhysicsSystem>()->substep_count = 8;
-    const size_t dataCount = 1024;
-    VkDeviceSize bufferSize = sizeof(float) * dataCount;
-    std::vector<float> inputData(dataCount, 2.0f);  // Sample input data: all values set to 2.0
+    {
+        auto& tex = Texture("invalid").texture();
+        auto pixels = tex.getPixelsFromGPU();
+        auto h = tex.getExtent().height;
+        auto w = tex.getExtent().width;
+        for(int i = 0; i < h; i += 1) {
+            for(int ii = 0; ii < w; ii += 1) {
+                auto r = (int)(pixels)[i * w + ii].red;
+                auto g = (int)(pixels)[i * w + ii].green;
+                auto b = (int)(pixels)[i * w + ii].blue;
+                std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
+                std::cout << "\u2588";
+            }
+            std::cout << '\n';
+        }
+        std::cout << "\033[0m";
+    }
+    controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
+    controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
 
-    // Create buffer
-    Buffer dataBuffer(device, sizeof(float), dataCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    controller.bind(eKeyMappings::LookUp, GLFW_KEY_W);
+    controller.bind(eKeyMappings::LookDown, GLFW_KEY_S);
+    controller.bind(eKeyMappings::LookLeft, GLFW_KEY_D);
+    controller.bind(eKeyMappings::LookRight, GLFW_KEY_A);
+
+    controller.bind(eKeyMappings::MoveUp, GLFW_KEY_UP);
+    controller.bind(eKeyMappings::MoveDown, GLFW_KEY_DOWN);
+    controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
+    controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
+
+    // coordinator.addComponent(cube, Model("cube"));
+    protagonist = coordinator.createEntity();
+
+    coordinator.getSystem<ColliderSystem>()
+        ->onCollisionEnter(protagonist,
+            protagonist,
+            [&](const CollisionInfo& info) {
+                auto ang = angle(info.collision_normal, vec2f(0, 1));
+                if (cos(ang) > -M_PI / 4.f) {
+                    return;
+                }
+                isProtagonistGrounded = info.collidee_entity;
+                EMP_LOG_DEBUG << "grounded: " << isProtagonistGrounded;
+            })
+        .onCollisionExit(
+            protagonist, protagonist, [&](Entity me, Entity other) {
+                if (other == isProtagonistGrounded || isProtagonistGrounded == false) {
+                    isProtagonistGrounded = false;
+                    EMP_LOG_DEBUG << "ungrounded";
+                }
+            });
+
+    mouse_entity = coordinator.createEntity();
+    coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
     {
-        dataBuffer.map();
-        memcpy(dataBuffer.getMappedMemory(), inputData.data(), bufferSize);
-        dataBuffer.unmap();
+        Rigidbody rb;
+        rb.useAutomaticMass = true;
+        rb.isRotationLocked = true;
+        coordinator.addComponent(protagonist, Transform(vec2f(), 0.f));
+        std::vector<vec2f> protagonist_shape = {
+                vec2f(-100.f/4, -100.f/1.5),
+                vec2f(-100.f/4, 100.f/1.5),
+                vec2f(100.f/4, 100.f/1.5),
+                vec2f(100.f/4, -100.f/1.5)
+        };
+        auto col = Collider(protagonist_shape);
+        col.collider_layer = PLAYER;
+
+        coordinator.addComponent(protagonist, col);
+        coordinator.addComponent(protagonist, rb);
+
+        auto mat = Material(); 
+        coordinator.addComponent(protagonist, mat);
+
+        auto db_shape = DebugShape(device, protagonist_shape, glm::vec4(1, 1, 1, 1));
+        coordinator.addComponent(protagonist, db_shape);
+
+
+        setupAnimationForProtagonist();
     }
-    // Create descriptor set layout
-    auto layoutBinding = DescriptorSetLayout::Builder(device)
-                             .addBinding(0,
-                                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                                 VK_SHADER_STAGE_COMPUTE_BIT)
+
+    std::pair<vec2f, float> ops[4] = {
+            {vec2f(0.f, 400.0f), 0.f},
+            {vec2f(400.f, 0.0f), M_PI / 2.f},
+            {vec2f(0.f, -400.0f), 0.f},
+            {vec2f(-400.f, 0.0f), M_PI / 2.f}
+    };
+    debug_cube_shape.fill_color = glm::vec4(1, 1, 1, 1);
+    for (auto o : ops) {
+        auto platform = coordinator.createEntity();
+        coordinator.addComponent(
+                platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
+        );
+        coordinator.addComponent(
+                platform, DebugShape(device, cube_model_shape)
+        );
+        auto col = Collider(cube_model_shape);
+        col.collider_layer = GROUND;
+        coordinator.addComponent(platform, col);
+        coordinator.addComponent(platform, Rigidbody{true});
+        coordinator.addComponent(platform, Material());
+    }
+    for (auto& marker : markers) {
+        marker = coordinator.createEntity();
+        coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
+        coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
+    }
+    debug_cube_shape.fill_color = glm::vec4(1, 1, 0, 1);
+
+    coordinator.getSystem<PhysicsSystem>()->gravity = 1000.f;
+    coordinator.getSystem<PhysicsSystem>()->substep_count = 8;
+    {
+        VkDeviceSize bufferSize = sizeof(float) * dataCount;
+        inputData = std::vector<float>(dataCount, 2.0f);  // Sample input data: all values set to 2.0
+        for(int i = 0; i < inputData.size(); i+=2) {
+            inputData[i] *= 2.f;
+        }
+
+        // Create buffer
+        dataBuffer = std::make_unique<Buffer>(device, sizeof(float), dataCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        {
+            dataBuffer->map();
+            memcpy(dataBuffer->getMappedMemory(), inputData.data(), bufferSize);
+            dataBuffer->unmap();
+        }
+        // Create descriptor set layout
+        layoutBinding = DescriptorSetLayout::Builder(device)
+                                 .addBinding(0,
+                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                     VK_SHADER_STAGE_COMPUTE_BIT)
+                                 .build();
+
+        // Descriptor pool and set allocation
+        compute_pool = DescriptorPool::Builder(device)
+                             .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                             .addPoolSize(
+                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                     1
+                             )
                              .build();
 
-    // Descriptor pool and set allocation
-    auto compute_pool = DescriptorPool::Builder(device)
-                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .addPoolSize(
-                                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                                 1
-                         )
-                         .build();
+        PipelineConfigInfo config;
+        {
+            // Create pipeline layout
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutInfo.setLayoutCount = 1;
+            auto layouts = layoutBinding->getDescriptorSetLayout();
+            pipelineLayoutInfo.pSetLayouts = &layouts;
 
-    VkPipelineLayout pipelineLayout{};
-    PipelineConfigInfo config;
-    {
-        // Create pipeline layout
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        auto layouts = layoutBinding->getDescriptorSetLayout();
-        pipelineLayoutInfo.pSetLayouts = &layouts;
+            vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 
-        vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
+            config.pipelineLayout = pipelineLayout;
+        }
+         compute_pipeline = std::make_unique<Pipeline>(device, "../assets/shaders/compute.comp.spv", config);
 
-        config.pipelineLayout = pipelineLayout;
+        {
+            VkDescriptorBufferInfo bufferInfoDS{};
+            bufferInfoDS.buffer = dataBuffer->getBuffer();
+            bufferInfoDS.offset = 0;
+            bufferInfoDS.range = bufferSize;
+
+            DescriptorWriter(*layoutBinding, *compute_pool)
+                    .writeBuffer(0, &bufferInfoDS)
+                    .build(descriptor_set);
+        }
+
+        }{
     }
-    Pipeline compute_pipeline(device, "../assets/shaders/compute.comp.spv", config);
-
-
-    VkDescriptorSet descriptor_set;
-    {
-        VkDescriptorBufferInfo bufferInfoDS{};
-        bufferInfoDS.buffer = dataBuffer.getBuffer();
-        bufferInfoDS.offset = 0;
-        bufferInfoDS.range = bufferSize;
-
-        DescriptorWriter(*layoutBinding, *compute_pool)
-                .writeBuffer(0, &bufferInfoDS)
-                .build(descriptor_set);
-    }
-
-    auto commandBuffer = device.beginSingleTimeCommands();
-
-    compute_pipeline.bind(commandBuffer);
-    vkCmdBindDescriptorSets(commandBuffer,
-        VK_PIPELINE_BIND_POINT_COMPUTE,
-        pipelineLayout, 0, 1,
-        &descriptor_set, 0, nullptr);
-    vkCmdDispatch(commandBuffer, (dataCount + 63) / 64, 1, 1); // Dispatch work
-
-    // End, submit and retrieve data
-    device.endSingleTimeCommands(commandBuffer);
-
-    // Map memory again to read back data
-    dataBuffer.map();
-    float* resultData = reinterpret_cast<float*>(dataBuffer.getMappedMemory());
-    EMP_LOG_DEBUG << "!";
-    for (size_t i = 0; i < dataCount; ++i) {
-        std::cout << "Result " << i << ": " << resultData[i] << std::endl;
-    }
-    dataBuffer.unmap();
-    exit(1);
-
-    // Cleanup omitted for brevity
 }
 
 void Demo::setupAnimationForProtagonist() {
@@ -364,10 +352,33 @@ void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardControl
 }
 void Demo::onRender(Device&, const FrameInfo& frame) {
     ImGui::ShowDemoWindow();
+
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
-    EMP_LOG_INTERVAL(DEBUG2, 3.f) << "{main thread}: " << 1.f / delta_time;
+    if(true)
+    {
+        auto commandBuffer = device.beginSingleTimeComputeCommands();
+
+        compute_pipeline->bind(commandBuffer);
+        vkCmdBindDescriptorSets(commandBuffer,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
+            pipelineLayout, 0, 1,
+            &descriptor_set, 0, nullptr);
+        vkCmdDispatch(commandBuffer, 1, 1, 1); // Dispatch work
+
+        // End, submit and retrieve data
+        device.endSingleTimeComputeCommands(commandBuffer);
+
+
+        // Map memory again to read back data
+        dataBuffer->map();
+        float* resultData = reinterpret_cast<float*>(dataBuffer->getMappedMemory());
+        EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result: " << resultData[0];
+        dataBuffer->unmap();
+    }
+    EMP_LOG_INTERVAL(DEBUG2, 0.1f) << "{main thread}: " << 1.f / delta_time;
+
     auto& phy_sys = *coordinator.getSystem<PhysicsSystem>();
     for(auto e : phy_sys.getEntities()) {
         if(!coordinator.getComponent<DebugShape>(e)) {
