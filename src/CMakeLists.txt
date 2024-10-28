@@ -1,6 +1,8 @@
 set(SOURCE_FILES
     #main.cpp
     debug/log.cpp
+
+    compute/compute_manager.cpp
     
     math/types.cpp
     math/math_func.cpp
@@ -58,7 +60,8 @@ set(HEADER_FILES
     debug/log.hpp
     debug/debug.hpp
 
-    multithreading/thread_pool.hpp
+    compute/multithreading/thread_pool.hpp
+    compute/compute_manager.hpp
 
 
     math/types.hpp
