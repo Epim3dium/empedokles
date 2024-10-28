@@ -5,6 +5,7 @@
     - collision optimization
         - tighter locked critical section
 - graphics
+    - separate command queue for ui only changed when imgui is interacted with
     - expand imgui editor
     - 2d lighting
 - core
