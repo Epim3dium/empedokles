@@ -365,7 +365,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             VK_PIPELINE_BIND_POINT_COMPUTE,
             pipelineLayout, 0, 1,
             &descriptor_set, 0, nullptr);
-        vkCmdDispatch(commandBuffer, 1, 1, 1); // Dispatch work
+        vkCmdDispatch(commandBuffer, (dataCount + 63) / 64, 1, 1); // Dispatch work
 
         // End, submit and retrieve data
         device.endSingleTimeComputeCommands(commandBuffer);
@@ -374,7 +374,12 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         // Map memory again to read back data
         dataBuffer->map();
         float* resultData = reinterpret_cast<float*>(dataBuffer->getMappedMemory());
-        EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result: " << resultData[0];
+        static int ticks = 4;
+        ticks++;
+        EMP_LOG_INTERVAL(DEBUG, 1.f) << "ResultCl: " << ticks;
+        EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result0: " << resultData[0];
+        EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result5: " << resultData[500'000];
+        EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result10: " << resultData[1'000'000 - 2];
         dataBuffer->unmap();
     }
     EMP_LOG_INTERVAL(DEBUG2, 0.1f) << "{main thread}: " << 1.f / delta_time;
