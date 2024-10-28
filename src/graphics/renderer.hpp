@@ -23,27 +23,27 @@ public:
     Renderer& operator=(const Renderer&) = delete;
 
     [[nodiscard]] VkRenderPass getSwapChainRenderPass() const {
-        return swapChain->getRenderPass();
+        return m_swapChain->getRenderPass();
     }
 
     [[nodiscard]] float getAspectRatio() const {
-        return swapChain->extentAspectRatio();
+        return m_swapChain->extentAspectRatio();
     }
 
     [[nodiscard]] bool isFrameInProgress() const {
-        return isFrameStarted;
+        return m_isFrameStarted;
     }
 
     [[nodiscard]] VkCommandBuffer getCurrentCommandBuffer() const {
-        assert(isFrameStarted &&
+        assert(m_isFrameStarted &&
                "Cannot get command buffer when frame not in progress");
-        return commandBuffers[currentFrameIndex];
+        return m_command_buffers[m_current_frame_index];
     }
 
     [[nodiscard]] int getFrameIndex() const {
-        assert(isFrameStarted &&
+        assert(m_isFrameStarted &&
                "Cannot get frame index when frame not in progress");
-        return currentFrameIndex;
+        return m_current_frame_index;
     }
 
     VkCommandBuffer beginFrame();
@@ -60,14 +60,14 @@ private:
 
     void recreateSwapChain();
 
-    Window& window;
-    Device& device;
-    std::unique_ptr<SwapChain> swapChain;
-    std::vector<VkCommandBuffer> commandBuffers;
+    Window& m_window;
+    Device& m_device;
+    std::unique_ptr<SwapChain> m_swapChain;
+    std::vector<VkCommandBuffer> m_command_buffers;
 
-    uint32_t currentImageIndex{};
-    int currentFrameIndex{0};
-    bool isFrameStarted{false};
+    uint32_t m_current_image_index{};
+    int m_current_frame_index{0};
+    bool m_isFrameStarted{false};
 };
 } // namespace emp
 
