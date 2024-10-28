@@ -37,6 +37,7 @@ VkDescriptorPool ImGuiGetDescriptorPool(VkDevice device) {
     }
     return imguiPool;
 }
+ImGui_ImplVulkan_InitInfo last_init_info;
 void ImGuiSetup(
         ImGui_ImplVulkan_InitInfo init_info,
         GLFWwindow* window,
@@ -44,6 +45,7 @@ void ImGuiSetup(
         Renderer& rend,
         VkRenderPass renderPass
 ) {
+    last_init_info = init_info;
     //1: create descriptor pool for IMGUI
 	// the size of the pool is very oversize, but it's copied from imgui demo itself.
 
@@ -87,6 +89,7 @@ void ImGuiDestroy() {
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    vkDestroyDescriptorPool(last_init_info.Device, last_init_info.DescriptorPool, nullptr);
 }
 
 };
