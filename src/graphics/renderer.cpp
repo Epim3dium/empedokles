@@ -8,12 +8,6 @@
 #include "graphics/imgui/imgui_emp_impl.hpp"
 
 namespace emp {
-void Renderer::submitImmediate(std::function<void(VkCommandBuffer cmd)>&& function)
-{
-    auto cmd = device.beginSingleTimeCommands();
-	function(cmd);
-    device.endSingleTimeCommands(cmd);
-}
 
 Renderer::Renderer(Window& window, Device& device)
     : window{window}, device{device} 

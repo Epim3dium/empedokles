@@ -53,8 +53,6 @@ public:
     void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
     void endSwapChainRenderPass(VkCommandBuffer commandBuffer) const;
-
-    void submitImmediate(std::function<void(VkCommandBuffer cmd)>&& function);
 private:
     void createCommandBuffers();
 

@@ -60,9 +60,9 @@ void ImGuiSetup(
 	ImGui_ImplVulkan_Init(&init_info, renderPass);
 
 	//execute a gpu command to upload imgui font textures
-	rend.submitImmediate([&](VkCommandBuffer cmd) {
-		ImGui_ImplVulkan_CreateFontsTexture(cmd);
-    });
+    auto command_buffer = device.beginSingleTimeCommands();
+    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+    device.endSingleTimeCommands(command_buffer);
 
 	//clear font textures from cpu data
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
