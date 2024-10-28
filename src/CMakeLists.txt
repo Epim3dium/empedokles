@@ -28,11 +28,11 @@ set(SOURCE_FILES
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
 
-    graphics/vulkan/buffer.cpp
-    graphics/vulkan/descriptors.cpp
-    graphics/vulkan/device.cpp
-    graphics/vulkan/pipeline.cpp
-    graphics/vulkan/swap_chain.cpp
+    vulkan/buffer.cpp
+    vulkan/descriptors.cpp
+    vulkan/device.cpp
+    vulkan/pipeline.cpp
+    vulkan/swap_chain.cpp
 
     graphics/camera.cpp
     graphics/model_system.cpp
@@ -112,11 +112,11 @@ set(HEADER_FILES
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
 
-    graphics/vulkan/buffer.hpp
-    graphics/vulkan/descriptors.hpp
-    graphics/vulkan/device.hpp
-    graphics/vulkan/pipeline.hpp
-    graphics/vulkan/swap_chain.hpp
+    vulkan/buffer.hpp
+    vulkan/descriptors.hpp
+    vulkan/device.hpp
+    vulkan/pipeline.hpp
+    vulkan/swap_chain.hpp
 
     graphics/camera.hpp
     graphics/frame_info.hpp

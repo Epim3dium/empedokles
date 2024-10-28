@@ -1,7 +1,7 @@
 #ifndef EMP_PIPELINE_HPP
 #define EMP_PIPELINE_HPP
 
-#include "graphics/vulkan/device.hpp"
+#include "vulkan/device.hpp"
 
 // std
 #include <string>
