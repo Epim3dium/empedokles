@@ -7,6 +7,12 @@ ComputeManager::~ComputeManager() {
     freeCommandBuffers();
 }
 void ComputeManager::freeCommandBuffers() {
+    vkFreeCommandBuffers(
+            m_device.device(),
+            m_device.getCommandPool(),
+            static_cast<uint32_t>(1),
+            &m_command_buffer
+    );
 }
 void ComputeManager::createCommandBuffer() {
     VkCommandBufferAllocateInfo allocInfo{};
