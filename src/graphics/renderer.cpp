@@ -21,6 +21,9 @@ Renderer::Renderer(Window& window, Device& device)
 
 Renderer::~Renderer() {
     freeCommandBuffers();
+#if EMP_USING_IMGUI 
+    ImGuiDestroy();
+#endif
 }
 
 void Renderer::recreateSwapChain() {

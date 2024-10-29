@@ -22,12 +22,19 @@
 
 # ⚠️ ISSUES:
 - when spawing overlapping colliders they explode
-- weird error message when closing window
 - restitution unreliability
 ---
 
 # ✅ DONE:
 
+- weird error message when closing window
+- graphics
+    - basic animation system
+        - truly moving animated sprites
+    - add imgui
+- collision
+    - collision optimization
+        - collision idle state
 - graphics
     - basic animation system
         - truly moving animated sprites

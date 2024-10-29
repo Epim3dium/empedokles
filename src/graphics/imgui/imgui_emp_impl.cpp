@@ -37,6 +37,8 @@ VkDescriptorPool ImGuiGetDescriptorPool(VkDevice device) {
     }
     return imguiPool;
 }
+//TODO fix ugly
+ImGui_ImplVulkan_InitInfo last_init_info;
 void ImGuiSetup(
         ImGui_ImplVulkan_InitInfo init_info,
         GLFWwindow* window,
@@ -44,6 +46,7 @@ void ImGuiSetup(
         Renderer& rend,
         VkRenderPass renderPass
 ) {
+    last_init_info = init_info;
     //1: create descriptor pool for IMGUI
 	// the size of the pool is very oversize, but it's copied from imgui demo itself.
 
@@ -66,11 +69,6 @@ void ImGuiSetup(
 
 	//clear font textures from cpu data
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-	//add the destroy the imgui created structures
-    //TODO
-    // vkDestroyDescriptorPool(device, imguiPool, nullptr);
-    // ImGui_ImplVulkan_Shutdown();
 }
 
 void ImGuiRenderBegin() {
@@ -82,6 +80,12 @@ void ImGuiRenderEnd(VkCommandBuffer commandBuffer) {
     // Render ImGui frame
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+}
+void ImGuiDestroy() {
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    vkDestroyDescriptorPool(last_init_info.Device, last_init_info.DescriptorPool, nullptr);
 }
 
 };

@@ -24,14 +24,15 @@ void SpriteSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend
             this->entities,
             [this](DescriptorWriter& desc_writer,
                    int frame_index,
-                   const Entity& entity) -> bool {
-                //TODO: fix this, its dirty and awful and it works
-                static VkDescriptorBufferInfo buf_info;
+                   const Entity& entity)->VkDescriptorSet {
+                VkDescriptorBufferInfo buf_info;
                 buf_info = getBufferInfoForGameObject(frame_index, entity);
                 auto& image_info = getComponent<Sprite>(entity).texture().getImageInfo();
                 desc_writer.writeBuffer(0, &buf_info);
                 desc_writer.writeImage(1, &image_info);
-                return true;
+                VkDescriptorSet result;
+                desc_writer.build(result);
+                return result;
             },
             [](const VkCommandBuffer& command_buf, const Entity& entity) {
                 Sprite::bind(command_buf);

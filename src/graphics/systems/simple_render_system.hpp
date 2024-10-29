@@ -29,9 +29,12 @@ public:
 
     template <class IterableObjects> 
     void render(FrameInfo& frameInfo,
-           IterableObjects& objects,
-           std::function<bool(DescriptorWriter&, int frame_idx, const typename IterableObjects::value_type&)> writeDesc,
-           std::function<void(const VkCommandBuffer&, const typename IterableObjects::value_type&)> bindAndDraw);
+        IterableObjects& objects,
+        std::function<VkDescriptorSet(DescriptorWriter&,
+            int frame_idx,
+            const typename IterableObjects::value_type&)> writeDesc,
+        std::function<void(const VkCommandBuffer&,
+            const typename IterableObjects::value_type&)> bindAndDraw);
 
 private:
     void createPipelineLayout(
@@ -51,11 +54,14 @@ private:
 
     std::unique_ptr<DescriptorSetLayout> render_system_layout;
 };
-template <class IterableObjects> 
+template <class IterableObjects>
 void SimpleRenderSystem::render(FrameInfo& frameInfo,
-       IterableObjects& objects,
-       std::function<bool(DescriptorWriter&, int frame_idx, const typename IterableObjects::value_type&)> writeDesc,
-       std::function<void(const VkCommandBuffer&, const typename IterableObjects::value_type&)> bindAndDraw) 
+    IterableObjects& objects,
+    std::function<VkDescriptorSet(DescriptorWriter&,
+        int frame_idx,
+        const typename IterableObjects::value_type&)> writeDesc,
+    std::function<void(const VkCommandBuffer&,
+        const typename IterableObjects::value_type&)> bindAndDraw) 
 {
     pipeline->bind(frameInfo.commandBuffer);
 
@@ -80,11 +86,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
         );
 
          
-        if(!writeDesc(desc_writer, frameInfo.frameIndex, object)) {
-            continue;
-        }
-        VkDescriptorSet entity_desc_set;
-        desc_writer.build(entity_desc_set);
+        VkDescriptorSet entity_desc_set = writeDesc(desc_writer, frameInfo.frameIndex, object);
 
         vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
@@ -100,7 +102,6 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
 
         bindAndDraw(frameInfo.commandBuffer, object);
     }
-
 }
 } // namespace emp
 #endif

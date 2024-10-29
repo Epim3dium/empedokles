@@ -238,20 +238,22 @@ void App::run() {
     }
 
 #if EMP_ENABLE_RENDER_THREAD
+    EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
     rendering_thread->join();
 #endif
 #if EMP_ENABLE_PHYSICS_THREAD
+    EMP_LOG(LogLevel::DEBUG) << "physics thread joined";
     physics_thread->join();
 #endif
 
-    EMP_LOG(LogLevel::DEBUG) << "rendering thread joined";
-
+    vkDeviceWaitIdle(device.device());
     EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
     coordinator.destroy();
     EMP_LOG(LogLevel::DEBUG) << "destroying models...";
     Model::destroyAll();
     EMP_LOG(LogLevel::DEBUG) << "destroying textures...";
     Texture::destroyAll();
+    Sprite::s_vertex_buffer.reset();
 
     vkDeviceWaitIdle(device.device());
 }
