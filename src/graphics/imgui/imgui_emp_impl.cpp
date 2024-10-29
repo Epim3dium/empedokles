@@ -37,6 +37,7 @@ VkDescriptorPool ImGuiGetDescriptorPool(VkDevice device) {
     }
     return imguiPool;
 }
+//TODO fix ugly
 ImGui_ImplVulkan_InitInfo last_init_info;
 void ImGuiSetup(
         ImGui_ImplVulkan_InitInfo init_info,
@@ -68,11 +69,6 @@ void ImGuiSetup(
 
 	//clear font textures from cpu data
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-	//add the destroy the imgui created structures
-    //TODO
-    // vkDestroyDescriptorPool(device, imguiPool, nullptr);
-    // ImGui_ImplVulkan_Shutdown();
 }
 
 void ImGuiRenderBegin() {

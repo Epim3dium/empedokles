@@ -10,12 +10,12 @@ void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_
         this->entities,
         [this](DescriptorWriter& desc_writer,
                int frame_index,
-               const Entity& entity) -> bool {
-            //TODO: fix this, its dirty and awful and it works
-            static VkDescriptorBufferInfo buf_info;
-            buf_info = getBufferInfoForGameObject(frame_index, entity);
+               const Entity& entity) -> VkDescriptorSet {
+            auto buf_info = getBufferInfoForGameObject(frame_index, entity);
             desc_writer.writeBuffer(0, &buf_info);
-            return true;
+            VkDescriptorSet result;
+            desc_writer.build(result);
+            return result;
         },
         [this](const VkCommandBuffer& command_buf, const Entity& entity) {
             auto& shape = getComponent<DebugShape>(entity);
