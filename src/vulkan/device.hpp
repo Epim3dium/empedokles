@@ -50,7 +50,7 @@ public:
 
     Device& operator=(Device&&) = delete;
 
-    VkCommandPool getCommandPool() {
+    VkCommandPool getGraphicsCommandPool() {
         return m_graphics_command_pool;
     }
 

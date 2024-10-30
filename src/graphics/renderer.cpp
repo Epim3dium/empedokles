@@ -54,7 +54,7 @@ void Renderer::createCommandBuffers() {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = m_device.getCommandPool();
+    allocInfo.commandPool = m_device.getGraphicsCommandPool();
     allocInfo.commandBufferCount = static_cast<uint32_t>(m_command_buffers.size());
 
     if (vkAllocateCommandBuffers(
@@ -67,7 +67,7 @@ void Renderer::createCommandBuffers() {
 void Renderer::freeCommandBuffers() {
     vkFreeCommandBuffers(
             m_device.device(),
-            m_device.getCommandPool(),
+            m_device.getGraphicsCommandPool(),
             static_cast<uint32_t>(m_command_buffers.size()),
             m_command_buffers.data()
     );
