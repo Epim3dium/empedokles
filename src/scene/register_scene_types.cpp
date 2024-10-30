@@ -16,7 +16,6 @@
 namespace emp {
 void registerSceneTypes() {
     coordinator.registerComponent<Transform>();
-    coordinator.addComponent(coordinator.world(), Transform(vec2f(0, 0), 0.f, {1.f, 1.f}));
     coordinator.registerComponent<Behaviour>();
 
     coordinator.registerComponent<Constraint>();
