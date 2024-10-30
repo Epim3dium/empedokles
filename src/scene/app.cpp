@@ -65,7 +65,8 @@ App::~App() = default;
 
 std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(
         DescriptorSetLayout& globalSetLayout,
-        const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+        const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
+        DescriptorPool& global_pool
 ) {
     std::vector<VkDescriptorSet> globalDescriptorSets(
             SwapChain::MAX_FRAMES_IN_FLIGHT
@@ -121,7 +122,7 @@ void App::run() {
                                    )
                                    .build();
     auto global_descriptor_sets =
-            m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers);
+            m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers, *globalPool);
     EMP_LOG(DEBUG3) << "Alignment: "
                     << device.properties.limits.minUniformBufferOffsetAlignment;
     EMP_LOG(DEBUG3) << "atom size: "
@@ -356,8 +357,7 @@ void App::renderFrame(
             );
             m_isRenderer_waiting = false;
 
-            GlobalUbo ubo =
-                    m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
+            m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
             auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
             auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
             auto& animated_sprite_sys = *coordinator.getSystem<AnimatedSpriteSystem>();

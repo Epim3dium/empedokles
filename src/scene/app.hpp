@@ -69,7 +69,8 @@ private:
     std::vector<AssetInfo> m_textures_to_load;
     std::vector<VkDescriptorSet> m_setupGlobalUBODescriptorSets(
             DescriptorSetLayout& globalSetLayout,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
+            DescriptorPool& global_pool
     );
     std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers();
     void setupECS();
