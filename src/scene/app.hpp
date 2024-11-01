@@ -1,5 +1,6 @@
 #ifndef EMP_APP_HPP
 #define EMP_APP_HPP
+#include "compute/compute_manager.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/debug_shape_system.hpp"
 #include "graphics/frame_info.hpp"
@@ -48,6 +49,7 @@ protected:
     Window window;
     Device device;
     Renderer renderer;
+    ComputeManager compute;
     // order of declarations matters
     std::unique_ptr<DescriptorPool> globalPool;
     std::vector<std::unique_ptr<DescriptorPool>> frame_pools;

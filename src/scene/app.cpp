@@ -35,6 +35,7 @@ App::App(
       window{width, height, "Vulkan MacOS M1"},
       device{window},
       renderer{window, device},
+      compute{device},
       globalPool{} {
     globalPool = DescriptorPool::Builder(device)
                          .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
@@ -339,15 +340,18 @@ void App::renderFrame(
         const std::vector<std::unique_ptr<Buffer>>& uboBuffers
 ) {
     if (auto command_buffer = renderer.beginFrame()) {
+        if(auto compute_buffer = compute.beginCompute(renderer)) {
+            compute.endCompute();
+        }
         int frame_index = renderer.getFrameIndex();
         frame_pools[frame_index]->resetPool();
         FrameInfo frame_info{
-                frame_index,
-                delta_time,
-                command_buffer,
-                camera,
-                global_descriptor_sets[frame_index],
-                *frame_pools[frame_index]
+            frame_index,
+            delta_time,
+            command_buffer,
+            camera,
+            global_descriptor_sets[frame_index],
+            *frame_pools[frame_index]
         };
 
         {
