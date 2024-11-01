@@ -19,7 +19,6 @@ private:
 
     void createSyncObjects();
     void freeSyncObjects();
-    VkResult submitCommandBuffers(VkCommandBuffer* cmd);
 
     std::vector<VkFence> m_compute_in_flight_fences;
     std::vector<VkSemaphore> m_compute_finished_semaphores;
