@@ -18,6 +18,7 @@ std::string FormatTime(std::chrono::system_clock::time_point tp) {
 }
 
 LogLevel Log::s_reporting_level = DEBUG3;
+const std::thread::id Log::s_main_thread = std::this_thread::get_id();
 std::unique_ptr<LogOutput> Log::s_out =
         std::make_unique<Output2Cerr>(Output2Cerr());
 std::mutex Log::s_out_lock;
@@ -26,8 +27,11 @@ Log::Log() {
 }
 
 std::ostringstream& Log::Get(LogLevel level) {
-    os << "- " << NowTime();
-    os << " [" << ToString(level) << "]: ";
+    os << "- " << NowTime() << " | ";
+    if(s_main_thread != std::this_thread::get_id()) {
+        os << "thread: " << std::this_thread::get_id() << " | ";
+    }
+    os << "[" << ToString(level) << "]: ";
     os << std::string(level > DEBUG ? level - DEBUG : 0, '\t');
     return os;
 }

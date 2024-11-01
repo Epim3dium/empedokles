@@ -2,6 +2,7 @@
 #define EMP_LOG_H
 #include <stdio.h>
 #include <cassert>
+#include <thread>
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -33,6 +34,7 @@ public:
 public:
     static std::unique_ptr<LogOutput> s_out;
     static std::mutex s_out_lock;
+    static const std::thread::id s_main_thread;
 
     static LogLevel s_reporting_level;
     static std::string ToString(LogLevel level);
