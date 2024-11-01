@@ -25,7 +25,7 @@ void ComputeManager::freeCommandBuffers() {
     vkFreeCommandBuffers(
             m_device.device(),
             m_device.getComputeCommandPool(),
-            static_cast<uint32_t>(3),
+            static_cast<uint32_t>(m_command_buffers.size()),
             m_command_buffers.data()
     );
     m_command_buffers.clear();
@@ -59,7 +59,7 @@ VkCommandBuffer ComputeManager::beginCompute(Renderer& renderer) {
     m_frame_index = renderer.getFrameIndex();
     vkWaitForFences(m_device.device(), 1, &m_compute_in_flight_fences[m_frame_index], VK_TRUE, UINT64_MAX);
     vkResetFences(m_device.device(), 1, &m_compute_in_flight_fences[m_frame_index]);
-    vkResetCommandBuffer(m_command_buffers[m_frame_index], /*VkCommandBufferResetFlagBits*/ 0);
+    // vkResetCommandBuffer(m_command_buffers[m_frame_index], /*VkCommandBufferResetFlagBits*/ 0);
 
     m_isComputeStarted = true;
 
@@ -80,18 +80,12 @@ void ComputeManager::endCompute() {
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer!");
     }
-    // vkResetCommandBuffer(m_command_buffers[m_frame_index],
-    // /*VkCommandBufferResetFlagBits*/ 0);
-    // recordComputeCommandBuffer(m_command_buffers[m_frame_index]);
-
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &m_command_buffers[m_frame_index];
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &m_compute_finished_semaphores[m_frame_index];
-    // in swapchain:
-    //VkSemaphore waitSemaphores[] = { computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame] };
 
     if (vkQueueSubmit(m_device.computeQueue(),
             1,
