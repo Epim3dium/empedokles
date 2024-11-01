@@ -95,9 +95,8 @@ VkResult SwapChain::acquireNextImage(uint32_t* imageIndex) {
     return result;
 }
 
-VkResult SwapChain::submitCommandBuffers(
-        const VkCommandBuffer* buffers, const uint32_t* imageIndex
-) {
+VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* buffers,
+        const uint32_t* imageIndex, VkSemaphore* compute_finished) {
     if (m_images_in_flight[*imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(
                 m_device.device(),
@@ -112,11 +111,14 @@ VkResult SwapChain::submitCommandBuffers(
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {m_image_available_semaphores[m_current_frame]};
-    VkPipelineStageFlags waitStages[] = {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-    };
-    submitInfo.waitSemaphoreCount = 1;
+    VkSemaphore waitSemaphores[2] = {m_image_available_semaphores[m_current_frame], NULL};
+    VkPipelineStageFlags waitStages[2] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0 };
+
+    if(compute_finished != NULL) {
+        waitSemaphores[1] = *compute_finished;
+        waitStages[1] = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    }
+    submitInfo.waitSemaphoreCount = 1 + (compute_finished != NULL);
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 

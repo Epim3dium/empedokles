@@ -7,18 +7,27 @@ public:
     ComputeManager(Device& device);
     ~ComputeManager();
     [[nodiscard]] VkCommandBuffer getCurrentCommandBuffer() const {
-        assert(isComputeStarted &&
+        assert(m_isComputeStarted &&
                "Cannot get command buffer when frame not in progress");
-        return m_command_buffer;
+        return m_command_buffers[m_frame_index];
     }
-    VkCommandBuffer beginCompute();
+    VkCommandBuffer beginCompute(Renderer& renderer);
     void endCompute();
 private:
     void createCommandBuffer();
     void freeCommandBuffers();
-    bool isComputeStarted = false;
-    VkCommandBuffer m_command_buffer;
+
+    void createSyncObjects();
+    void freeSyncObjects();
+    VkResult submitCommandBuffers(VkCommandBuffer* cmd);
+
+    std::vector<VkFence> m_compute_in_flight_fences;
+    std::vector<VkSemaphore> m_compute_finished_semaphores;
+    int m_frame_index = 0;
+    bool m_isComputeStarted = false;
+    std::vector<VkCommandBuffer> m_command_buffers;
     Device& m_device;
+
 };
 };
 #endif //EMP_COMPUTE_MANAGER_HPP

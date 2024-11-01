@@ -12,6 +12,7 @@
 #include <vector>
 
 namespace emp {
+struct ComputeManager;
 class Renderer {
 public:
     Renderer(Window& window, Device& device);
@@ -54,6 +55,10 @@ public:
 
     void endSwapChainRenderPass(VkCommandBuffer commandBuffer) const;
 private:
+    void setComputeSemaphore(VkSemaphore semaphore) { 
+        m_compute_finished_semaphore = semaphore;
+    }
+
     void createCommandBuffers();
 
     void freeCommandBuffers();
@@ -64,10 +69,12 @@ private:
     Device& m_device;
     std::unique_ptr<SwapChain> m_swapChain;
     std::vector<VkCommandBuffer> m_command_buffers;
+    VkSemaphore m_compute_finished_semaphore = NULL;
 
     uint32_t m_current_image_index{};
     int m_current_frame_index{0};
     bool m_isFrameStarted{false};
+    friend ComputeManager;
 };
 } // namespace emp
 

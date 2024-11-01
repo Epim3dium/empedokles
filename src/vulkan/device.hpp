@@ -53,6 +53,9 @@ public:
     VkCommandPool getGraphicsCommandPool() {
         return m_graphics_command_pool;
     }
+    VkCommandPool getComputeCommandPool() {
+        return m_compute_command_pool;
+    }
 
     VkDevice device() {
         return m_device;
@@ -64,6 +67,9 @@ public:
 
     VkQueue graphicsQueue() {
         return m_graphics_queue;
+    }
+    VkQueue computeQueue() {
+        return m_compute_queue;
     }
 
     VkQueue presentQueue() {

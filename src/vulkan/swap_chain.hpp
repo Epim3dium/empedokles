@@ -72,9 +72,8 @@ public:
 
     VkResult acquireNextImage(uint32_t* imageIndex);
 
-    VkResult submitCommandBuffers(
-            const VkCommandBuffer* buffers, const uint32_t* imageIndex
-    );
+    VkResult submitCommandBuffers(const VkCommandBuffer* buffers,
+        const uint32_t* imageIndex, VkSemaphore* compute_finished = NULL);
 
     [[nodiscard]] bool compareSwapFormats(const SwapChain& swapChain) const {
         return swapChain.m_swapChain_depth_format == m_swapChain_depth_format &&

@@ -75,8 +75,7 @@ void Renderer::freeCommandBuffers() {
 }
 
 VkCommandBuffer Renderer::beginFrame() {
-    assert(!m_isFrameStarted && "Can't call beginFrame while already in progress"
-    );
+    assert(!m_isFrameStarted && "Can't call beginFrame while already in progress");
 
     auto result = m_swapChain->acquireNextImage(&m_current_image_index);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -108,8 +107,8 @@ void Renderer::endFrame() {
         throw std::runtime_error("failed to record command buffer!");
     }
 
-    auto result =
-            m_swapChain->submitCommandBuffers(&commandBuffer, &m_current_image_index);
+    auto result = m_swapChain->submitCommandBuffers(
+        &commandBuffer, &m_current_image_index, &m_compute_finished_semaphore);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_window.wasWindowResized()) {
         m_window.resetWindowResizedFlag();
