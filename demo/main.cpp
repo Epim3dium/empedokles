@@ -37,6 +37,7 @@ enum CollisionLayers {
 };
 class Demo : public App {
     public:
+        Texture crate_texture;
         Entity mouse_entity;
         Entity protagonist;
 
@@ -88,8 +89,12 @@ class Demo : public App {
                 }) {}
 };
 void Demo::onSetup(Window& window, Device& device) {
-    {
+    crate_texture = Texture("crate");
+    if(false){
         auto& tex = Texture("invalid").texture();
+        EMP_LOG_DEBUG << tex.getExtent().width;
+        EMP_LOG_DEBUG << tex.getExtent().height;
+        EMP_LOG_DEBUG << tex.getExtent().depth;
         auto pixels = tex.getPixelsFromGPU();
         auto h = tex.getExtent().height;
         auto w = tex.getExtent().width;
@@ -106,6 +111,7 @@ void Demo::onSetup(Window& window, Device& device) {
         std::cout << "\033[0m";
     }
     controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
+    controller.bind(eKeyMappings::Ability2, GLFW_KEY_T);
     controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
 
     controller.bind(eKeyMappings::LookUp, GLFW_KEY_W);
@@ -286,6 +292,39 @@ void Demo::setupAnimationForProtagonist() {
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
 void Demo::onRender(Device&, const FrameInfo& frame) {
+    if(controller.get(eKeyMappings::Ability2).held) {
+        crate_texture = Texture("demo");
+        // auto& tex = Texture("demo").texture();
+        // auto cmd = device.beginSingleTimeCommands();
+        // tex.transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        // device.endSingleTimeCommands(cmd);
+        //
+        // cmd = device.beginSingleTimeCommands();
+        // Texture().texture().transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        // device.endSingleTimeCommands(cmd);
+        //
+        // device.copyImageToImage(Texture().texture().getImage(), tex.getImage(), 2, 2, 1);
+        //
+        // EMP_LOG_DEBUG << tex.getExtent().width;
+        // EMP_LOG_DEBUG << tex.getExtent().height;
+        // EMP_LOG_DEBUG << tex.getExtent().depth;
+        // auto pixels = tex.getPixelsFromGPU();
+        // auto h = tex.getExtent().height;
+        // auto w = tex.getExtent().width;
+        // std::cout << "\n";
+        // for(int i = 0; i < h; i += 1) {
+        //     for(int ii = 0; ii < w; ii += 1) {
+        //         auto r = (int)(pixels)[i * w + ii].red;
+        //         auto g = (int)(pixels)[i * w + ii].green;
+        //         auto b = (int)(pixels)[i * w + ii].blue;
+        //         std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
+        //         std::cout << "\u2588";
+        //     }
+        //     std::cout << '\n';
+        // }
+        // std::cout << "\033[0m";
+        // exit(0);
+    }
     ImGui::ShowDemoWindow();
 
 }
@@ -363,7 +402,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     static vec2f last_pos;
     if (controller.get(eKeyMappings::Ability1).held && last_pos != vec2f(controller.global_mouse_pos())) {
         last_pos = vec2f(controller.global_mouse_pos());
-        Sprite spr = Sprite(Texture("crate"), {cube_side_len, cube_side_len});
+        Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
         Rigidbody rb;
         rb.useAutomaticMass = true;
         auto col = Collider(cube_model_shape);
