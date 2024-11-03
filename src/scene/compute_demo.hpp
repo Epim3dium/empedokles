@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan_core.h>
 #include <memory>
+#include "graphics/frame_info.hpp"
+#include "graphics/texture.hpp"
 #include "vulkan/pipeline.hpp"
 #include "vulkan/buffer.hpp"
 #include "vulkan/swap_chain.hpp"
@@ -9,20 +11,35 @@
 namespace emp {
 class ComputeDemo {
 public:
+    Device& m_device;
     std::unique_ptr<DescriptorSetLayout> layoutBinding;
     std::unique_ptr<DescriptorPool> compute_pool;
-    const size_t dataCount = 1'000'000;
+    const size_t dataCount = 4;
     VkDescriptorSet descriptor_set;
     VkPipelineLayout pipelineLayout{};
     std::unique_ptr<Pipeline> compute_pipeline;
     std::unique_ptr<Buffer> dataBuffer;
     std::vector<float> inputData;
-    ComputeDemo(Device& device) {
+
+    std::unique_ptr<TextureAsset> output_image;
+    TextureAsset* display_image;
+    
+
+    ComputeDemo(Device& device) : m_device(device) {
+        VkExtent3D extent = {2, 2, 1};
+        assert(extent.width * extent.height * extent.depth == dataCount);
+        output_image = std::make_unique<TextureAsset>(
+            device,
+            VK_FORMAT_R8G8B8A8_SRGB,
+            extent,
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_SAMPLE_COUNT_1_BIT);
+
+
         VkDeviceSize bufferSize = sizeof(float) * dataCount;
-        inputData = std::vector<float>(
-            dataCount, 2.0f); // Sample input data: all values set to 2.0
-        for (int i = 0; i < inputData.size(); i += 2) {
-            inputData[i] *= 2.f;
+        inputData = std::vector<float>(dataCount, 1.0f); // Sample input data: all values set to 2.0
+        for(int i = 0; i < dataCount; i += 2) {
+            inputData[i] = 512.f;
         }
 
         // Create buffer
@@ -43,12 +60,16 @@ public:
                             .addBinding(0,
                                 VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                 VK_SHADER_STAGE_COMPUTE_BIT)
+                            .addBinding(1,
+                                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                                VK_SHADER_STAGE_COMPUTE_BIT)
                             .build();
 
         // Descriptor pool and set allocation
         compute_pool = DescriptorPool::Builder(device)
                            .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
                            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
+                           .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1)
                            .build();
 
         PipelineConfigInfo config;
@@ -70,35 +91,84 @@ public:
             device, "../assets/shaders/compute.comp.spv", config);
 
         {
-            VkDescriptorBufferInfo bufferInfoDS{};
-            bufferInfoDS.buffer = dataBuffer->getBuffer();
-            bufferInfoDS.offset = 0;
-            bufferInfoDS.range = bufferSize;
-
+            auto cmd = device.beginSingleTimeCommands();
+            output_image->transitionLayout(cmd, VK_IMAGE_LAYOUT_GENERAL);
+            output_image->updateDescriptor();
+            device.endSingleTimeCommands(cmd);
+        }
+        {
+            auto bufferInfoDS = dataBuffer->descriptorInfo();
             DescriptorWriter(*layoutBinding, *compute_pool)
                 .writeBuffer(0, &bufferInfoDS)
+                .writeImage(1, &output_image->getImageInfo())
                 .build(descriptor_set);
         }
-    }
-    void performCompute(VkCommandBuffer commandBuffer) {
+        display_image = &Texture::create("demo",
+            device,
+            VK_FORMAT_R8G8B8A8_SRGB,
+            extent,
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            VK_SAMPLE_COUNT_1_BIT).texture();
 
-        compute_pipeline->bind(commandBuffer);
-        vkCmdBindDescriptorSets(commandBuffer,
+    }
+    void performCompute(FrameInfo frame_info) {
+
+        {
+            auto cmd = m_device.beginSingleTimeCommands();
+                display_image->transitionLayout(cmd,
+                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                output_image->transitionLayout(cmd,
+                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            m_device.endSingleTimeCommands(cmd);
+
+        }
+        m_device.copyImageToImage(
+            output_image->getImage(), display_image->getImage(), 2, 2, 1);
+        {
+            auto cmd = m_device.beginSingleTimeCommands();
+            display_image->transitionLayout(cmd,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            output_image->transitionLayout(cmd,
+                VK_IMAGE_LAYOUT_GENERAL);
+            m_device.endSingleTimeCommands(cmd);
+
+            display_image->updateDescriptor();
+        }
+
+        auto command_buffer = frame_info.commandBuffer;
+        compute_pipeline->bind(command_buffer);
+        vkCmdBindDescriptorSets(command_buffer,
             VK_PIPELINE_BIND_POINT_COMPUTE,
             pipelineLayout, 0, 1,
             &descriptor_set, 0, nullptr);
-        vkCmdDispatch(commandBuffer, (dataCount + 63) / 64, 1, 1); // Dispatch work
+        auto workgroup_count_x = 2;
 
-        // // Map memory again to read back data
-        // dataBuffer->map();
-        // float* resultData = reinterpret_cast<float*>(dataBuffer->getMappedMemory());
-        // static int ticks = 4;
-        // ticks++;
-        // EMP_LOG_INTERVAL(DEBUG, 1.f) << "ResultCl: " << ticks;
-        // EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result0: " << resultData[0];
-        // EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result5: " << resultData[500'000];
-        // EMP_LOG_INTERVAL(DEBUG, 1.f) << "Result10: " << resultData[1'000'000 - 2];
-        // dataBuffer->unmap();
+        // output_image.texture().transitionLayout(command_buffer,
+        //     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+        //     VK_IMAGE_LAYOUT_GENERAL);
+
+        vkCmdDispatch(command_buffer, workgroup_count_x , workgroup_count_x , 1); // Dispatch work
+        
+        return;
+        auto& tex = *display_image;
+
+        EMP_LOG_DEBUG << tex.getExtent().width;
+        EMP_LOG_DEBUG << tex.getExtent().height;
+        EMP_LOG_DEBUG << tex.getExtent().depth;
+        auto pixels = tex.getPixelsFromGPU();
+        auto h = tex.getExtent().height;
+        auto w = tex.getExtent().width;
+        std::cout << "\n";
+        for(int i = 0; i < h; i += 1) {
+            for(int ii = 0; ii < w; ii += 1) {
+                auto r = (int)(pixels)[i * w + ii].red;
+                auto g = (int)(pixels)[i * w + ii].green;
+                auto b = (int)(pixels)[i * w + ii].blue;
+                std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
+                std::cout << "\u2588";
+            }
+            std::cout << '\n';
+        }
     }
 };
 };

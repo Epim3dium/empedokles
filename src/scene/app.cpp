@@ -380,16 +380,25 @@ void App::renderFrame(
         const std::vector<std::unique_ptr<Buffer>>& compute_ubo_buffers
 ) {
     if (auto command_buffer = renderer.beginFrame()) {
+        int frame_index = renderer.getFrameIndex();
+        frame_pools[frame_index]->resetPool();
         if(auto compute_buffer = compute.beginCompute(renderer)) {
-            m_compute_demo->performCompute(compute_buffer);
+            FrameInfo frame_info{
+                frame_index,
+                delta_time,
+                compute_buffer,
+                camera,
+                global_compute_descriptor_sets[frame_index],
+                *frame_pools[frame_index]
+            };
+
+            m_compute_demo->performCompute(frame_info);
             m_compute_demo->dataBuffer->map();
             float* resultData = reinterpret_cast<float*>(m_compute_demo->dataBuffer->getMappedMemory());
-            EMP_LOG_INTERVAL(DEBUG, 0.1f) << resultData[500'000];
+            EMP_LOG_INTERVAL(DEBUG, 0.1f) << resultData[1];
             m_compute_demo->dataBuffer->unmap();
             compute.endCompute();
         }
-        int frame_index = renderer.getFrameIndex();
-        frame_pools[frame_index]->resetPool();
         FrameInfo frame_info{
             frame_index,
             delta_time,
@@ -453,7 +462,7 @@ void App::m_updateUBO(
 void App::loadAssets() {
     for (auto tex : m_textures_to_load) {
         try {
-            Texture::create(device, tex.filename, tex.id);
+            Texture::create(tex.id, device, tex.filename);
             EMP_LOG(LogLevel::DEBUG) << "loaded texture: " << tex.id;
         } catch(std::runtime_error& e) {
             EMP_LOG(LogLevel::WARNING) << "failure while loading textures: " << e.what();
@@ -464,9 +473,9 @@ void App::loadAssets() {
     m_textures_to_load.clear();
     for (auto model : m_models_to_load) {
         Model::create(
+                model.id,
                 device,
-                ModelAsset::Builder().loadModel(model.filename),
-                model.id
+                ModelAsset::Builder().loadModel(model.filename)
         );
         EMP_LOG(LogLevel::DEBUG) << "loaded model: " << model.id;
     }
