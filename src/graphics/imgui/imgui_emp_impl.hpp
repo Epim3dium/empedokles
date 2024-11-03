@@ -3,8 +3,8 @@
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "backends/imgui_impl_glfw.h"
+#include "scene/scene_defs.hpp"
 
-#define EMP_USING_IMGUI 1
 namespace emp {
 struct Device;
 struct Renderer;
