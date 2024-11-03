@@ -21,7 +21,7 @@ Texture::Texture(std::string model_id) : m_id(model_id) {
 std::unordered_map<std::string, std::unique_ptr<TextureAsset>>
         Texture::m_tex_table;
 TextureAsset::TextureAsset(Device& device, const std::string& textureFilepath)
-    : mDevice{device} {
+    : m_device{device} {
     createTextureImage(textureFilepath);
     createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
     createTextureSampler();
@@ -29,103 +29,64 @@ TextureAsset::TextureAsset(Device& device, const std::string& textureFilepath)
 }
 
 TextureAsset::TextureAsset(
-        Device& device,
+        Device& m_device,
         VkFormat format,
         VkExtent3D extent,
         VkImageUsageFlags usage,
         VkSampleCountFlagBits sampleCount
 )
-    : mDevice{device} {
+    : m_device{m_device} 
+{
+
+
     VkImageAspectFlags aspectMask = 0;
-    VkImageLayout imageLayout;
 
-    mFormat = format;
-    mExtent = extent;
+    m_mip_levels = 1;
+    m_format = format;
+    m_extent = extent;
 
+    if (m_format & VK_FORMAT_R8G8B8A8_SRGB) {
+        aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
     if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
         aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
     if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
         aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     }
 
-    // Don't like this, should I be using an image array instead of multiple
-    // images?
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.format = format;
-    imageInfo.extent = extent;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.samples = sampleCount;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = usage;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    device.createImageWithInfo(
-            imageInfo,
+    VkImageCreateInfo image_info{};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.extent = m_extent;
+    image_info.mipLevels = m_mip_levels;
+    image_info.arrayLayers = m_layer_count;
+    image_info.format = m_format;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.usage = usage;
+    image_info.samples = sampleCount;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    m_device.createImageWithInfo(
+            image_info,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mTextureImage,
-            mTextureImageMemory
+            m_texture_image,
+            m_texture_image_memory
     );
-
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
-    viewInfo.subresourceRange = {};
-    viewInfo.subresourceRange.aspectMask = aspectMask;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-    viewInfo.image = mTextureImage;
-    if (vkCreateImageView(
-                device.device(), &viewInfo, nullptr, &mTextureImageView
-        ) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture image view!");
-    }
-
-    // Sampler should be seperated out
+    
+    createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
     if (usage & VK_IMAGE_USAGE_SAMPLED_BIT) {
-        // Create sampler to sample from the attachment in the fragment shader
-        VkSamplerCreateInfo samplerInfo{};
-        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
-        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        samplerInfo.addressModeV = samplerInfo.addressModeU;
-        samplerInfo.addressModeW = samplerInfo.addressModeU;
-        samplerInfo.mipLodBias = 0.0f;
-        samplerInfo.maxAnisotropy = 1.0f;
-        samplerInfo.minLod = 0.0f;
-        samplerInfo.maxLod = 1.0f;
-        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-
-        if (vkCreateSampler(
-                    device.device(), &samplerInfo, nullptr, &mTextureSampler
-            ) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create sampler!");
-        }
-
-        VkImageLayout samplerImageLayout =
-                imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-                        ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                        : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-        mDescriptor.sampler = mTextureSampler;
-        mDescriptor.imageView = mTextureImageView;
-        mDescriptor.imageLayout = samplerImageLayout;
+        createTextureSampler();
     }
+    updateDescriptor();
 }
 
 TextureAsset::~TextureAsset() {
-    vkDestroySampler(mDevice.device(), mTextureSampler, nullptr);
-    vkDestroyImageView(mDevice.device(), mTextureImageView, nullptr);
-    vkDestroyImage(mDevice.device(), mTextureImage, nullptr);
-    vkFreeMemory(mDevice.device(), mTextureImageMemory, nullptr);
+    vkDestroySampler(m_device.device(), m_texture_sampler, nullptr);
+    vkDestroyImageView(m_device.device(), m_texture_image_view, nullptr);
+    vkDestroyImage(m_device.device(), m_texture_image, nullptr);
+    vkFreeMemory(m_device.device(), m_texture_image_memory, nullptr);
 }
 
 std::unique_ptr<TextureAsset> TextureAsset::createTextureFromFile(
@@ -135,27 +96,27 @@ std::unique_ptr<TextureAsset> TextureAsset::createTextureFromFile(
 }
 
 void TextureAsset::updateDescriptor() {
-    mDescriptor.sampler = mTextureSampler;
-    mDescriptor.imageView = mTextureImageView;
-    mDescriptor.imageLayout = mTextureLayout;
+    m_descriptor.sampler = m_texture_sampler;
+    m_descriptor.imageView = m_texture_image_view;
+    m_descriptor.imageLayout = m_texture_layout;
 }
 
 std::vector<TextureAsset::Pixel> TextureAsset::getPixelsFromGPU() {
     VkDeviceSize imageSize = getExtent().width * getExtent().height;
     constexpr std::size_t pixel_size = sizeof(stbi_uc) * 4U;
-    auto command_buffer = mDevice.beginSingleTimeCommands();
-    transitionLayout(command_buffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    mDevice.endSingleTimeCommands(command_buffer);
+    auto command_buffer = m_device.beginSingleTimeCommands();
+    transitionLayout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    m_device.endSingleTimeCommands(command_buffer);
 
     Buffer stagingBuffer{
-            mDevice,
+            m_device,
             pixel_size,
             static_cast<uint32_t>(imageSize),
             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     };
-    mDevice.copyImageToBuffer(getImage(), stagingBuffer.getBuffer(), getExtent().width, getExtent().height, 1);
+    m_device.copyImageToBuffer(getImage(), stagingBuffer.getBuffer(), getExtent().width, getExtent().height, 1);
     stagingBuffer.map();
 
     static_assert(std::is_same<unsigned char, stbi_uc>::value);
@@ -178,7 +139,6 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
     );
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-    m_size = {texWidth, texHeight};
     if (!pixels) {
         std::cerr << filepath;
         throw std::runtime_error("failed to load texture image!");
@@ -187,10 +147,10 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
     // mMipLevels =
     // static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth,
     // texHeight)))) + 1;
-    mMipLevels = 1;
+    m_mip_levels = 1;
 
     Buffer stagingBuffer{
-            mDevice,
+            m_device,
             sizeof(stbi_uc) * 4U,
             static_cast<uint32_t>(texWidth * texHeight),
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -206,78 +166,78 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
 
     stbi_image_free(pixels);
 
-    mFormat = VK_FORMAT_R8G8B8A8_SRGB;
-    mExtent = {
+    m_format = VK_FORMAT_R8G8B8A8_SRGB;
+    m_extent = {
             static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1
     };
 
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent = mExtent;
-    imageInfo.mipLevels = mMipLevels;
-    imageInfo.arrayLayers = mLayerCount;
-    imageInfo.format = mFormat;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    VkImageCreateInfo image_info{};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.extent = m_extent;
+    image_info.mipLevels = m_mip_levels;
+    image_info.arrayLayers = m_layer_count;
+    image_info.format = m_format;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                       VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                       VK_IMAGE_USAGE_SAMPLED_BIT;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    mDevice.createImageWithInfo(
-            imageInfo,
+    m_device.createImageWithInfo(
+            image_info,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mTextureImage,
-            mTextureImageMemory
+            m_texture_image,
+            m_texture_image_memory
     );
-    mDevice.transitionImageLayout(
-            mTextureImage,
+    m_device.transitionImageLayout(
+            m_texture_image,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            mMipLevels,
-            mLayerCount
+            m_mip_levels,
+            m_layer_count
     );
-    mDevice.copyBufferToImage(
+    m_device.copyBufferToImage(
             stagingBuffer.getBuffer(),
-            mTextureImage,
+            m_texture_image,
             static_cast<uint32_t>(texWidth),
             static_cast<uint32_t>(texHeight),
-            mLayerCount
+            m_layer_count
     );
 
     // comment this out if using mips
-    mDevice.transitionImageLayout(
-            mTextureImage,
+    m_device.transitionImageLayout(
+            m_texture_image,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            mMipLevels,
-            mLayerCount
+            m_mip_levels,
+            m_layer_count
     );
 
     // If we generate mip maps then the final image will alerady be
     // READ_ONLY_OPTIMAL mDevice.generateMipmaps(mTextureImage, mFormat,
     // texWidth, texHeight, mMipLevels);
-    mTextureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    m_texture_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 void TextureAsset::createTextureImageView(VkImageViewType viewType) {
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = mTextureImage;
+    viewInfo.image = m_texture_image;
     viewInfo.viewType = viewType;
     viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = mMipLevels;
+    viewInfo.subresourceRange.levelCount = m_mip_levels;
     viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = mLayerCount;
+    viewInfo.subresourceRange.layerCount = m_layer_count;
 
     if (vkCreateImageView(
-                mDevice.device(), &viewInfo, nullptr, &mTextureImageView
+                m_device.device(), &viewInfo, nullptr, &m_texture_image_view
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to create texture image view!");
     }
@@ -305,20 +265,60 @@ void TextureAsset::createTextureSampler() {
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = static_cast<float>(mMipLevels);
+    samplerInfo.maxLod = static_cast<float>(m_mip_levels);
 
     if (vkCreateSampler(
-                mDevice.device(), &samplerInfo, nullptr, &mTextureSampler
+                m_device.device(), &samplerInfo, nullptr, &m_texture_sampler
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to create texture sampler!");
     }
 }
 
+
+VkAccessFlags getAccessFlag(VkImageLayout layout) {
+    switch(layout) {
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            return VK_ACCESS_TRANSFER_WRITE_BIT;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            return VK_ACCESS_TRANSFER_READ_BIT;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            return VK_ACCESS_SHADER_READ_BIT;
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            return VK_ACCESS_SHADER_WRITE_BIT;
+        default:
+            return 0;
+    }
+}
+VkPipelineStageFlags getStage(VkImageLayout layout) {
+    switch(layout) {
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        default:
+            return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    }
+}
 void TextureAsset::transitionLayout(
         VkCommandBuffer commandBuffer,
-        VkImageLayout oldLayout,
         VkImageLayout newLayout
 ) {
+    auto oldLayout = m_texture_layout;
+
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = oldLayout;
@@ -327,69 +327,27 @@ void TextureAsset::transitionLayout(
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-    barrier.image = mTextureImage;
+    barrier.image = m_texture_image;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mMipLevels;
+    barrier.subresourceRange.levelCount = m_mip_levels;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = mLayerCount;
+    barrier.subresourceRange.layerCount = m_layer_count;
 
     if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        if (mFormat == VK_FORMAT_D32_SFLOAT_S8_UINT ||
-            mFormat == VK_FORMAT_D24_UNORM_S8_UINT) {
+        if (m_format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
+            m_format == VK_FORMAT_D24_UNORM_S8_UINT) {
             barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
     } else {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
+    auto sourceStage = getStage(oldLayout);
+    auto destinationStage = getStage(newLayout);
 
-    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-        newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-               newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-               newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-               newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL &&
-               newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-        // This says that any cmd that acts in color output or after (dstStage)
-        // that needs read or write access to a resource
-        // must wait until all previous read accesses in fragment shader
-        barrier.srcAccessMask =
-                VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-                                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    } else {
-        throw std::invalid_argument("unsupported layout transition!");
-    }
+    barrier.srcAccessMask = getAccessFlag(oldLayout);
+    barrier.dstAccessMask = getAccessFlag(newLayout);
     vkCmdPipelineBarrier(
             commandBuffer,
             sourceStage,
@@ -402,5 +360,6 @@ void TextureAsset::transitionLayout(
             1,
             &barrier
     );
+    m_texture_layout = newLayout;
 }
 } // namespace emp
