@@ -70,7 +70,7 @@ public:
         return *m_model_table.at(m_id);
     }
     static void create(
-            Device& device, const ModelAsset::Builder& builder, std::string id
+            std::string id, Device& device, const ModelAsset::Builder& builder
     ) {
         auto model = std::make_unique<ModelAsset>(device, builder);
         assert(!m_model_table.contains(id) &&

@@ -23,7 +23,7 @@ TexturedModelsSystem::TexturedModelsSystem(Device& device) {
         uboBuffer->map();
     }
 
-    Texture::create(device, "../assets/textures/invalid.png", "default");
+    Texture::create("default", device, "../assets/textures/invalid.png");
 }
 
 void TexturedModelsSystem::updateBuffer(int frameIndex) {
