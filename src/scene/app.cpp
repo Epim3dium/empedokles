@@ -80,6 +80,22 @@ std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(
     }
     return globalDescriptorSets;
 }
+std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalComputeUBOBuffers() {
+    std::vector<std::unique_ptr<Buffer>> uboBuffers(
+            SwapChain::MAX_FRAMES_IN_FLIGHT
+    );
+    for (auto& uboBuffer : uboBuffers) {
+        uboBuffer = std::make_unique<Buffer>(
+                device,
+                sizeof(GlobalComputeUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+        );
+        uboBuffer->map();
+    }
+    return uboBuffers;
+}
 std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalUBOBuffers() {
     std::vector<std::unique_ptr<Buffer>> uboBuffers(
             SwapChain::MAX_FRAMES_IN_FLIGHT
@@ -114,16 +130,26 @@ void App::run() {
     onSetup(window, device);
 
     EMP_LOG(LogLevel::INFO) << "ubo buffers...";
+    auto uboComputeBuffers = m_setupGlobalUBOBuffers();
     auto uboBuffers = m_setupGlobalUBOBuffers();
+
     auto globalSetLayout = DescriptorSetLayout::Builder(device)
-                                   .addBinding(
-                                           0,
-                                           VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                           VK_SHADER_STAGE_ALL_GRAPHICS
-                                   )
-                                   .build();
+                               .addBinding(0,
+                                   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                   VK_SHADER_STAGE_ALL_GRAPHICS)
+                               .build();
+
     auto global_descriptor_sets =
             m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers, *globalPool);
+
+    auto computeGlobalSetLayout = DescriptorSetLayout::Builder(device)
+                               .addBinding(0,
+                                   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                   VK_SHADER_STAGE_ALL_GRAPHICS)
+                               .build();
+    auto global_compute_descriptor_sets =
+            m_setupGlobalUBODescriptorSets(*computeGlobalSetLayout, uboComputeBuffers, *globalPool);
+
     EMP_LOG(DEBUG3) << "Alignment: "
                     << device.properties.limits.minUniformBufferOffsetAlignment;
     EMP_LOG(DEBUG3) << "atom size: "
@@ -152,6 +178,9 @@ void App::run() {
             "../assets/shaders/sprite.vert.spv",
             "../assets/shaders/sprite.frag.spv"
     );
+    m_compute_demo = std::make_unique<ComputeDemo>(
+        device
+    );
     Camera camera{};
 
     auto viewer_object = coordinator.createEntity();
@@ -171,8 +200,11 @@ void App::run() {
     EMP_LOG(LogLevel::INFO) << "creating threads...";
 #endif
 #if EMP_ENABLE_RENDER_THREAD
-    auto rendering_thread =
-            createRenderThread(camera, global_descriptor_sets, uboBuffers);
+    auto rendering_thread = createRenderThread(camera,
+        global_descriptor_sets,
+        global_compute_descriptor_sets,
+        uboBuffers,
+        uboComputeBuffers);
 #endif
 #if EMP_ENABLE_PHYSICS_THREAD
     auto physics_thread = createPhysicsThread();
@@ -262,14 +294,20 @@ void App::run() {
 std::unique_ptr<std::thread> App::createRenderThread(
         Camera& camera,
         const std::vector<VkDescriptorSet>& global_descriptor_sets,
-        const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+        const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
+        const std::vector<std::unique_ptr<Buffer>>& ubo_buffers,
+        const std::vector<std::unique_ptr<Buffer>>& compute_ubo_buffers
 ) {
     return std::move(std::make_unique<std::thread>([&]() {
         Stopwatch clock;
         while (isAppRunning) {
             float delta_time = clock.restart();
 
-            renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+            renderFrame(camera,
+                delta_time,
+                global_descriptor_sets,
+                global_compute_descriptor_sets,
+                ubo_buffers, compute_ubo_buffers);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
         }
@@ -337,10 +375,17 @@ void App::renderFrame(
         Camera& camera,
         float delta_time,
         const std::vector<VkDescriptorSet>& global_descriptor_sets,
-        const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+        const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
+        const std::vector<std::unique_ptr<Buffer>>& ubo_buffers,
+        const std::vector<std::unique_ptr<Buffer>>& compute_ubo_buffers
 ) {
     if (auto command_buffer = renderer.beginFrame()) {
         if(auto compute_buffer = compute.beginCompute(renderer)) {
+            m_compute_demo->performCompute(compute_buffer);
+            m_compute_demo->dataBuffer->map();
+            float* resultData = reinterpret_cast<float*>(m_compute_demo->dataBuffer->getMappedMemory());
+            EMP_LOG_INTERVAL(DEBUG, 0.1f) << resultData[500'000];
+            m_compute_demo->dataBuffer->unmap();
             compute.endCompute();
         }
         int frame_index = renderer.getFrameIndex();
@@ -361,7 +406,10 @@ void App::renderFrame(
             );
             m_isRenderer_waiting = false;
 
-            m_updateUBO(frame_info, *uboBuffers[frame_index], camera);
+            m_updateUBO(frame_info, camera,
+                *ubo_buffers[frame_index],
+                *compute_ubo_buffers[frame_index]);
+
             auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
             auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
             auto& animated_sprite_sys = *coordinator.getSystem<AnimatedSpriteSystem>();
@@ -377,13 +425,6 @@ void App::renderFrame(
                 debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
                 sprite_sys.render(frame_info, *m_sprite_rend_sys);
                 animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
-                // m_sprite_rend_sys->render(frame_info, animated_sprite_sys.entities, 
-                //     [&animated_sprite_sys](Entity entity, int frameIndex) {
-                //         return animated_sprite_sys.getBufferInfoForGameObject(frameIndex, entity);
-                //     },
-                //     [](Entity entity) {
-                //         return coordinator.getComponent<AnimatedSprite>(entity)->sprite().texture().getImageInfo();
-                //     });
 
                 onRender(device, frame_info);
 
@@ -394,8 +435,8 @@ void App::renderFrame(
         renderer.endFrame();
     }
 }
-GlobalUbo App::m_updateUBO(
-        FrameInfo frameInfo, Buffer& uboBuffer, Camera& camera
+void App::m_updateUBO(
+        FrameInfo frameInfo, Camera& camera, Buffer& uboBuffer, Buffer& computeUboBuffer
 ) {
     GlobalUbo ubo{};
     ubo.projection = camera.getProjection();
@@ -403,7 +444,10 @@ GlobalUbo App::m_updateUBO(
     ubo.inverseView = camera.getInverseView();
     uboBuffer.writeToBuffer(&ubo);
     uboBuffer.flush();
-    return ubo;
+    GlobalComputeUbo compute_ubo{};
+    compute_ubo.delta_time = frameInfo.frameTime;
+    computeUboBuffer.writeToBuffer(&ubo);
+    computeUboBuffer.flush();
 }
 
 void App::loadAssets() {

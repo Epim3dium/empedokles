@@ -7,6 +7,7 @@
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/systems/simple_render_system.hpp"
+#include "scene/compute_demo.hpp"
 #include "vulkan/descriptors.hpp"
 #include "vulkan/device.hpp"
 
@@ -58,6 +59,7 @@ protected:
 private:
     std::unique_ptr<SimpleRenderSystem> m_sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> m_debugShape_rend_sys;
+    std::unique_ptr<ComputeDemo> m_compute_demo;
 
     // synchronization systems
     std::condition_variable m_priority_access;
@@ -69,29 +71,38 @@ private:
 
     std::vector<AssetInfo> m_models_to_load;
     std::vector<AssetInfo> m_textures_to_load;
+
     std::vector<VkDescriptorSet> m_setupGlobalUBODescriptorSets(
             DescriptorSetLayout& globalSetLayout,
             const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
             DescriptorPool& global_pool
     );
+
     std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers();
+    std::vector<std::unique_ptr<Buffer>> m_setupGlobalComputeUBOBuffers();
+
     void setupECS();
 
-    GlobalUbo m_updateUBO(
-            FrameInfo frameinfo, Buffer& uboBuffer, Camera& camera
-    );
+    void m_updateUBO(FrameInfo frameInfo,
+        Camera& camera,
+        Buffer& uboBuffer,
+        Buffer& computeUboBuffer);
     void loadAssets();
 
     void renderFrame(
             Camera& camera,
             float delta_time,
             const std::vector<VkDescriptorSet>& global_descriptor_sets,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+            const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
+            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
+            const std::vector<std::unique_ptr<Buffer>>& computeUboBuffers
     );
     std::unique_ptr<std::thread> createRenderThread(
             Camera& camera,
             const std::vector<VkDescriptorSet>& global_descriptor_sets,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers
+            const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
+            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
+            const std::vector<std::unique_ptr<Buffer>>& comute_uboBuffers
     );
     std::unique_ptr<std::thread> createPhysicsThread();
 };

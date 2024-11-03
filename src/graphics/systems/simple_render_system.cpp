@@ -15,14 +15,13 @@
 
 namespace emp {
 
-SimpleRenderSystem::SimpleRenderSystem(
-        Device& device,
-        VkRenderPass renderPass,
-        VkDescriptorSetLayout globalSetLayout,
-        const char* vert_filename,
-        const char* frag_filename,
-        PipelineConfigInfo* config) : device{device} 
-{
+SimpleRenderSystem::SimpleRenderSystem(Device& device,
+    VkRenderPass renderPass,
+    VkDescriptorSetLayout globalSetLayout,
+    const char* vert_filename,
+    const char* frag_filename,
+    PipelineConfigInfo* config)
+    : device{device} {
     createPipelineLayout(globalSetLayout);
     createPipeline(renderPass, vert_filename, frag_filename, config);
 }
@@ -32,62 +31,52 @@ SimpleRenderSystem::~SimpleRenderSystem() {
 }
 
 void SimpleRenderSystem::createPipelineLayout(
-        VkDescriptorSetLayout globalSetLayout, size_t push_const_size
-) {
+    VkDescriptorSetLayout globalSetLayout, size_t push_const_size) {
     VkPushConstantRange pushConstantRange{};
     pushConstantRange.stageFlags =
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstantRange.offset = 0;
     pushConstantRange.size = push_const_size;
 
     render_system_layout =
-            DescriptorSetLayout::Builder(device)
-                    .addBinding(
-                            0,
-                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                            VK_SHADER_STAGE_VERTEX_BIT |
-                                    VK_SHADER_STAGE_FRAGMENT_BIT
-                    )
-                    .addBinding(
-                            1,
-                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                            VK_SHADER_STAGE_FRAGMENT_BIT
-                    )
-                    .build();
+        DescriptorSetLayout::Builder(device)
+            .addBinding(0,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(1,
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                VK_SHADER_STAGE_FRAGMENT_BIT)
+            .build();
 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-            globalSetLayout, render_system_layout->getDescriptorSetLayout()
-    };
+        globalSetLayout, render_system_layout->getDescriptorSetLayout()};
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount =
-            static_cast<uint32_t>(descriptorSetLayouts.size());
+        static_cast<uint32_t>(descriptorSetLayouts.size());
     pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
     pipelineLayoutInfo.pushConstantRangeCount = push_const_size ? 1 : 0;
     pipelineLayoutInfo.pPushConstantRanges =
-            push_const_size ? &pushConstantRange : nullptr;
+        push_const_size ? &pushConstantRange : nullptr;
     if (vkCreatePipelineLayout(
-                device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout
-        ) != VK_SUCCESS) {
+            device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout) !=
+        VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
 }
 
-void SimpleRenderSystem::createPipeline(
-        VkRenderPass renderPass,
-        const char* vert_filename,
-        const char* frag_filename,
-        PipelineConfigInfo* config
-) {
+void SimpleRenderSystem::createPipeline(VkRenderPass renderPass,
+    const char* vert_filename,
+    const char* frag_filename,
+    PipelineConfigInfo* config) {
     assert(pipeline_layout != nullptr &&
            "Cannot create pipeline before pipeline layout");
-    if(config != nullptr) {
+    if (config != nullptr) {
         config->renderPass = renderPass;
         config->pipelineLayout = pipeline_layout;
         pipeline = std::make_unique<Pipeline>(
-                device, vert_filename, frag_filename, *config
-        );
+            device, vert_filename, frag_filename, *config);
         return;
     }
 
@@ -96,8 +85,7 @@ void SimpleRenderSystem::createPipeline(
     pipelineConfig.renderPass = renderPass;
     pipelineConfig.pipelineLayout = pipeline_layout;
     pipeline = std::make_unique<Pipeline>(
-            device, vert_filename, frag_filename, pipelineConfig
-    );
+        device, vert_filename, frag_filename, pipelineConfig);
 }
 
 } // namespace emp

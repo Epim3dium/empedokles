@@ -17,6 +17,9 @@ struct PointLight {
     glm::vec4 color{}; // w is intensity
 };
 
+struct GlobalComputeUbo {
+    float delta_time;
+};
 struct GlobalUbo {
     glm::mat4 projection{1.f};
     glm::mat4 view{1.f};
