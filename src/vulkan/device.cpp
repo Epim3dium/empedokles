@@ -566,6 +566,16 @@ void Device::endSingleTimeComputeCommands(VkCommandBuffer commandBuffer) {
 
     vkFreeCommandBuffers(m_device, m_compute_command_pool, 1, &commandBuffer);
 }
+void Device::useSingleTimeCommand(std::function<void(VkCommandBuffer)>&& func) {
+    auto cmd = beginSingleTimeCommands();
+    func(cmd);
+    endSingleTimeCommands(cmd);
+}
+void Device::useSingleTimeComputeCommand(std::function<void(VkCommandBuffer)>&& func) {
+    auto cmd = beginSingleTimeComputeCommands();
+    func(cmd);
+    endSingleTimeComputeCommands(cmd);
+}
 VkCommandBuffer Device::beginSingleTimeCommands() {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

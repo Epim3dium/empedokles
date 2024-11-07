@@ -5,6 +5,7 @@
 #include "io/window.hpp"
 
 // std lib headers
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -103,11 +104,6 @@ public:
             VkDeviceMemory& bufferMemory
     );
 
-    VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-
-    VkCommandBuffer beginSingleTimeComputeCommands();
-    void endSingleTimeComputeCommands(VkCommandBuffer commandBuffer);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -151,8 +147,14 @@ public:
 #if EMP_USING_IMGUI 
     ImGui_ImplVulkan_InitInfo getImGuiInitInfo() const;
 #endif
+    void useSingleTimeCommand(std::function<void(VkCommandBuffer)>&& func);
+    void useSingleTimeComputeCommand(std::function<void(VkCommandBuffer)>&& func);
 
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
+    VkCommandBuffer beginSingleTimeComputeCommands();
+    void endSingleTimeComputeCommands(VkCommandBuffer commandBuffer);
 private:
     void createInstance();
 
