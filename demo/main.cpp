@@ -92,9 +92,6 @@ void Demo::onSetup(Window& window, Device& device) {
     crate_texture = Texture("crate");
     if(false){
         auto& tex = Texture("invalid").texture();
-        EMP_LOG_DEBUG << tex.getExtent().width;
-        EMP_LOG_DEBUG << tex.getExtent().height;
-        EMP_LOG_DEBUG << tex.getExtent().depth;
         auto pixels = tex.getPixelsFromGPU();
         auto h = tex.getExtent().height;
         auto w = tex.getExtent().width;

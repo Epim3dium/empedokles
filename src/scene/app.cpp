@@ -393,10 +393,6 @@ void App::renderFrame(
             };
 
             m_compute_demo->performCompute(frame_info);
-            m_compute_demo->dataBuffer->map();
-            float* resultData = reinterpret_cast<float*>(m_compute_demo->dataBuffer->getMappedMemory());
-            EMP_LOG_INTERVAL(DEBUG, 0.1f) << resultData[1];
-            m_compute_demo->dataBuffer->unmap();
             compute.endCompute();
         }
         FrameInfo frame_info{

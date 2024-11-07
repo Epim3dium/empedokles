@@ -1,5 +1,5 @@
 #version 450
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(binding = 0) buffer DataBuffer {
     float data[];
@@ -7,17 +7,16 @@ layout(binding = 0) buffer DataBuffer {
 layout (binding = 1, rgba8) uniform writeonly image2D outputImage;
 
 void main() {
-    if(gl_GlobalInvocationID.x > 2) {
+    if(gl_GlobalInvocationID.x > 256) {
         return;
     }
-    if(gl_GlobalInvocationID.y > 2) {
+    if(gl_GlobalInvocationID.y > 256) {
         return;
     }
-    uint index = gl_GlobalInvocationID.x;
-    data[index + gl_GlobalInvocationID.y * 2] += 1;
+    uint index = gl_GlobalInvocationID.x+ gl_GlobalInvocationID.y * 16;
+    data[index] += 1;
 
-    float mapped = data[index] / 1024.f * (gl_GlobalInvocationID.y + 1); 
-    mapped *= (gl_GlobalInvocationID.x + 1); 
+    float mapped = data[index] / 60.f;
     float color = mapped - floor(mapped);
     imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, color, color, 1.f));
 }
