@@ -430,6 +430,7 @@ void App::renderFrame(
                 debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
                 sprite_sys.render(frame_info, *m_sprite_rend_sys);
                 animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
+                m_compute_demo->render(frame_info, *m_sprite_rend_sys);
 
                 onRender(device, frame_info);
 

@@ -1,8 +1,11 @@
 #pragma once 
 
+#include "graphics/sprite.hpp"
 #include <vulkan/vulkan_core.h>
 #include <memory>
 #include "graphics/frame_info.hpp"
+#include "graphics/sprite_system.hpp"
+#include "graphics/systems/simple_render_system.hpp"
 #include "graphics/texture.hpp"
 #include "utils/time.hpp"
 #include "vulkan/pipeline.hpp"
@@ -24,6 +27,12 @@ public:
 
     std::unique_ptr<TextureAsset> output_image;
     TextureAsset* display_image;
+    Transform transform;
+    vec2f size = {900.f, 900.f};
+    std::vector<std::unique_ptr<Buffer>> uboBuffers{
+            SwapChain::MAX_FRAMES_IN_FLIGHT
+    };
+
     
 
 void copyImageToImage(VkCommandBuffer command_buffer,
@@ -139,11 +148,66 @@ void copyImageToImage(VkCommandBuffer command_buffer,
             device, "../assets/shaders/compute.comp.spv", config);
 
     }
-    ComputeDemo(Device& device) : m_device(device) {
+    ComputeDemo(Device& device) : m_device(device), transform(vec2f(0, 0), 0.f, vec2f(1.f, 1.f)) {
+        transform.syncWithChange();
         initializeImages(m_device);
         initializeDataBuffer(m_device);
         createDescriptors(m_device);
         createPipeline(m_device);
+        initializeUBO(m_device);
+    }
+    void initializeUBO(Device& device) {
+        int alignment = std::lcm(
+                device.properties.limits.nonCoherentAtomSize,
+                device.properties.limits.minUniformBufferOffsetAlignment
+        );
+        for (auto& uboBuffer : uboBuffers) {
+            uboBuffer = std::make_unique<Buffer>(
+                    device,
+                    sizeof(SpriteInfo),
+                    1U,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                    alignment
+            );
+            uboBuffer->map();
+        }
+    }
+    void updateUBO(int frameIndex) {
+        for (auto& uboBuffer : uboBuffers) {
+            SpriteInfo data{};
+
+            data.model_matrix = transform.global();
+            data.size_matrix = glm::scale(
+                    glm::mat4{1.f}, {size.x, size.y, 1.f}
+            );
+
+            uboBuffers[frameIndex]->writeToBuffer(&data);
+        }
+    }
+    void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+        updateUBO(frame_info.frameIndex);
+        static const std::set<Entity> singleton {0};
+        simple_rend_system.render(
+                frame_info,
+                singleton,
+                [this](DescriptorWriter& desc_writer,
+                       int frame_index,
+                       const Entity&) -> VkDescriptorSet {
+                    static VkDescriptorBufferInfo buf_info;
+                    buf_info = uboBuffers[frame_index]->descriptorInfo();
+                    auto& image_info = output_image->getImageInfo();
+                    desc_writer.writeBuffer(0, &buf_info);
+                    desc_writer.writeImage(1, &image_info);
+                    VkDescriptorSet result;
+                    desc_writer.build(result);
+                    return result;
+                },
+                [](const VkCommandBuffer& command_buf, const Entity& entity) {
+                    Sprite::bind(command_buf);
+                    Sprite::draw(command_buf);
+                }
+        );
     }
     void performCompute(FrameInfo frame_info) {
         auto command_buffer = frame_info.commandBuffer;
