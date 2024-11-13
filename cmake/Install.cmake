@@ -64,6 +64,22 @@ target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/
 # Link libraries (add glfw, and vulkan dependencies)
 target_link_libraries(imgui Vulkan::Vulkan glfw)
 
+# Fetch ImPlot
+FetchContent_Declare(
+    ImPlot
+    GIT_REPOSITORY https://github.com/epezent/implot.git
+    GIT_TAG        v0.16
+)
+FetchContent_MakeAvailable(ImPlot)
+add_library(implot STATIC
+  ${implot_SOURCE_DIR}/implot.h
+  ${implot_SOURCE_DIR}/implot_internal.h
+  ${implot_SOURCE_DIR}/implot.cpp
+  ${implot_SOURCE_DIR}/implot_items.cpp
+  ${implot_SOURCE_DIR}/implot_demo.cpp
+)
+target_link_libraries(implot imgui)
+
 
 #linking
 if (WIN32)
@@ -94,7 +110,7 @@ if (WIN32)
 
   target_link_libraries(
       ${PROJECT_NAME} 
-      glfw3 vulkan-1 imgui
+      glfw3 vulkan-1 imgui implot 
   )
 elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
@@ -104,7 +120,7 @@ elseif (UNIX)
       ${STB_PATH} ${Vulkan_INCLUDE_DIRS}
     )
     target_link_libraries(
-        ${PROJECT_NAME} glfw ${Vulkan_LIBRARIES} imgui
+        ${PROJECT_NAME} glfw ${Vulkan_LIBRARIES} imgui implot 
     )
 endif()
 
