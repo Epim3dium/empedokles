@@ -85,8 +85,10 @@ void copyImageToImage(VkCommandBuffer command_buffer,
     void initializeDataBuffer(Device& device) {
         VkDeviceSize bufferSize = sizeof(float) * dataCount;
         inputData = std::vector<float>(dataCount, 0.0f); // Sample input data: all values set to 2.0
-        for(int i = 0; i < dataCount; i++) {
-            inputData[i] = i / 256.f;
+        for(int i = 100; i < 150; i++) {
+            for(int ii = 100; ii < 150; ii++) {
+                inputData[ii + i * 256] = 0.9f;
+            }
         }
 
         // Create buffer

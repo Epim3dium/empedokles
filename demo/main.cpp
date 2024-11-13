@@ -59,8 +59,8 @@ class Demo : public App {
                 vec2f(cube_side_len/2, cube_side_len/2),
                 vec2f(cube_side_len/2, -cube_side_len/2)
         };
-        static constexpr int markers_count = 64;
-        Entity markers[markers_count];
+        // static constexpr int markers_count = 64;
+        // Entity markers[markers_count];
         Entity last_created_crate = 0;
         DebugShape debug_cube_shape = DebugShape(
                 device,
@@ -194,11 +194,11 @@ void Demo::onSetup(Window& window, Device& device) {
         coordinator.addComponent(platform, Rigidbody{true});
         coordinator.addComponent(platform, Material());
     }
-    for (auto& marker : markers) {
-        marker = coordinator.createEntity();
-        coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
-        coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
-    }
+    // for (auto& marker : markers) {
+    //     marker = coordinator.createEntity();
+    //     coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
+    //     coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
+    // }
     debug_cube_shape.fill_color = glm::vec4(1, 1, 0, 1);
 
     coordinator.getSystem<PhysicsSystem>()->gravity = 1000.f;
@@ -340,28 +340,28 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             coordinator.getComponent<DebugShape>(e)->fill_color = {1, 1, 1, 1};
         }
     }
-    for(auto m : markers) {
-        coordinator.getComponent<Transform>(m)->position = {INFINITY, INFINITY};
-        coordinator.getComponent<Transform>(m)->scale = {1, 1};
-    }
+    // for(auto m : markers) {
+    //     coordinator.getComponent<Transform>(m)->position = {INFINITY, INFINITY};
+    //     coordinator.getComponent<Transform>(m)->scale = {1, 1};
+    // }
     int i = 0;
-    for(auto entity : phy_sys.getEntities()) {
-        if(i == markers_count) {
-            break;
-        }
-        auto& dis_set = phy_sys.m_collision_islands;
-        auto other = dis_set.group(entity);
-
-        auto& other_trans = *coordinator.getComponent<Transform>(other);
-        auto& this_trans = *coordinator.getComponent<Transform>(entity);
-        vec2f pos1 = this_trans.position;
-        vec2f pos2 = other_trans.position;
-
-        auto& shape = *coordinator.getComponent<Transform>(markers[i++]);
-        shape.position = (pos1 + pos2) * 0.5f;
-        shape.scale = vec2f(1.f, length(pos1 - pos2));
-        shape.rotation = angle(vec2f(0.f, 1.f), pos1 - pos2);
-    }
+    // for(auto entity : phy_sys.getEntities()) {
+    //     if(i == markers_count) {
+    //         break;
+    //     }
+    //     auto& dis_set = phy_sys.m_collision_islands;
+    //     auto other = dis_set.group(entity);
+    //
+    //     auto& other_trans = *coordinator.getComponent<Transform>(other);
+    //     auto& this_trans = *coordinator.getComponent<Transform>(entity);
+    //     vec2f pos1 = this_trans.position;
+    //     vec2f pos2 = other_trans.position;
+    //
+    //     auto& shape = *coordinator.getComponent<Transform>(markers[i++]);
+    //     shape.position = (pos1 + pos2) * 0.5f;
+    //     shape.scale = vec2f(1.f, length(pos1 - pos2));
+    //     shape.rotation = angle(vec2f(0.f, 1.f), pos1 - pos2);
+    // }
 
     {
         coordinator.getComponent<Transform>(mouse_entity)->position =

@@ -7,16 +7,26 @@ layout(binding = 0) buffer DataBuffer {
 layout (binding = 1, rgba8) uniform writeonly image2D outputImage;
 
 void main() {
-    if(gl_GlobalInvocationID.x > 256) {
+    if(gl_GlobalInvocationID.x > 255) {
         return;
     }
-    if(gl_GlobalInvocationID.y > 256) {
+    if(gl_GlobalInvocationID.y > 255) {
+        return;
+    }
+    if(gl_GlobalInvocationID.y == 0) {
+        return;
+    }
+    if(gl_GlobalInvocationID.x == 0) {
         return;
     }
     uint index = gl_GlobalInvocationID.x+ gl_GlobalInvocationID.y * 256;
-    data[index] += 1;
+    uint up = gl_GlobalInvocationID.x+ (gl_GlobalInvocationID.y + 1) * 256;
+    uint down = gl_GlobalInvocationID.x+ (gl_GlobalInvocationID.y - 1) * 256;
+    uint left = gl_GlobalInvocationID.x - 1+ gl_GlobalInvocationID.y * 256;
+    uint right = gl_GlobalInvocationID.x + 1+ gl_GlobalInvocationID.y * 256;
+    data[index] = (data[index] + data[up] + data[down] + data[left] + data[right]) / 5.f * 0.99f;
 
-    float mapped = data[index] / 127;
+    float mapped = data[index];
     float color = mapped - floor(mapped);
     imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, color, color, 1.f));
 }
