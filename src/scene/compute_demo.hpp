@@ -87,7 +87,7 @@ void copyImageToImage(VkCommandBuffer command_buffer,
         inputData = std::vector<float>(dataCount, 0.0f); // Sample input data: all values set to 2.0
         for(int i = 100; i < 150; i++) {
             for(int ii = 100; ii < 150; ii++) {
-                inputData[ii + i * 256] = 0.9f;
+                inputData[ii + i * 256] = 1.f;
             }
         }
 
