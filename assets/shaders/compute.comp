@@ -13,10 +13,10 @@ void main() {
     if(gl_GlobalInvocationID.y > 256) {
         return;
     }
-    uint index = gl_GlobalInvocationID.x+ gl_GlobalInvocationID.y * 16;
+    uint index = gl_GlobalInvocationID.x+ gl_GlobalInvocationID.y * 256;
     data[index] += 1;
 
-    float mapped = data[index] / 60.f;
+    float mapped = data[index] / 127;
     float color = mapped - floor(mapped);
     imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, color, color, 1.f));
 }
