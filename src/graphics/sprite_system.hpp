@@ -11,9 +11,9 @@ struct SpriteInfo {
     glm::mat4 pivot_matrix{1.f};
     glm::mat4 size_matrix{1.f};
 
-    glm::vec2 rect_min;
-    glm::vec2 rect_max;
-    glm::vec2 flip; // only 0.f or 1.f
+    glm::vec2 rect_min = {0, 0};
+    glm::vec2 rect_max = {1, 1};
+    glm::vec2 flip = {0, 0}; // only 0.f or 1.f
 
     glm::vec4 color;
 };
