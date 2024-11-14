@@ -29,6 +29,6 @@ void Coordinator::destroy() {
     delete m_entity_manager.release();
     delete m_system_manager.release();
 }
-Coordinator coordinator;
+Coordinator ECS;
 };
 

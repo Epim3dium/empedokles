@@ -113,7 +113,7 @@ std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalUBOBuffers() {
     return uboBuffers;
 }
 void App::setupECS() {
-    coordinator.init();
+    ECS.init();
     registerSceneTypes();
     registerSceneSystems(device);
 }
@@ -183,18 +183,18 @@ void App::run() {
     );
     Camera camera{};
 
-    auto viewer_object = coordinator.createEntity();
-    coordinator.addComponent(viewer_object, Transform({0.f, 0.f}));
+    auto viewer_object = ECS.createEntity();
+    ECS.addComponent(viewer_object, Transform({0.f, 0.f}));
     // viewerObject.transform.translation.z = -2.5f;
 
-    auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
-    auto& transform_sys = *coordinator.getSystem<TransformSystem>();
-    auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
-    auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
-    auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
+    auto& physics_sys = *ECS.getSystem<PhysicsSystem>();
+    auto& transform_sys = *ECS.getSystem<TransformSystem>();
+    auto& rigidbody_sys = *ECS.getSystem<RigidbodySystem>();
+    auto& constraint_sys = *ECS.getSystem<ConstraintSystem>();
+    auto& collider_sys = *ECS.getSystem<ColliderSystem>();
 
-    auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
-    auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
+    auto& debugshape_sys = *ECS.getSystem<DebugShapeSystem>();
+    auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
 
 #if EMP_ENABLE_RENDER_THREAD || EMP_ENABLE_PHYSICS_THREAD
     EMP_LOG(LogLevel::INFO) << "creating threads...";
@@ -226,14 +226,14 @@ void App::run() {
         float delta_time = delta_clock.restart();
 
         controller.update(
-                window, *coordinator.getComponent<Transform>(viewer_object)
+                window, *ECS.getComponent<Transform>(viewer_object)
         );
         onUpdate(delta_time, window, controller);
         {
-            assert(coordinator.hasComponent<Transform>(viewer_object));
+            assert(ECS.hasComponent<Transform>(viewer_object));
 
             auto& viewer_transform =
-                    *coordinator.getComponent<Transform>(viewer_object);
+                    *ECS.getComponent<Transform>(viewer_object);
             viewer_transform.position +=
                     controller.lookingInPlane2D() * delta_time * 500.f;
 
@@ -282,7 +282,7 @@ void App::run() {
 
     vkDeviceWaitIdle(device.device());
     EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
-    coordinator.destroy();
+    ECS.destroy();
     EMP_LOG(LogLevel::DEBUG) << "destroying models...";
     Model::destroyAll();
     EMP_LOG(LogLevel::DEBUG) << "destroying textures...";
@@ -319,11 +319,11 @@ void App::forcePhysicsTickrate(const float tick_rate) {
 }
 std::unique_ptr<std::thread> App::createPhysicsThread() {
     return std::move(std::make_unique<std::thread>([&]() {
-        auto& physics_sys = *coordinator.getSystem<PhysicsSystem>();
-        auto& transform_sys = *coordinator.getSystem<TransformSystem>();
-        auto& rigidbody_sys = *coordinator.getSystem<RigidbodySystem>();
-        auto& collider_sys = *coordinator.getSystem<ColliderSystem>();
-        auto& constraint_sys = *coordinator.getSystem<ConstraintSystem>();
+        auto& physics_sys = *ECS.getSystem<PhysicsSystem>();
+        auto& transform_sys = *ECS.getSystem<TransformSystem>();
+        auto& rigidbody_sys = *ECS.getSystem<RigidbodySystem>();
+        auto& collider_sys = *ECS.getSystem<ColliderSystem>();
+        auto& constraint_sys = *ECS.getSystem<ConstraintSystem>();
 
         Stopwatch clock;
         auto last_sleep_duration = std::chrono::nanoseconds(0);
@@ -415,9 +415,9 @@ void App::renderFrame(
                 *ubo_buffers[frame_index],
                 *compute_ubo_buffers[frame_index]);
 
-            auto& debugshape_sys = *coordinator.getSystem<DebugShapeSystem>();
-            auto& sprite_sys = *coordinator.getSystem<SpriteSystem>();
-            auto& animated_sprite_sys = *coordinator.getSystem<AnimatedSpriteSystem>();
+            auto& debugshape_sys = *ECS.getSystem<DebugShapeSystem>();
+            auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
+            auto& animated_sprite_sys = *ECS.getSystem<AnimatedSpriteSystem>();
 
             // models_sys->updateBuffer(frameIndex);
             debugshape_sys.updateBuffer(frame_index);

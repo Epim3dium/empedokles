@@ -46,7 +46,7 @@ public:
         m_updateLocalTransform();
     }
     Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f})
-          : Transform(coordinator.world(), pos, rot, s) {}
+          : Transform(ECS.world(), pos, rot, s) {}
 
     friend TransformSystem;
 };

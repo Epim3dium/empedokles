@@ -122,9 +122,9 @@ void Demo::onSetup(Window& window, Device& device) {
     controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
 
     // coordinator.addComponent(cube, Model("cube"));
-    protagonist = coordinator.createEntity();
+    protagonist = ECS.createEntity();
 
-    coordinator.getSystem<ColliderSystem>()
+    ECS.getSystem<ColliderSystem>()
         ->onCollisionEnter(protagonist,
             protagonist,
             [&](const CollisionInfo& info) {
@@ -143,14 +143,14 @@ void Demo::onSetup(Window& window, Device& device) {
                 }
             });
 
-    mouse_entity = coordinator.createEntity();
-    coordinator.addComponent(mouse_entity, Transform({0.f, 0.f}));
+    mouse_entity = ECS.createEntity();
+    ECS.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
     {
         Rigidbody rb;
         rb.useAutomaticMass = true;
         rb.isRotationLocked = true;
-        coordinator.addComponent(protagonist, Transform(vec2f(), 0.f));
+        ECS.addComponent(protagonist, Transform(vec2f(), 0.f));
         std::vector<vec2f> protagonist_shape = {
                 vec2f(-100.f/4, -100.f/1.5),
                 vec2f(-100.f/4, 100.f/1.5),
@@ -160,14 +160,14 @@ void Demo::onSetup(Window& window, Device& device) {
         auto col = Collider(protagonist_shape);
         col.collider_layer = PLAYER;
 
-        coordinator.addComponent(protagonist, col);
-        coordinator.addComponent(protagonist, rb);
+        ECS.addComponent(protagonist, col);
+        ECS.addComponent(protagonist, rb);
 
         auto mat = Material(); 
-        coordinator.addComponent(protagonist, mat);
+        ECS.addComponent(protagonist, mat);
 
         auto db_shape = DebugShape(device, protagonist_shape, glm::vec4(1, 1, 1, 1));
-        coordinator.addComponent(protagonist, db_shape);
+        ECS.addComponent(protagonist, db_shape);
 
 
         setupAnimationForProtagonist();
@@ -181,18 +181,18 @@ void Demo::onSetup(Window& window, Device& device) {
     };
     debug_cube_shape.fill_color = glm::vec4(1, 1, 1, 1);
     for (auto o : ops) {
-        auto platform = coordinator.createEntity();
-        coordinator.addComponent(
+        auto platform = ECS.createEntity();
+        ECS.addComponent(
                 platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
         );
-        coordinator.addComponent(
+        ECS.addComponent(
                 platform, DebugShape(device, cube_model_shape)
         );
         auto col = Collider(cube_model_shape);
         col.collider_layer = GROUND;
-        coordinator.addComponent(platform, col);
-        coordinator.addComponent(platform, Rigidbody{true});
-        coordinator.addComponent(platform, Material());
+        ECS.addComponent(platform, col);
+        ECS.addComponent(platform, Rigidbody{true});
+        ECS.addComponent(platform, Material());
     }
     // for (auto& marker : markers) {
     //     marker = coordinator.createEntity();
@@ -201,8 +201,8 @@ void Demo::onSetup(Window& window, Device& device) {
     // }
     debug_cube_shape.fill_color = glm::vec4(1, 1, 0, 1);
 
-    coordinator.getSystem<PhysicsSystem>()->gravity = 1000.f;
-    coordinator.getSystem<PhysicsSystem>()->substep_count = 8;
+    ECS.getSystem<PhysicsSystem>()->gravity = 1000.f;
+    ECS.getSystem<PhysicsSystem>()->substep_count = 8;
     
 }
 
@@ -257,19 +257,19 @@ void Demo::setupAnimationForProtagonist() {
         }
 
         build.addEdge("idle", "run", [](Entity owner) {
-            return abs(coordinator.getComponent<Rigidbody>(owner)->velocity.x) >
+            return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) >
                    25.f;
         });
         build.addEdge("run", "idle", [](Entity owner, bool isended) {
-            return abs(coordinator.getComponent<Rigidbody>(owner)->velocity.x) <
+            return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) <
                    25.f;
         });
         auto isJumping = [](Entity owner) {
-            return coordinator.getComponent<Rigidbody>(owner)->velocity.y <
+            return ECS.getComponent<Rigidbody>(owner)->velocity.y <
                    -100.f;
         };
         auto isFalling = [](Entity owner) {
-            return coordinator.getComponent<Rigidbody>(owner)->velocity.y >
+            return ECS.getComponent<Rigidbody>(owner)->velocity.y >
                    25.f;
         };
         auto hasFallen = [&](Entity owner) {
@@ -284,7 +284,7 @@ void Demo::setupAnimationForProtagonist() {
         build.addEdge("fall", "idle", hasFallen);
     }
     auto anim_sprite = AnimatedSprite(build);
-    coordinator.addComponent(protagonist, anim_sprite);
+    ECS.addComponent(protagonist, anim_sprite);
 }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
@@ -329,15 +329,15 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
 {
     EMP_LOG_INTERVAL(DEBUG2, 3.0f) << "{main thread}: " << 1.f / delta_time;
 
-    auto& phy_sys = *coordinator.getSystem<PhysicsSystem>();
+    auto& phy_sys = *ECS.getSystem<PhysicsSystem>();
     for(auto e : phy_sys.getEntities()) {
-        if(!coordinator.getComponent<DebugShape>(e)) {
+        if(!ECS.getComponent<DebugShape>(e)) {
             continue;
         }
         if(phy_sys.m_isDormant(e)) {
-            coordinator.getComponent<DebugShape>(e)->fill_color = {1, 0, 0, 1};
+            ECS.getComponent<DebugShape>(e)->fill_color = {1, 0, 0, 1};
         }else {
-            coordinator.getComponent<DebugShape>(e)->fill_color = {1, 1, 1, 1};
+            ECS.getComponent<DebugShape>(e)->fill_color = {1, 1, 1, 1};
         }
     }
     // for(auto m : markers) {
@@ -364,21 +364,21 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     // }
 
     {
-        coordinator.getComponent<Transform>(mouse_entity)->position =
+        ECS.getComponent<Transform>(mouse_entity)->position =
                 controller.global_mouse_pos();
     }
-    if(coordinator.isEntityAlive(protagonist)){
+    if(ECS.isEntityAlive(protagonist)){
         isProtagonistGroundedSec += delta_time;
         if(isProtagonistGrounded) {
             isProtagonistGroundedSec = 0.f;
         } 
-        if(coordinator.isEntityAlive(protagonist)){
-            coordinator.getComponent<Rigidbody>(protagonist)->velocity.x +=
+        if(ECS.isEntityAlive(protagonist)){
+            ECS.getComponent<Rigidbody>(protagonist)->velocity.x +=
                     controller.movementInPlane2D().x *
                     (protagonist_speed / 2.f + protagonist_speed / 2.f *
                             (isProtagonistGrounded != false)) *
                     delta_time;
-            auto& rb = *coordinator.getComponent<Rigidbody>(protagonist);
+            auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
             if (controller.get(eKeyMappings::Jump).pressed && isProtagonistGroundedSec < cayote_time) {
                 isProtagonistGroundedSec = cayote_time;
                 isProtagonistGrounded = false;
@@ -388,8 +388,8 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
                 rb.velocity += 500.f * direction;
             }
         }
-        auto& rb = *coordinator.getComponent<Rigidbody>(protagonist);
-        auto& trans = *coordinator.getComponent<Transform>(protagonist);
+        auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
+        auto& trans = *ECS.getComponent<Transform>(protagonist);
         bool isRunningLeft = rb.velocity.x < 0.f;
         if(abs(rb.velocity.x) > 10.f) {
             trans.scale.x = isRunningLeft ?  -1.f : 1.f;
@@ -404,16 +404,16 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         rb.useAutomaticMass = true;
         auto col = Collider(cube_model_shape);
         col.collider_layer = ITEM;
-        auto entity = coordinator.createEntity();
+        auto entity = ECS.createEntity();
         last_created_crate = entity;
-        coordinator.addComponent(
+        ECS.addComponent(
                 entity, Transform(vec2f(controller.global_mouse_pos()), 0.f)
         );
-        coordinator.addComponent(entity, debug_cube_shape);
-        coordinator.addComponent(entity, col);
-        coordinator.addComponent(entity, rb);
-        coordinator.addComponent(entity, Material());
-        coordinator.addComponent(entity, spr);
+        ECS.addComponent(entity, debug_cube_shape);
+        ECS.addComponent(entity, col);
+        ECS.addComponent(entity, rb);
+        ECS.addComponent(entity, Material());
+        ECS.addComponent(entity, spr);
     }
 }
 int main()

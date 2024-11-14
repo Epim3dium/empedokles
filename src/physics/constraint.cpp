@@ -17,8 +17,8 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
     if (rb1 == nullptr) {
         EMP_LOG(WARNING) << "no rigidbody to create PositionalCorrectionInfo";
     }
-    assert(coordinator.hasComponent<Rigidbody>(e1));
-    assert(coordinator.hasComponent<Rigidbody>(e2));
+    assert(ECS.hasComponent<Rigidbody>(e1));
+    assert(ECS.hasComponent<Rigidbody>(e2));
 
     isStatic1 = rb1->isStatic;
     inertia1 = rb1->inertia();
@@ -46,15 +46,15 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
       center_to_collision1(r1),
       entity2(e2),
       center_to_collision2(r2) {
-    assert(coordinator.hasComponent<Rigidbody>(e1));
-    auto& rb1 = *coordinator.getComponent<Rigidbody>(e1);
+    assert(ECS.hasComponent<Rigidbody>(e1));
+    auto& rb1 = *ECS.getComponent<Rigidbody>(e1);
     isStatic1 = rb1.isStatic;
     inertia1 = rb1.inertia();
     mass1 = rb1.mass();
     generalized_inverse_mass1 = rb1.generalizedInverseMass(r1, normal);
 
-    if (coordinator.hasComponent<Rigidbody>(e2)) {
-        auto& rb2 = *coordinator.getComponent<Rigidbody>(e2);
+    if (ECS.hasComponent<Rigidbody>(e2)) {
+        auto& rb2 = *ECS.getComponent<Rigidbody>(e2);
         isStatic2 = rb2.isStatic;
         inertia2 = rb2.inertia();
         mass2 = rb2.mass();
@@ -102,17 +102,17 @@ PositionalCorrResult calcPositionalCorrection(
 Constraint Constraint::createPointAnchor(
         Entity anchor, Entity rigidbody, vec2f pinch_point_rotated
 ) {
-    assert(coordinator.hasComponent<Transform>(anchor));
-    assert(coordinator.hasComponent<Transform>(rigidbody));
-    assert(coordinator.hasComponent<Rigidbody>(rigidbody));
+    assert(ECS.hasComponent<Transform>(anchor));
+    assert(ECS.hasComponent<Transform>(rigidbody));
+    assert(ECS.hasComponent<Rigidbody>(rigidbody));
 
     Constraint result;
     result.type = eConstraintType::PointAnchor;
     result.entity_list = {anchor, rigidbody};
     result.disabled_collision_between_bodies = true;
 
-    const auto& anchor_trans = *coordinator.getComponent<Transform>(anchor);
-    const auto& rigid_trans = *coordinator.getComponent<Transform>(rigidbody);
+    const auto& anchor_trans = *ECS.getComponent<Transform>(anchor);
+    const auto& rigid_trans = *ECS.getComponent<Transform>(rigidbody);
 
     result.point_anchor.relative_position =
             anchor_trans.position - rigid_trans.position;
@@ -125,14 +125,14 @@ Constraint Constraint::createPointAnchor(
 void Constraint::m_solvePointAnchor(float delta_time) {
     Entity anchor = entity_list[0];
     Entity rigidbody = entity_list[1];
-    assert(coordinator.hasComponent<Transform>(anchor));
-    assert(coordinator.hasComponent<Transform>(rigidbody));
-    assert(coordinator.hasComponent<Rigidbody>(rigidbody));
+    assert(ECS.hasComponent<Transform>(anchor));
+    assert(ECS.hasComponent<Transform>(rigidbody));
+    assert(ECS.hasComponent<Rigidbody>(rigidbody));
 
     auto target = point_anchor.relative_position;
-    const auto& anchor_trans = *coordinator.getComponent<Transform>(anchor);
-    auto& rigid_trans = *coordinator.getComponent<Transform>(rigidbody);
-    auto& rb = *coordinator.getComponent<Rigidbody>(rigidbody);
+    const auto& anchor_trans = *ECS.getComponent<Transform>(anchor);
+    auto& rigid_trans = *ECS.getComponent<Transform>(rigidbody);
+    auto& rb = *ECS.getComponent<Rigidbody>(rigidbody);
 
     const vec2f& pos1 = anchor_trans.position;
     const vec2f& pos2 = rigid_trans.position;

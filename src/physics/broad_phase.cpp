@@ -23,7 +23,7 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
     };
     std::vector<Object> objects_sorted;
     for (auto itr = begin; itr != end; itr++) {
-        auto& col = *coordinator.getComponent<Collider>(*itr);
+        auto& col = *ECS.getComponent<Collider>(*itr);
         size_t i = 0;
         for (const auto& shape : col.transformed_shape()) {
             objects_sorted.push_back(
@@ -41,7 +41,7 @@ std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
     );
 
     std::vector<int> opened_layers[MAX_LAYERS];
-    auto collider_sys = coordinator.getSystem<ColliderSystem>();
+    auto collider_sys = ECS.getSystem<ColliderSystem>();
     assert(collider_sys != nullptr);
 
     for (auto i = 0; i < objects_sorted.size(); ++i) {

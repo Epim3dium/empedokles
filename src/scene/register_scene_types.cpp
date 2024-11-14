@@ -15,34 +15,34 @@
 
 namespace emp {
 void registerSceneTypes() {
-    coordinator.registerComponent<Transform>();
-    coordinator.registerComponent<Behaviour>();
+    ECS.registerComponent<Transform>();
+    ECS.registerComponent<Behaviour>();
 
-    coordinator.registerComponent<Constraint>();
-    coordinator.registerComponent<Material>();
-    coordinator.registerComponent<Collider>();
-    coordinator.registerComponent<Rigidbody>();
+    ECS.registerComponent<Constraint>();
+    ECS.registerComponent<Material>();
+    ECS.registerComponent<Collider>();
+    ECS.registerComponent<Rigidbody>();
 
-    coordinator.registerComponent<Model>();
-    coordinator.registerComponent<Texture>();
-    coordinator.registerComponent<DebugShape>();
+    ECS.registerComponent<Model>();
+    ECS.registerComponent<Texture>();
+    ECS.registerComponent<DebugShape>();
 
-    coordinator.registerComponent<Sprite>();
-    coordinator.registerComponent<AnimatedSprite>();
+    ECS.registerComponent<Sprite>();
+    ECS.registerComponent<AnimatedSprite>();
 }
 void registerSceneSystems(Device& device) {
-    coordinator.registerSystem<TransformSystem>();
-    coordinator.registerSystem<BehaviourSystem>();
+    ECS.registerSystem<TransformSystem>();
+    ECS.registerSystem<BehaviourSystem>();
 
-    coordinator.registerSystem<RigidbodySystem>();
-    coordinator.registerSystem<ColliderSystem>();
-    coordinator.registerSystem<ConstraintSystem>();
-    coordinator.registerSystem<PhysicsSystem>();
+    ECS.registerSystem<RigidbodySystem>();
+    ECS.registerSystem<ColliderSystem>();
+    ECS.registerSystem<ConstraintSystem>();
+    ECS.registerSystem<PhysicsSystem>();
 
-    coordinator.registerSystem<SpriteSystem>(std::ref(device));
-    coordinator.registerSystem<AnimatedSpriteSystem>(std::ref(device));
-    coordinator.registerSystem<DebugShapeSystem>(std::ref(device));
-    coordinator.registerSystem<TexturedModelsSystem>(std::ref(device));
-    coordinator.addComponent(coordinator.world(), Transform(vec2f(0, 0), 0.f, {1.f, 1.f}));
+    ECS.registerSystem<SpriteSystem>(std::ref(device));
+    ECS.registerSystem<AnimatedSpriteSystem>(std::ref(device));
+    ECS.registerSystem<DebugShapeSystem>(std::ref(device));
+    ECS.registerSystem<TexturedModelsSystem>(std::ref(device));
+    ECS.addComponent(ECS.world(), Transform(vec2f(0, 0), 0.f, {1.f, 1.f}));
 }
 } // namespace emp

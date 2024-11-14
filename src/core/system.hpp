@@ -12,14 +12,14 @@ public:
         static_assert((std::is_same<T, Components>::value || ...),
                       "must get component contained in this system");
         assert(this->entities.contains(entity) && "can only call getComponent on owned entities");
-        return *coordinator.getComponent<T>(entity);
+        return *ECS.getComponent<T>(entity);
     }
     template <class T>
     inline const T& getComponent(Entity entity) const {
         static_assert((std::is_same<T, Components>::value || ...),
                       "must get component contained in this system");
         assert(this->entities.contains(entity) && "can only call getComponent on owned entities");
-        return *coordinator.getComponent<T>(entity);
+        return *ECS.getComponent<T>(entity);
     }
 };
 }; // namespace emp
