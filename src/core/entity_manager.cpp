@@ -22,6 +22,8 @@ Entity EntityManager::createEntity() {
 }
 
 bool EntityManager::isEntityAlive(Entity entity) {
+    if(entity >= MAX_ENTITIES)
+        return false;
     return m_signatures[entity].test(MAX_COMPONENTS - 1);
 }
 void EntityManager::destroyEntity(Entity entity) {
