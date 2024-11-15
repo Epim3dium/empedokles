@@ -41,7 +41,7 @@ include(FetchContent)
 FetchContent_Declare(
   ImGui
   GIT_REPOSITORY https://github.com/ocornut/imgui.git
-  GIT_TAG v1.89.1  # You can specify the version you want to use here.
+  GIT_TAG v1.91.5  # You can specify the version you want to use here.
 )
 # Make sure the content is downloaded and available
 FetchContent_MakeAvailable(ImGui)
@@ -55,7 +55,9 @@ add_library(imgui STATIC
 
   # Add Vulkan backend
   ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.h
   ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp  # Assuming GLFW is used
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.h
 )
 
 # Include the backend headers

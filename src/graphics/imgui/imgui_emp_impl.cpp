@@ -26,8 +26,8 @@ VkDescriptorPool ImGuiGetDescriptorPool(VkDevice device) {
 	VkDescriptorPoolCreateInfo pool_info = {};
 	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	pool_info.maxSets = 1000;
-	pool_info.poolSizeCount = std::size(pool_sizes);
+	pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+    pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 	pool_info.pPoolSizes = pool_sizes;
 
 	VkDescriptorPool imguiPool;
@@ -54,21 +54,20 @@ void ImGuiSetup(
 	// 2: initialize imgui library
 
 	//this initializes the core structures of imgui
+    IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
 	//this initializes imgui for SDL
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 
 	//this initializes imgui for Vulkan
-	ImGui_ImplVulkan_Init(&init_info, renderPass);
+    init_info.RenderPass = renderPass;
+	ImGui_ImplVulkan_Init(&init_info);
 
 	//execute a gpu command to upload imgui font textures
-    auto command_buffer = device.beginSingleTimeCommands();
-    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-    device.endSingleTimeCommands(command_buffer);
-
+    ImGui_ImplVulkan_CreateFontsTexture();
 	//clear font textures from cpu data
-	ImGui_ImplVulkan_DestroyFontUploadObjects();
+	ImGui_ImplVulkan_DestroyFontsTexture();
 }
 
 void ImGuiRenderBegin() {
