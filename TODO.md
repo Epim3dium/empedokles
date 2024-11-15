@@ -5,18 +5,18 @@
     - collision optimization
         - tighter locked critical section
 - graphics
+    - instanced rendering
     - separate command queue for ui only changed when imgui is interacted with
-    - expand imgui editor
     - 2d lighting
 - core
+    - serialization / deserialization
     - message bus
     - command terminal
+- networking?
 
 ---
 
 # 📌 DOING:
-- core
-    - reconsider global coordinator
 
 ---
 
@@ -29,27 +29,20 @@
 
 - weird error message when closing window
 - graphics
+    - imgui inspector for basic components
     - basic animation system
         - truly moving animated sprites
     - add imgui
 - collision
     - collision optimization
         - collision idle state
-- graphics
-    - basic animation system
-        - truly moving animated sprites
-    - add imgui
-- collision
-    - collision optimization
-        - collision idle state
+    - collision triggers
 - graphics
     - resizable window
     - render system abstraction
     - basic animation system
         - animated sprites
         - finite state machine animated sprite switching
-- collision
-    - collision triggers
 - separate threads for rendering, physics and the rest
 - constraints as components
 - sprites (color, texRect, origin, render pipeline)
