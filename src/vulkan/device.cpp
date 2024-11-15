@@ -5,6 +5,7 @@
 #include <set>
 #include <unordered_set>
 #include "debug/log.hpp"
+#include "vulkan/swap_chain.hpp"
 
 namespace emp {
 #if EMP_USING_IMGUI 
@@ -17,8 +18,8 @@ ImGui_ImplVulkan_InitInfo Device::getImGuiInitInfo() const {
 	init_info.Queue = m_graphics_queue;
     init_info.QueueFamily = indices.graphicsFamily;
 	init_info.DescriptorPool = ImGuiGetDescriptorPool(m_device);
-	init_info.MinImageCount = 3;
-	init_info.ImageCount = 3;
+	init_info.MinImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
+	init_info.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     return init_info;
 }
