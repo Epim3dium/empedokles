@@ -1,35 +1,9 @@
-#include "core/layer.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "gui/editor/inspector.hpp"
 #include "scene/app.hpp"
-#include "templates/type_pack.hpp"
 #include <vector>
 #include <iostream>
-#include <fstream>
-#include <stdexcept>
-
 // Load SPIR-V shader code from file
-std::vector<char> readShaderFile(const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    size_t fileSize = (size_t)file.tellg();
-    std::vector<char> buffer(fileSize);
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    return buffer;
-}
-
-// Helper function to find suitable memory type for buffer allocation
-uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-            return i;
-        }
-    }
-    throw std::runtime_error("Failed to find suitable memory type.");
-}
-
 using namespace emp;
 
 class DebugSelectionSystem : public System<DebugShape, Transform> {
