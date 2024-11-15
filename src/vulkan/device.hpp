@@ -175,7 +175,7 @@ private:
 
     bool checkValidationLayerSupport();
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
     static void populateDebugMessengerCreateInfo(
             VkDebugUtilsMessengerCreateInfoEXT& createInfo

@@ -1,6 +1,8 @@
 #include "core/layer.hpp"
 #include "graphics/animated_sprite.hpp"
+#include "gui/editor/inspector.hpp"
 #include "scene/app.hpp"
+#include "templates/type_pack.hpp"
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -30,6 +32,27 @@ uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, Vk
 
 using namespace emp;
 
+class DebugSelectionSystem : public System<DebugShape, Transform> {
+public:
+    std::vector<Entity> query(vec2f point) {
+        std::vector<Entity> result;
+        for(auto e : entities) {
+            auto& shape = getComponent<DebugShape>(e);
+            auto& transform = getComponent<Transform>(e);
+            auto transformed_outline = shape.outline();
+            for(auto& p : transformed_outline) {
+                p = transformPoint(transform.global(), p);
+            }
+            
+            auto overlap = isOverlappingPointPoly(point, transformed_outline);
+            if(overlap) {
+                result.push_back(e);
+            }
+        }
+        return result;
+    }
+};
+
 enum CollisionLayers {
     GROUND,
     PLAYER,
@@ -40,6 +63,7 @@ class Demo : public App {
         Texture crate_texture;
         Entity mouse_entity;
         Entity protagonist;
+        Entity hovered_entity = -1;
 
         
         float protagonist_speed = 600.f;
@@ -89,6 +113,8 @@ class Demo : public App {
                 }) {}
 };
 void Demo::onSetup(Window& window, Device& device) {
+    ECS.registerSystem<DebugSelectionSystem>();
+
     crate_texture = Texture("crate");
     if(false){
         auto& tex = Texture("invalid").texture();
@@ -107,6 +133,8 @@ void Demo::onSetup(Window& window, Device& device) {
         }
         std::cout << "\033[0m";
     }
+    controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
+
     controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
     controller.bind(eKeyMappings::Ability2, GLFW_KEY_T);
     controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
@@ -212,7 +240,6 @@ void Demo::setupAnimationForProtagonist() {
     MovingSprite idle_moving;
     {
         Sprite idle_sprite = Sprite(Texture("idle"), def_size);
-        idle_sprite.position_offset = offset;
         idle_sprite.centered = true;
         idle_sprite.hframes = 10;
         idle_sprite.vframes = 1;
@@ -225,7 +252,6 @@ void Demo::setupAnimationForProtagonist() {
     {
         {
             Sprite running_sprite = Sprite(Texture("running"), def_size);
-            running_sprite.position_offset = offset;
             running_sprite.centered = true;
             running_sprite.hframes = 10;
             running_sprite.vframes = 1;
@@ -233,7 +259,6 @@ void Demo::setupAnimationForProtagonist() {
         }
         {
             Sprite jumping_spr = Sprite(Texture("jump-up"), def_size);
-            jumping_spr.position_offset = offset;
             jumping_spr.centered = true;
             jumping_spr.hframes = 3;
             jumping_spr.vframes = 1;
@@ -241,7 +266,6 @@ void Demo::setupAnimationForProtagonist() {
         }
         {
             Sprite jumpfall_spr = Sprite(Texture("jumpfall"), def_size);
-            jumpfall_spr.position_offset = offset;
             jumpfall_spr.centered = true;
             jumpfall_spr.hframes = 2;
             jumpfall_spr.vframes = 1;
@@ -249,7 +273,6 @@ void Demo::setupAnimationForProtagonist() {
         }
         {
             Sprite falling_spr = Sprite(Texture("jump-down"), def_size);
-            falling_spr.position_offset = offset;
             falling_spr.centered = true;
             falling_spr.hframes = 3;
             falling_spr.vframes = 1;
@@ -284,6 +307,7 @@ void Demo::setupAnimationForProtagonist() {
         build.addEdge("fall", "idle", hasFallen);
     }
     auto anim_sprite = AnimatedSprite(build);
+    anim_sprite.position_offset = offset;
     ECS.addComponent(protagonist, anim_sprite);
 }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
@@ -291,39 +315,11 @@ void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardControl
 void Demo::onRender(Device&, const FrameInfo& frame) {
     if(controller.get(eKeyMappings::Ability2).held) {
         crate_texture = Texture("demo");
-        // auto& tex = Texture("demo").texture();
-        // auto cmd = device.beginSingleTimeCommands();
-        // tex.transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        // device.endSingleTimeCommands(cmd);
-        //
-        // cmd = device.beginSingleTimeCommands();
-        // Texture().texture().transitionLayout(cmd, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        // device.endSingleTimeCommands(cmd);
-        //
-        // device.copyImageToImage(Texture().texture().getImage(), tex.getImage(), 2, 2, 1);
-        //
-        // EMP_LOG_DEBUG << tex.getExtent().width;
-        // EMP_LOG_DEBUG << tex.getExtent().height;
-        // EMP_LOG_DEBUG << tex.getExtent().depth;
-        // auto pixels = tex.getPixelsFromGPU();
-        // auto h = tex.getExtent().height;
-        // auto w = tex.getExtent().width;
-        // std::cout << "\n";
-        // for(int i = 0; i < h; i += 1) {
-        //     for(int ii = 0; ii < w; ii += 1) {
-        //         auto r = (int)(pixels)[i * w + ii].red;
-        //         auto g = (int)(pixels)[i * w + ii].green;
-        //         auto b = (int)(pixels)[i * w + ii].blue;
-        //         std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
-        //         std::cout << "\u2588";
-        //     }
-        //     std::cout << '\n';
-        // }
-        // std::cout << "\033[0m";
-        // exit(0);
     }
     ImGui::ShowDemoWindow();
-
+    if(ECS.isEntityAlive(hovered_entity)) {
+        (Inspector(hovered_entity));
+    }
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
@@ -334,35 +330,8 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         if(!ECS.getComponent<DebugShape>(e)) {
             continue;
         }
-        if(phy_sys.m_isDormant(e)) {
-            ECS.getComponent<DebugShape>(e)->fill_color = {1, 0, 0, 1};
-        }else {
-            ECS.getComponent<DebugShape>(e)->fill_color = {1, 1, 1, 1};
-        }
     }
-    // for(auto m : markers) {
-    //     coordinator.getComponent<Transform>(m)->position = {INFINITY, INFINITY};
-    //     coordinator.getComponent<Transform>(m)->scale = {1, 1};
-    // }
     int i = 0;
-    // for(auto entity : phy_sys.getEntities()) {
-    //     if(i == markers_count) {
-    //         break;
-    //     }
-    //     auto& dis_set = phy_sys.m_collision_islands;
-    //     auto other = dis_set.group(entity);
-    //
-    //     auto& other_trans = *coordinator.getComponent<Transform>(other);
-    //     auto& this_trans = *coordinator.getComponent<Transform>(entity);
-    //     vec2f pos1 = this_trans.position;
-    //     vec2f pos2 = other_trans.position;
-    //
-    //     auto& shape = *coordinator.getComponent<Transform>(markers[i++]);
-    //     shape.position = (pos1 + pos2) * 0.5f;
-    //     shape.scale = vec2f(1.f, length(pos1 - pos2));
-    //     shape.rotation = angle(vec2f(0.f, 1.f), pos1 - pos2);
-    // }
-
     {
         ECS.getComponent<Transform>(mouse_entity)->position =
                 controller.global_mouse_pos();
@@ -389,10 +358,13 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             }
         }
         auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
-        auto& trans = *ECS.getComponent<Transform>(protagonist);
+        auto& spr = *ECS.getComponent<AnimatedSprite>(protagonist);
         bool isRunningLeft = rb.velocity.x < 0.f;
         if(abs(rb.velocity.x) > 10.f) {
-            trans.scale.x = isRunningLeft ?  -1.f : 1.f;
+            if(spr.flipX ^ isRunningLeft) {
+                spr.position_offset.x *= -1.f;
+            }
+            spr.flipX = isRunningLeft ?  true : false;
         }
     }
 
@@ -414,6 +386,16 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         ECS.addComponent(entity, rb);
         ECS.addComponent(entity, Material());
         ECS.addComponent(entity, spr);
+    }
+    
+    if (controller.get(eKeyMappings::Shoot).pressed && !ImGui::GetIO().WantCaptureMouse) {
+        auto mouse_pos = controller.global_mouse_pos();
+        auto entities= ECS.getSystem<DebugSelectionSystem>()->query(mouse_pos);
+        if(entities.size() != 0) {
+            hovered_entity = entities.front();
+        }else {
+            hovered_entity = -1;
+        }
     }
 }
 int main()

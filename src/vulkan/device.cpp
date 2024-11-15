@@ -9,11 +9,13 @@
 namespace emp {
 #if EMP_USING_IMGUI 
 ImGui_ImplVulkan_InitInfo Device::getImGuiInitInfo() const {
+    QueueFamilyIndices indices = findQueueFamilies(m_physical_device);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = m_instance;
 	init_info.PhysicalDevice = m_physical_device;
 	init_info.Device = m_device;
 	init_info.Queue = m_graphics_queue;
+    init_info.QueueFamily = indices.graphicsFamily;
 	init_info.DescriptorPool = ImGuiGetDescriptorPool(m_device);
 	init_info.MinImageCount = 3;
 	init_info.ImageCount = 3;
@@ -374,7 +376,7 @@ bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     return requiredExtensions.empty();
 }
 
-QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) {
+QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) const {
     QueueFamilyIndices indices;
 
     uint32_t queueFamilyCount = 0;

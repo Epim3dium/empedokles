@@ -14,21 +14,12 @@
 #include "scene/behaviour.hpp"
 
 namespace emp {
+template<class ...T>
+void registerComponents(TypePack<T...> pack) {
+    (ECS.registerComponent<T>(), ...);
+}
 void registerSceneTypes() {
-    ECS.registerComponent<Transform>();
-    ECS.registerComponent<Behaviour>();
-
-    ECS.registerComponent<Constraint>();
-    ECS.registerComponent<Material>();
-    ECS.registerComponent<Collider>();
-    ECS.registerComponent<Rigidbody>();
-
-    ECS.registerComponent<Model>();
-    ECS.registerComponent<Texture>();
-    ECS.registerComponent<DebugShape>();
-
-    ECS.registerComponent<Sprite>();
-    ECS.registerComponent<AnimatedSprite>();
+    registerComponents(AllComponentTypes());
 }
 void registerSceneSystems(Device& device) {
     ECS.registerSystem<TransformSystem>();

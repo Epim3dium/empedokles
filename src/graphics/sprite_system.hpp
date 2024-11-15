@@ -15,7 +15,7 @@ struct SpriteInfo {
     glm::vec2 rect_max = {1, 1};
     glm::vec2 flip = {0, 0}; // only 0.f or 1.f
 
-    glm::vec4 color;
+    glm::vec4 color = {1, 1, 1, 1};
 };
 struct SpriteSystem : public System<Sprite, Transform> {
     SpriteSystem(Device& device);
