@@ -59,6 +59,7 @@ protected:
 private:
     std::unique_ptr<SimpleRenderSystem> m_sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> m_debugShape_rend_sys;
+    std::unique_ptr<SimpleRenderSystem> m_debugShapeOutline_rend_sys;
     std::unique_ptr<ComputeDemo> m_compute_demo;
 
     // synchronization systems

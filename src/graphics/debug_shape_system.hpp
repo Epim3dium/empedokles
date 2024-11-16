@@ -25,6 +25,7 @@ struct DebugShapeInfo {
 };
 
 class DebugShapeSystem : public System<Transform, DebugShape> {
+    void m_render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system, bool outline = false);
 public:
     DebugShapeSystem(Device& device);
 
@@ -39,6 +40,7 @@ public:
             SwapChain::MAX_FRAMES_IN_FLIGHT
     };
     void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
+    void renderOutline(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 };
 
 } // namespace emp
