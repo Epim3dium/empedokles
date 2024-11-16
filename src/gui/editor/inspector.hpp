@@ -1,5 +1,6 @@
 #ifndef EMP_INSPECTOR_HPP
 #define EMP_INSPECTOR_HPP
+#include "imgui.h"
 #include "core/entity.hpp"
 #include "scene/register_scene_types.hpp"
 #include "templates/type_pack.hpp"
@@ -102,7 +103,10 @@ class Inspector {
     }
 public:
     Inspector(Entity e) {
+        ImGui::Begin("Entity Inspector", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
         inspectAll(e, AllComponentTypes());
+        ImGui::End();
+
     }
 };
 };
