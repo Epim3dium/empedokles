@@ -181,15 +181,15 @@ void Demo::onSetup(Window& window, Device& device) {
             {vec2f(0.f, -400.0f), 0.f},
             {vec2f(-400.f, 0.0f), M_PI / 2.f}
     };
-    debug_cube_shape.fill_color = glm::vec4(1, 1, 1, 1);
+    debug_cube_shape.fill_color = glm::vec4(0.5, 0.5, 0.5, 1);
     for (auto o : ops) {
         auto platform = ECS.createEntity();
         ECS.addComponent(
                 platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
         );
-        ECS.addComponent(
-                platform, DebugShape(device, cube_model_shape)
-        );
+        auto db_shape = DebugShape(device, cube_model_shape);
+        db_shape.fill_color *= 0.5f;
+        ECS.addComponent(platform, db_shape);
         auto col = Collider(cube_model_shape);
         col.collider_layer = GROUND;
         ECS.addComponent(platform, col);

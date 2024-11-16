@@ -5,7 +5,7 @@ layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 uv;
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 fragPosWorld;
 
 struct PointLight {
@@ -31,13 +31,21 @@ layout(set = 1, binding = 0) uniform DebugShapeInfo{
 } gameObject;
 
 
+mat4 absoluteValue(mat4 inputMatrix) {
+    return mat4(
+        abs(inputMatrix[0]),
+        abs(inputMatrix[1]),
+        abs(inputMatrix[2]),
+        abs(inputMatrix[3])
+    );
+}
 void main() {
     vec4 positionWorld = gameObject.modelMatrix * vec4(position, 1.0);
-    vec4 outlineOffset = inverse(gameObject.scaleMatrix) * gameObject.modelMatrix 
+    vec4 outlineOffset = gameObject.modelMatrix * inverse(absoluteValue(gameObject.scaleMatrix))
         * vec4(gameObject.edge_outline * normal, 0);
     positionWorld += outlineOffset;
     positionWorld.z = 5;
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
-    fragColor = gameObject.outline_color.xyz;
+    fragColor = gameObject.outline_color;
 }

@@ -174,7 +174,7 @@ void App::run() {
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
                 "../assets/shaders/debug_shape_outline.vert.spv",
-                "../assets/shaders/debug_shape_outline.frag.spv",
+                "../assets/shaders/debug_shape.frag.spv",
                 &debug_shape_pipeline_config
         );
     }
