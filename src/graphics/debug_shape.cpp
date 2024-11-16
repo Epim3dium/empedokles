@@ -1,7 +1,9 @@
+#include "imgui.h"
 #include <cstddef>
 #include <functional>
 #include <ranges>
 #include "graphics/model.hpp"
+#include "math/math_func.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/hash.hpp"
@@ -69,37 +71,43 @@ std::size_t hash(vec2f v) {
 }
 
 void DebugShapeMesh::setupMesh(std::vector<vec2f> verticies, Device& device) {
+    verticies.pop_back();
     auto triangles = triangulate(verticies);
 
-    std::vector<vec2f> flattened_triangles(triangles.size() * 3U);
+    std::vector<Vertex> flattened_triangles(triangles.size() * 3U);
     std::vector<uint32_t> indices;
+    auto center = std::reduce(verticies.begin(), verticies.end()) / static_cast<float>(verticies.size());
+    auto normOfOutline = [&](vec2f x) {
+        auto vert_count = verticies.size();
+        for (int i = 0; i < vert_count; i++) {
+            auto prev = verticies[(i - 1 + vert_count) % vert_count]; 
+            auto cur = verticies[i]; 
+            auto next = verticies[(i + 1) % vert_count]; 
+            if(cur != x)
+                continue;
+            auto normA = cur - prev;
+            normA = normal({-normA.y, normA.x});
+            auto normB = next - cur;
+            normB = normal({-normB.y, normB.x});
+            return normal(normA + normB);
+        }
+        return vec2f(0, 0);
+    };
 
     for(int i = 0; i < triangles.size(); i++) {
         for(int ii = 0; ii < 3; ii++) {
-            flattened_triangles[i * 3U + ii] = triangles[i].arr[ii];
+            auto& vertex = flattened_triangles[i * 3U + ii];
+            auto v = triangles[i].arr[ii];
+            vertex.position =
+                vec3f(v, 0);
+            auto norm = normOfOutline(v);
+            vertex.normal = vec3f(norm, 0);
         }
     }
-    std::vector<Vertex> graphic_vertices;
-    std::unordered_map<std::size_t, uint32_t> hash_to_index;
-    size_t cur_index = 0;
-    for(int i = 0; i < flattened_triangles.size(); i++) {
-        auto vec = flattened_triangles[i];
-        auto hash_vec = hash(vec);
-        if(!hash_to_index.contains(hash_vec)) {
-            hash_to_index[hash_vec] = cur_index++;
+    
+    m_vertex_buffer = createVertexBuffer(flattened_triangles, device);
+    m_vertex_count = flattened_triangles.size();
 
-            Vertex vert;
-            vert.position = vec3f(vec, 0.f);
-            graphic_vertices.push_back(vert);
-        }
-        indices.push_back(hash_to_index.at(hash_vec));
-    }
-    m_vertex_buffer = createVertexBuffer(graphic_vertices, device);
-    m_vertex_count = graphic_vertices.size();
-
-    m_index_buffer = createIndexBuffer(indices, device);
-    m_index_count = indices.size();
-    m_has_index_buffer = true;
 }
 std::unique_ptr<Buffer> DebugShapeMesh::createVertexBuffer(
     const std::vector<Vertex>& vertices, Device& device) {

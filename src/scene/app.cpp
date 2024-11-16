@@ -168,14 +168,12 @@ void App::run() {
                 "../assets/shaders/debug_shape.frag.spv",
                 &debug_shape_pipeline_config
         );
-        debug_shape_pipeline_config.inputAssemblyInfo.topology =
-                VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
         m_debugShapeOutline_rend_sys = std::make_unique<SimpleRenderSystem>(
                 device,
                 renderer.getSwapChainRenderPass(),
                 globalSetLayout->getDescriptorSetLayout(),
-                "../assets/shaders/debug_shape.vert.spv",
-                "../assets/shaders/debug_shape.frag.spv",
+                "../assets/shaders/debug_shape_outline.vert.spv",
+                "../assets/shaders/debug_shape_outline.frag.spv",
                 &debug_shape_pipeline_config
         );
     }
@@ -435,11 +433,11 @@ void App::renderFrame(
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
 
-                debugshape_sys.renderOutline(frame_info, *m_debugShapeOutline_rend_sys);
-                // debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
+                debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
+                debugshape_sys.render(frame_info, *m_debugShapeOutline_rend_sys);
                 sprite_sys.render(frame_info, *m_sprite_rend_sys);
                 animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
-                m_compute_demo->render(frame_info, *m_sprite_rend_sys);
+                // m_compute_demo->render(frame_info, *m_sprite_rend_sys);
 
                 onRender(device, frame_info);
 

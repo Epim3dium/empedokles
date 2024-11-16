@@ -20,12 +20,13 @@ namespace emp {
 
 struct DebugShapeInfo {
     glm::mat4 modelMatrix{1.f};
+    glm::mat4 scaleMatrix{1.f};
     glm::vec4 fill_color;
     glm::vec4 outline_color;
+    float edge_width = 10.f;
 };
 
 class DebugShapeSystem : public System<Transform, DebugShape> {
-    void m_render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system, bool outline = false);
 public:
     DebugShapeSystem(Device& device);
 
@@ -40,7 +41,6 @@ public:
             SwapChain::MAX_FRAMES_IN_FLIGHT
     };
     void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
-    void renderOutline(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 };
 
 } // namespace emp

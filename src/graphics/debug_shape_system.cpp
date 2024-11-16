@@ -1,10 +1,11 @@
 #include "debug_shape_system.hpp"
+#include <glm/ext/matrix_transform.hpp>
 #include "core/coordinator.hpp"
 
 #include <numeric>
 
 namespace emp {
-void DebugShapeSystem::m_render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system, bool outline) {
+void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
     simple_rend_system.render(
         frame_info,
         this->entities,
@@ -17,23 +18,12 @@ void DebugShapeSystem::m_render(FrameInfo& frame_info, SimpleRenderSystem& simpl
             desc_writer.build(result);
             return result;
         },
-        [this, outline](const VkCommandBuffer& command_buf, const Entity& entity) {
+        [this](const VkCommandBuffer& command_buf, const Entity& entity) {
             auto& shape = getComponent<DebugShape>(entity);
-            if(outline) {
-                shape.mesh().bindOutline(command_buf);
-                shape.mesh().drawOutline(command_buf);
-            }else {
-                shape.mesh().bind(command_buf);
-                shape.mesh().draw(command_buf);
-            }
+            shape.mesh().bind(command_buf);
+            shape.mesh().draw(command_buf);
         }
     );
-}
-void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
-    m_render(frame_info, simple_rend_system, false);
-}
-void DebugShapeSystem::renderOutline(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
-    m_render(frame_info, simple_rend_system, true);
 }
 
 DebugShapeSystem::DebugShapeSystem(Device& device) {
@@ -64,8 +54,10 @@ void DebugShapeSystem::updateBuffer(int frameIndex) {
         const auto& debug_shape = getComponent<DebugShape>(e);
         DebugShapeInfo data{};
         data.modelMatrix = transform.global();
+        data.scaleMatrix = glm::scale(glm::mat4(1), vec3f(transform.scale, 1));
         data.fill_color = debug_shape.fill_color;
         data.outline_color = debug_shape.outline_color;
+        data.edge_width = debug_shape.outline_width;
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }
     uboBuffers[frameIndex]->flush();

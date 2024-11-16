@@ -41,6 +41,7 @@ class DebugShape {
 public:
     glm::vec4 fill_color;
     glm::vec4 outline_color;
+    float outline_width = 10.f;
     DebugShape() {
     }
     DebugShape(
