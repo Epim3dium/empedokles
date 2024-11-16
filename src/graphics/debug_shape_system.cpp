@@ -4,7 +4,7 @@
 #include <numeric>
 
 namespace emp {
-void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+void DebugShapeSystem::m_render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system, bool outline) {
     simple_rend_system.render(
         frame_info,
         this->entities,
@@ -17,12 +17,23 @@ void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_
             desc_writer.build(result);
             return result;
         },
-        [this](const VkCommandBuffer& command_buf, const Entity& entity) {
+        [this, outline](const VkCommandBuffer& command_buf, const Entity& entity) {
             auto& shape = getComponent<DebugShape>(entity);
-            shape.model().bind(command_buf);
-            shape.model().draw(command_buf);
+            if(outline) {
+                shape.mesh().bindOutline(command_buf);
+                shape.mesh().drawOutline(command_buf);
+            }else {
+                shape.mesh().bind(command_buf);
+                shape.mesh().draw(command_buf);
+            }
         }
     );
+}
+void DebugShapeSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+    m_render(frame_info, simple_rend_system, false);
+}
+void DebugShapeSystem::renderOutline(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+    m_render(frame_info, simple_rend_system, true);
 }
 
 DebugShapeSystem::DebugShapeSystem(Device& device) {
