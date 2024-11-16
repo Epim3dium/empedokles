@@ -160,6 +160,7 @@ void App::run() {
     {
         PipelineConfigInfo debug_shape_pipeline_config;
         Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
+        Pipeline::enableAlphaBlending(debug_shape_pipeline_config);
         m_debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(
                 device,
                 renderer.getSwapChainRenderPass(),
