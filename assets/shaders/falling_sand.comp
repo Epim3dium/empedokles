@@ -1,0 +1,27 @@
+#version 450
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) buffer DataBuffer {
+    uint data[];
+};
+layout (set = 0, binding = 1, rgba8) uniform writeonly image2D outputImage;
+
+void main() {
+    vec4 color_sci = vec4(1, 0, 0, 1);
+    if(gl_GlobalInvocationID.y >= 255 || gl_GlobalInvocationID.x >= 255 ||
+        gl_GlobalInvocationID.y == 0 || gl_GlobalInvocationID.x == 0) 
+    {
+        imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), color_sci);
+        return;
+    }
+    uint idxX = gl_GlobalInvocationID.x;
+    uint idxY = gl_GlobalInvocationID.y;
+    uint index = idxX + idxY * 256;
+    uint index_upper = idxX + (idxY - 1) * 256;
+    data[index] = data[index_upper];
+
+    if(data[index] == 0) {
+        color_sci = vec4(0, 0, 0, 1);
+    }
+    imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), color_sci);
+}
