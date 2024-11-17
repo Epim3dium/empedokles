@@ -125,6 +125,7 @@ public:
     DescriptorWriter(const DescriptorWriter&) = delete;
     DescriptorWriter& operator=(const DescriptorWriter&) = delete;
 private:
+    bool m_isBindingFree(uint32_t binding) const;
     DescriptorSetLayout& m_set_layout;
     DescriptorPool& m_pool;
     std::vector<VkWriteDescriptorSet> m_writes;
