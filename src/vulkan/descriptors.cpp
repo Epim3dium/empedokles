@@ -160,11 +160,20 @@ DescriptorWriter::DescriptorWriter(
     : m_set_layout{setLayout}, m_pool{pool} {
 }
 
+bool DescriptorWriter::m_isBindingFree(uint32_t binding) const {
+    for(const auto& write : m_writes) {
+        if(binding == write.dstBinding) {
+            return false;
+        }
+    }
+    return true;
+}
 DescriptorWriter& DescriptorWriter::writeBuffer(
         uint32_t binding, VkDescriptorBufferInfo* bufferInfo
 ) {
     assert(m_set_layout.m_bindings.count(binding) == 1 &&
            "Layout does not contain specified binding");
+    assert(m_isBindingFree(binding) && "cannot overwrite layout binding");
 
     auto& bindingDescription = m_set_layout.m_bindings[binding];
 
