@@ -21,7 +21,7 @@ public:
     const size_t dataCount = 256 * 256;
     VkDescriptorSet descriptor_set;
 
-    VkPipelineLayout pipelineLayout{};
+    VkPipelineLayout pipeline_layout{};
     std::unique_ptr<Pipeline> compute_pipeline;
 
     std::unique_ptr<Buffer> dataBuffer;
@@ -135,18 +135,17 @@ void copyImageToImage(VkCommandBuffer command_buffer,
     void createPipeline(Device& device) {
         PipelineConfigInfo config;
         {
+            auto layouts = layoutBinding->getDescriptorSetLayout();
             // Create pipeline layout
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-            pipelineLayoutInfo.sType =
-                VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 1;
-            auto layouts = layoutBinding->getDescriptorSetLayout();
             pipelineLayoutInfo.pSetLayouts = &layouts;
 
             vkCreatePipelineLayout(
-                device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
+                device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout);
 
-            config.pipelineLayout = pipelineLayout;
+            config.pipelineLayout = pipeline_layout;
         }
         compute_pipeline = std::make_unique<Pipeline>(
             device, "../assets/shaders/falling_sand.comp.spv", config);
@@ -234,7 +233,7 @@ void copyImageToImage(VkCommandBuffer command_buffer,
         compute_pipeline->bind(command_buffer);
         vkCmdBindDescriptorSets(command_buffer,
             VK_PIPELINE_BIND_POINT_COMPUTE,
-            pipelineLayout,
+            pipeline_layout,
             0, //desc set
             1, //desc count
             &descriptor_set,
