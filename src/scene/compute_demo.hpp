@@ -20,10 +20,12 @@ public:
     std::unique_ptr<DescriptorPool> compute_pool;
     const size_t dataCount = 256 * 256;
     VkDescriptorSet descriptor_set;
+
     VkPipelineLayout pipelineLayout{};
     std::unique_ptr<Pipeline> compute_pipeline;
+
     std::unique_ptr<Buffer> dataBuffer;
-    std::vector<float> inputData;
+    std::vector<uint32_t> inputData;
 
     std::unique_ptr<TextureAsset> output_image;
     TextureAsset* display_image;
@@ -83,17 +85,17 @@ void copyImageToImage(VkCommandBuffer command_buffer,
         }
     }
     void initializeDataBuffer(Device& device) {
-        VkDeviceSize bufferSize = sizeof(float) * dataCount;
-        inputData = std::vector<float>(dataCount, 0.0f); // Sample input data: all values set to 2.0
+        VkDeviceSize bufferSize = sizeof(uint32_t) * dataCount;
+        inputData = std::vector<uint32_t>(dataCount, 0); // Sample input data: all values set to 2.0
         for(int i = 100; i < 150; i++) {
             for(int ii = 100; ii < 150; ii++) {
-                inputData[ii + i * 256] = 1.f;
+                inputData[ii + i * 256] = 1;
             }
         }
 
         // Create buffer
         dataBuffer = std::make_unique<Buffer>(device,
-            sizeof(float),
+            sizeof(uint32_t),
             dataCount,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -147,7 +149,7 @@ void copyImageToImage(VkCommandBuffer command_buffer,
             config.pipelineLayout = pipelineLayout;
         }
         compute_pipeline = std::make_unique<Pipeline>(
-            device, "../assets/shaders/compute.comp.spv", config);
+            device, "../assets/shaders/falling_sand.comp.spv", config);
 
     }
     ComputeDemo(Device& device) : m_device(device), transform(vec2f(0, 0), 0.f, vec2f(1.f, 1.f)) {
@@ -172,20 +174,19 @@ void copyImageToImage(VkCommandBuffer command_buffer,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                     alignment
             );
-            uboBuffer->map();
         }
     }
     void updateUBO(int frameIndex) {
-        for (auto& uboBuffer : uboBuffers) {
-            SpriteInfo data{};
+        SpriteInfo data{};
 
-            data.model_matrix = transform.global();
-            data.size_matrix = glm::scale(
-                    glm::mat4{1.f}, {size.x, size.y, 1.f}
-            );
+        data.model_matrix = transform.global();
+        data.size_matrix = glm::scale(
+                glm::mat4{1.f}, {size.x, size.y, 1.f}
+        );
 
-            uboBuffers[frameIndex]->writeToBuffer(&data);
-        }
+        uboBuffers[frameIndex]->map();
+        uboBuffers[frameIndex]->writeToBuffer(&data);
+        uboBuffers[frameIndex]->unmap();
     }
     void render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
         updateUBO(frame_info.frameIndex);
@@ -196,10 +197,9 @@ void copyImageToImage(VkCommandBuffer command_buffer,
                 [this](DescriptorWriter& desc_writer,
                        int frame_index,
                        const Entity&) -> VkDescriptorSet {
-                    static VkDescriptorBufferInfo buf_info;
-                    buf_info = uboBuffers[frame_index]->descriptorInfo();
-                    auto& image_info = output_image->getImageInfo();
+                    auto buf_info = uboBuffers[frame_index]->descriptorInfo();
                     desc_writer.writeBuffer(0, &buf_info);
+                    auto& image_info = output_image->getImageInfo();
                     desc_writer.writeImage(1, &image_info);
                     VkDescriptorSet result;
                     desc_writer.build(result);
@@ -234,8 +234,12 @@ void copyImageToImage(VkCommandBuffer command_buffer,
         compute_pipeline->bind(command_buffer);
         vkCmdBindDescriptorSets(command_buffer,
             VK_PIPELINE_BIND_POINT_COMPUTE,
-            pipelineLayout, 0, 1,
-            &descriptor_set, 0, nullptr);
+            pipelineLayout,
+            0, //desc set
+            1, //desc count
+            &descriptor_set,
+            0,
+            nullptr);
 
         auto workgroup_count = 16;
         vkCmdDispatch(command_buffer, workgroup_count , workgroup_count , 1); // Dispatch work

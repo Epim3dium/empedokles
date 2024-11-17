@@ -135,13 +135,11 @@ void Demo::onSetup(Window& window, Device& device) {
                     return;
                 }
                 isProtagonistGrounded = info.collidee_entity;
-                EMP_LOG_DEBUG << "grounded: " << isProtagonistGrounded;
             })
         .onCollisionExit(
             protagonist, protagonist, [&](Entity me, Entity other) {
                 if (other == isProtagonistGrounded || isProtagonistGrounded == false) {
                     isProtagonistGrounded = false;
-                    EMP_LOG_DEBUG << "ungrounded";
                 }
             });
 

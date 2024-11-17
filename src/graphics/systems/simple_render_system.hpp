@@ -69,8 +69,8 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
             frameInfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             pipeline_layout,
-            0,
-            1,
+            0, // starting set (0 is the globalDescriptorSet)
+            1, // set count
             &frameInfo.globalDescriptorSet,
             0,
             nullptr
