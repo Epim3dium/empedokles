@@ -39,7 +39,6 @@ namespace emp {
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                     alignment
             );
-            uboBuffer->map();
         }
     }
 
@@ -51,6 +50,7 @@ namespace emp {
     void AnimatedSpriteSystem::updateBuffer(int frameIndex) {
         // copy model matrix and normal matrix for each gameObj into
         // buffer for this frame
+        uboBuffers[frameIndex]->map();
         for (auto entity : entities) {
 
             // auto &obj = kv.second;
@@ -81,5 +81,6 @@ namespace emp {
             uboBuffers[frameIndex]->writeToIndex(&data, entity);
         }
         uboBuffers[frameIndex]->flush();
+        uboBuffers[frameIndex]->unmap();
     }
 };
