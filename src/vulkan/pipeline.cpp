@@ -73,7 +73,6 @@ std::vector<char> Pipeline::readFile(const std::string& filepath) {
     std::string enginePath = filepath;
     std::ifstream file{enginePath, std::ios::ate | std::ios::binary};
 
-    EMP_LOG_DEBUG << filepath;
     if (!file.is_open()) {
         throw std::runtime_error("failed to open file: " + enginePath);
     }
