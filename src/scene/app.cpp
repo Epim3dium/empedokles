@@ -472,7 +472,7 @@ void App::loadAssets() {
         } catch(std::runtime_error& e) {
             EMP_LOG(LogLevel::WARNING) << "failure while loading textures: " << e.what();
         } catch(...) {
-            EMP_LOG(LogLevel::WARNING) << "undefined error when loading textures";
+            EMP_LOG(LogLevel::WARNING) << "unknown error when loading textures";
         }
     }
     m_textures_to_load.clear();
