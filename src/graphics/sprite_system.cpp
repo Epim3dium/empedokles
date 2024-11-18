@@ -15,7 +15,6 @@ SpriteSystem::SpriteSystem(Device& device) {
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                 alignment
         );
-        uboBuffer->map();
     }
 }
 void SpriteSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
@@ -44,6 +43,7 @@ void SpriteSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend
 void SpriteSystem::updateBuffer(int frameIndex) {
     // copy model matrix and normal matrix for each gameObj into
     // buffer for this frame
+    uboBuffers[frameIndex]->map();
     for (auto e : entities) {
         // auto &obj = kv.second;
         const auto& transform = getComponent<Transform>(e);
@@ -73,6 +73,7 @@ void SpriteSystem::updateBuffer(int frameIndex) {
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }
     uboBuffers[frameIndex]->flush();
+    uboBuffers[frameIndex]->unmap();
 }
 }; // namespace emp
 
