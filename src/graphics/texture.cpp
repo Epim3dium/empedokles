@@ -102,11 +102,17 @@ void TextureAsset::updateDescriptor() {
 }
 
 std::vector<TextureAsset::Pixel> TextureAsset::getPixelsFromGPU() {
+
     VkDeviceSize imageSize = getExtent().width * getExtent().height;
     constexpr std::size_t pixel_size = sizeof(stbi_uc) * 4U;
-    auto command_buffer = m_device.beginSingleTimeCommands();
-    transitionLayout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    m_device.endSingleTimeCommands(command_buffer);
+
+    auto old_layout = m_texture_layout;
+
+    {
+        auto command_buffer = m_device.beginSingleTimeCommands();
+        transitionLayout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        m_device.endSingleTimeCommands(command_buffer);
+    }
 
     Buffer stagingBuffer{
             m_device,
@@ -124,6 +130,13 @@ std::vector<TextureAsset::Pixel> TextureAsset::getPixelsFromGPU() {
 
     std::vector<Pixel> pixels(imageSize);
     std::memcpy(pixels.data(), stagingBuffer.getMappedMemory(), imageSize * sizeof(Pixel));
+
+    {
+        auto command_buffer = m_device.beginSingleTimeCommands();
+        transitionLayout(command_buffer, old_layout);
+        m_device.endSingleTimeCommands(command_buffer);
+    }
+
     return pixels;
 }
 void TextureAsset::createTextureImage(const std::string& filepath) {
@@ -140,8 +153,7 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
-        std::cerr << filepath;
-        throw std::runtime_error("failed to load texture image!");
+        throw std::runtime_error("failed to load image file: " + filepath);
     }
 
     // mMipLevels =
@@ -192,14 +204,11 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
             m_texture_image,
             m_texture_image_memory
     );
-    m_device.transitionImageLayout(
-            m_texture_image,
-            VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            m_mip_levels,
-            m_layer_count
-    );
+    {
+        auto command_buffer = m_device.beginSingleTimeCommands();
+        transitionLayout(command_buffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        m_device.endSingleTimeCommands(command_buffer);
+    }
     m_device.copyBufferToImage(
             stagingBuffer.getBuffer(),
             m_texture_image,
@@ -208,15 +217,11 @@ void TextureAsset::createTextureImage(const std::string& filepath) {
             m_layer_count
     );
 
-    // comment this out if using mips
-    m_device.transitionImageLayout(
-            m_texture_image,
-            VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            m_mip_levels,
-            m_layer_count
-    );
+    {
+        auto command_buffer = m_device.beginSingleTimeCommands();
+        transitionLayout(command_buffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        m_device.endSingleTimeCommands(command_buffer);
+    }
 
     // If we generate mip maps then the final image will alerady be
     // READ_ONLY_OPTIMAL mDevice.generateMipmaps(mTextureImage, mFormat,
