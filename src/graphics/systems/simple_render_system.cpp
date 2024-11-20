@@ -72,20 +72,16 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass,
     PipelineConfigInfo* config) {
     assert(pipeline_layout != nullptr &&
            "Cannot create pipeline before pipeline layout");
-    if (config != nullptr) {
-        config->renderPass = renderPass;
-        config->pipelineLayout = pipeline_layout;
-        pipeline = std::make_unique<Pipeline>(
-            device, vert_filename, frag_filename, *config);
-        return;
-    }
-
     PipelineConfigInfo pipelineConfig{};
     Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-    pipelineConfig.renderPass = renderPass;
-    pipelineConfig.pipelineLayout = pipeline_layout;
+    if (config == nullptr) {
+        config = &pipelineConfig;
+    }
+
+    config->renderPass = renderPass;
+    config->pipelineLayout = pipeline_layout;
     pipeline = std::make_unique<Pipeline>(
-        device, vert_filename, frag_filename, pipelineConfig);
+        device, vert_filename, frag_filename, *config);
 }
 
 } // namespace emp
