@@ -1,4 +1,5 @@
 #include "pipeline.hpp"
+#include <vulkan/vulkan_core.h>
 
 #include "debug/log.hpp"
 #include "graphics/model.hpp"
@@ -18,13 +19,16 @@ Pipeline::Pipeline(
         const std::string& fragFilepath,
         const PipelineConfigInfo& configInfo
 )
-    : m_device{device} {
+    : m_device{device} 
+{
+    m_layout = configInfo.pipelineLayout;
     createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 }
 Pipeline::Pipeline(Device& device,
     const std::string& computeFilepath,
     const PipelineConfigInfo& configInfo) : m_device{device} 
 {
+    m_layout = configInfo.pipelineLayout;
     createComputePipeline(computeFilepath, configInfo);
 }
 void Pipeline::createComputePipeline(
@@ -185,6 +189,27 @@ void Pipeline::createShaderModule(
     }
 }
 
+void Pipeline::bindDescriptorSets(VkCommandBuffer command_buffer,
+    VkDescriptorSet* sets,
+    uint32_t first_set,
+    uint32_t set_count,
+    uint32_t dynamic_offset_count,
+    uint32_t* pDynamic_offsets) 
+{
+    VkPipelineBindPoint bind_point = 
+        ((m_compute_shader_module != VK_NULL_HANDLE) ?
+            VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS);
+    vkCmdBindDescriptorSets(command_buffer,
+        bind_point,
+        m_layout,
+        first_set, // starting set (0 is the globalDescriptorSet)
+        set_count, // set count
+        sets,
+        dynamic_offset_count,
+        pDynamic_offsets
+
+    );
+}
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
     if(m_compute_shader_module != VK_NULL_HANDLE) {
         vkCmdBindPipeline(

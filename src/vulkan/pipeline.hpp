@@ -1,6 +1,7 @@
 #ifndef EMP_PIPELINE_HPP
 #define EMP_PIPELINE_HPP
 
+#include <vulkan/vulkan_core.h>
 #include "vulkan/device.hpp"
 
 // std
@@ -44,6 +45,12 @@ public:
     Pipeline(const Pipeline&) = delete;
     Pipeline& operator=(const Pipeline&) = delete;
     void bind(VkCommandBuffer commandBuffer);
+    void bindDescriptorSets(VkCommandBuffer command_buffer,
+        VkDescriptorSet* sets,
+        uint32_t first_set,
+        uint32_t set_count = 1,
+        uint32_t dynamic_offset_count = 0U,
+        uint32_t* pDynamic_offsets = nullptr);
 
     static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
     static void enableAlphaBlending(PipelineConfigInfo& configInfo);
@@ -64,6 +71,7 @@ private:
             const std::vector<char>& code, VkShaderModule* shaderModule
     );
 
+    VkPipelineLayout m_layout;
     Device& m_device;
     VkPipeline m_pipeline{};
     VkShaderModule m_vert_shader_module{};

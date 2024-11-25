@@ -243,14 +243,7 @@ void copyImageToImage(VkCommandBuffer command_buffer,
         display_image[frame_index]->updateDescriptor();
 
         compute_pipeline->bind(command_buffer);
-        vkCmdBindDescriptorSets(command_buffer,
-            VK_PIPELINE_BIND_POINT_COMPUTE,
-            pipeline_layout,
-            0, //desc set
-            1, //desc count
-            &descriptor_set[frame_info.frameIndex],
-            0,
-            nullptr);
+        compute_pipeline->bindDescriptorSets(command_buffer, &descriptor_set[frame_info.frameIndex], 0U);
 
         auto workgroup_count = 16;
         vkCmdDispatch(command_buffer, workgroup_count , workgroup_count , 1); // Dispatch work
