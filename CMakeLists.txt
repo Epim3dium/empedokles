@@ -16,6 +16,7 @@ if(POLICY CMP0079 )
 endif()
 
 add_subdirectory(demo)
+add_subdirectory(tests)
 add_subdirectory(src)
 
 include(cmake/Install.cmake)
