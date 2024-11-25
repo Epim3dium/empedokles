@@ -63,18 +63,12 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
     std::function<void(const VkCommandBuffer&,
         const typename IterableObjects::value_type&)> bindAndDraw) 
 {
+    if(pipeline == nullptr)
+        return;
+
     pipeline->bind(frameInfo.commandBuffer);
 
-    vkCmdBindDescriptorSets(
-            frameInfo.commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipeline_layout,
-            0, // starting set (0 is the globalDescriptorSet)
-            1, // set count
-            &frameInfo.globalDescriptorSet,
-            0,
-            nullptr
-    );
+    pipeline->bindDescriptorSets(frameInfo.commandBuffer, &frameInfo.globalDescriptorSet, 0U);
 
     for (auto object : objects) {
         // writing descriptor set each frame can slow performance
@@ -88,17 +82,7 @@ void SimpleRenderSystem::render(FrameInfo& frameInfo,
          
         VkDescriptorSet entity_desc_set = writeDesc(desc_writer, frameInfo.frameIndex, object);
 
-        vkCmdBindDescriptorSets(
-                frameInfo.commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipeline_layout,
-                1, // starting set (0 is the globalDescriptorSet, 1 is the set
-                   // specific to this system)
-                1, // set count
-                &entity_desc_set,
-                0,
-                nullptr
-        );
+        pipeline->bindDescriptorSets(frameInfo.commandBuffer, &entity_desc_set, 1U);
 
         bindAndDraw(frameInfo.commandBuffer, object);
     }
