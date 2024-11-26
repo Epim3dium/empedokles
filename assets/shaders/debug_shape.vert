@@ -33,7 +33,7 @@ layout(set = 1, binding = 0) uniform DebugShapeInfo{
 
 void main() {
     vec4 positionWorld = gameObject.modelMatrix * vec4(position, 1.0);
-    positionWorld.z = 4;
+    positionWorld.z = -0.1;
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
     fragColor = gameObject.fill_color;
