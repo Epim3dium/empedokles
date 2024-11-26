@@ -13,7 +13,8 @@ enable_testing()
 
 add_executable(
     tests
-    main.cpp
+    test_main.cpp
+    core/test_coordinator.cpp
     test.cpp
 )
 include(GoogleTest)
