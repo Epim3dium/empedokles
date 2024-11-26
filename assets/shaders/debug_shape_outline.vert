@@ -44,7 +44,7 @@ void main() {
     vec4 outlineOffset = gameObject.modelMatrix * inverse(absoluteValue(gameObject.scaleMatrix))
         * vec4(gameObject.edge_outline * normal, 0);
     positionWorld += outlineOffset;
-    positionWorld.z = 5;
+    positionWorld.z = 0;
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
     fragColor = gameObject.outline_color;

@@ -166,10 +166,6 @@ void Demo::onSetup(Window& window, Device& device) {
         auto mat = Material(); 
         ECS.addComponent(protagonist, mat);
 
-        auto db_shape = DebugShape(device, protagonist_shape, glm::vec4(1, 1, 1, 1));
-        ECS.addComponent(protagonist, db_shape);
-
-
         setupAnimationForProtagonist();
     }
 
