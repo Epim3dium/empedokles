@@ -1,14 +1,14 @@
 #include "coordinator.hpp"
 namespace emp {
-const Entity Coordinator::world() const {
-    return m_world;
+const  Entity Coordinator::world() {
+    return 0U;
 }
 void Coordinator::init() {
     // Create pointers to each manager
     m_component_manager = std::make_unique<ComponentManager>();
     m_entity_manager = std::make_unique<EntityManager>();
     m_system_manager = std::make_unique<SystemManager>();
-    m_world = createEntity();
+    assert(createEntity() == world());
 }
 
 // Entity methods
@@ -29,6 +29,5 @@ void Coordinator::destroy() {
     delete m_entity_manager.release();
     delete m_system_manager.release();
 }
-Coordinator ECS;
 };
 

@@ -11,7 +11,7 @@ namespace emp {
 // size_t shape_index1;
 // size_t shape_index2;
 std::vector<CollidingPair> SweepBroadPhase::findPotentialPairs(
-        std::set<Entity>::iterator begin, std::set<Entity>::iterator end
+        std::set<Entity>::iterator begin, std::set<Entity>::iterator end, Coordinator& ECS
 ) {
     std::vector<CollidingPair> result;
     struct Object {

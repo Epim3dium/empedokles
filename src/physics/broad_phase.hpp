@@ -5,6 +5,7 @@
 #include <map>
 #include <stack>
 #include <vector>
+#include "core/coordinator.hpp"
 #include "core/entity.hpp"
 #include "debug/log.hpp"
 #include "math/geometry_func.hpp"
@@ -20,7 +21,7 @@ struct CollidingPair {
 class SweepBroadPhase {
 public:
     std::vector<CollidingPair> findPotentialPairs(
-            std::set<Entity>::iterator begin, std::set<Entity>::iterator end
+            std::set<Entity>::iterator begin, std::set<Entity>::iterator end, Coordinator& ECS
     );
 };
 struct LooseTightDoubleGrid {

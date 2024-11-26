@@ -114,8 +114,8 @@ std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalUBOBuffers() {
 }
 void App::setupECS() {
     ECS.init();
-    registerSceneTypes();
-    registerSceneSystems(device);
+    registerSceneTypes(ECS);
+    registerSceneSystems(device, ECS);
 }
 void App::run() {
     EMP_LOG(LogLevel::INFO) << "start running ...";

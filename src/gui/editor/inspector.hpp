@@ -1,6 +1,7 @@
 #ifndef EMP_INSPECTOR_HPP
 #define EMP_INSPECTOR_HPP
 #include "imgui.h"
+#include "core/coordinator.hpp"
 #include "core/entity.hpp"
 #include "scene/register_scene_types.hpp"
 #include "templates/type_pack.hpp"
@@ -36,7 +37,7 @@ class Inspector {
     }
 
     template<class CompType>
-    void inspectProxy(Entity e) {
+    void inspectProxy(Entity e, Coordinator& ECS) {
         auto* comp = ECS.getComponent<CompType>(e);
         if(comp == nullptr) {
             return;
@@ -99,13 +100,13 @@ class Inspector {
     }
 
     template<class ...Ts>
-    void inspectAll(Entity e, TypePack<Ts...>) {
-        (inspectProxy<Ts>(e), ...);
+    void inspectAll(Entity e, Coordinator& ECS, TypePack<Ts...>) {
+        (inspectProxy<Ts>(e, ECS), ...);
     }
 public:
-    Inspector(Entity e) {
+    Inspector(Entity e, Coordinator& ECS) {
         ImGui::Begin("Entity Inspector", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-        inspectAll(e, AllComponentTypes());
+        inspectAll(e, ECS, AllComponentTypes());
         ImGui::End();
 
     }
