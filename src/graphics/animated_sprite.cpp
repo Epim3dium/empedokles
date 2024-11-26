@@ -10,6 +10,12 @@ MovingSprite MovingSprite::allFrames(Sprite sprite, float whole_time, bool isLoo
     }
     return moving;
 }
+MovingSprite MovingSprite::singleFrame(Sprite sprite) {
+    MovingSprite result;
+    result.sprite = sprite;
+    result.add(0, INFINITY);
+    return result;
+}
 AnimatedSprite::AnimatedSprite(const Builder& builder)
     : m_state_machine(builder.FSM_builder),
       m_moving_sprites(builder.moving_sprites) {
@@ -57,5 +63,30 @@ void AnimatedSprite::updateState(Entity entity, float delta_time) {
         m_processSpriteChange(sprite_id_after);
     }
     m_checkFrameSwitching(delta_time);
+}
+typedef AnimatedSprite::Builder Builder;
+Builder::Builder(std::string entry_point, const MovingSprite& default_sprite) : FSM_builder(entry_point) {
+    moving_sprites[entry_point] = default_sprite;
+}
+void Builder::addNode(std::string name, const MovingSprite& sprite) {
+    FSM_builder.addNode(name);
+    moving_sprites[name] = sprite;
+}
+/**
+* @param trigger is a function that return boolean and takes in 
+*   Entity and bool value informing if the frame just ended
+*/
+void Builder::addEdge(std::string from, std::string to, std::function<bool(Entity, bool)> trigger) {
+    FSM_builder.addEdge(from, to, trigger);
+}
+void Builder::addEdge(std::string from, std::string to, std::function<bool(Entity)> trigger) {
+    FSM_builder.addEdge(from, to, [=](Entity e, bool) -> bool {
+        return trigger(e);
+    });
+}
+void Builder::addEdge(std::string from, std::string to) {
+    FSM_builder.addEdge(from, to, [](Entity, bool hasEnded) -> bool {
+        return hasEnded;
+    });
 }
 }; // namespace emp

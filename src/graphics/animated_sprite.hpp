@@ -18,14 +18,10 @@ struct MovingSprite {
         frames.push_back({frame, duration});
     }
     static MovingSprite allFrames(Sprite sprite, float whole_time, bool isLoop = true);
-    static MovingSprite singleFrame(Sprite sprite) {
-        MovingSprite result;
-        result.sprite = sprite;
-        result.add(0, INFINITY);
-        return result;
-    }
+    static MovingSprite singleFrame(Sprite sprite);
 };
 class AnimatedSprite {
+    //bool here is the info whether animation just ended
     typedef FiniteStateMachine<std::string, Entity, bool> StateMachine_t;
 
     StateMachine_t m_state_machine;
@@ -44,14 +40,14 @@ public:
     // used for shaders stuff
     glm::vec4 color;
 
-    std::string current_sprite_frame() const {
+    inline std::string current_sprite_frame() const {
         return m_state_machine.state();
     }
-    Sprite& sprite() {
+    inline Sprite& sprite() {
         auto& moving_sprite = m_moving_sprites.at(current_sprite_frame());
         return moving_sprite.sprite;
     }
-    const Sprite& sprite() const {
+    inline const Sprite& sprite() const {
         auto& moving_sprite = m_moving_sprites.at(current_sprite_frame());
         return moving_sprite.sprite;
     }
@@ -66,30 +62,15 @@ class AnimatedSprite::Builder {
     StateMachine_t::Builder FSM_builder;
     std::unordered_map<std::string, MovingSprite> moving_sprites;
 public:
-    Builder(std::string entry_point, const MovingSprite& default_sprite) : FSM_builder(entry_point) {
-        moving_sprites[entry_point] = default_sprite;
-    }
-    void addNode(std::string name, const MovingSprite& sprite) {
-        FSM_builder.addNode(name);
-        moving_sprites[name] = sprite;
-    }
+    Builder(std::string entry_point, const MovingSprite& default_sprite);
+    void addNode(std::string name, const MovingSprite& sprite);
     /**
     * @param trigger is a function that return boolean and takes in 
     *   Entity and bool value informing if the frame just ended
     */
-    void addEdge(std::string from, std::string to, std::function<bool(Entity, bool)> trigger) {
-        FSM_builder.addEdge(from, to, trigger);
-    }
-    void addEdge(std::string from, std::string to, std::function<bool(Entity)> trigger) {
-        FSM_builder.addEdge(from, to, [=](Entity e, bool) -> bool {
-            return trigger(e);
-        });
-    }
-    void addEdge(std::string from, std::string to) {
-        FSM_builder.addEdge(from, to, [](Entity, bool hasEnded) -> bool {
-            return hasEnded;
-        });
-    }
+    void addEdge(std::string from, std::string to, std::function<bool(Entity, bool)> trigger);
+    void addEdge(std::string from, std::string to, std::function<bool(Entity)> trigger);
+    void addEdge(std::string from, std::string to);
     friend AnimatedSprite;
 };
 }; // namespace emp
