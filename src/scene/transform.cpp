@@ -36,7 +36,7 @@ EMP_DEBUGCALL(
     bool updated_entities[MAX_ENTITIES]{0};
 )
     std::stack<Entity> to_process;
-    to_process.push(ECS.world());
+    to_process.push(Coordinator::world());
 
     while(!to_process.empty()) {
         auto entity = to_process.top();
@@ -73,24 +73,24 @@ EMP_DEBUGCALL(
     // }
 }
     void TransformSystem::onEntityAdded(Entity entity) {
-        if(entity == ECS.world())
+        if(entity == Coordinator::world())
             return;
         auto& transform = getComponent<Transform>(entity);
 
         const auto parent = transform.parent();
-        auto parent_transform = ECS.getComponent<Transform>(parent);
+        auto parent_transform = ECS().getComponent<Transform>(parent);
 
         if(parent_transform == nullptr) {
             EMP_LOG(WARNING) << "assigned a parent without transform, reassigning to world";
-            transform.m_parent_entity = ECS.world();
-            parent_transform = ECS.getComponent<Transform>(ECS.world());
+            transform.m_parent_entity = Coordinator::world();
+            parent_transform = ECS().getComponent<Transform>(Coordinator::world());
         }
         parent_transform->m_children_entities.push_back(entity);
     }
     void TransformSystem::onEntityRemoved(Entity entity) {
         auto& transform = getComponent<Transform>(entity);
         const auto parent = transform.parent();
-        auto parent_transform = ECS.getComponent<Transform>(parent);
+        auto parent_transform = ECS().getComponent<Transform>(parent);
         if(parent_transform == nullptr) {
             EMP_LOG(WARNING) << "parent without transfrom, but had when assigning";
             return;

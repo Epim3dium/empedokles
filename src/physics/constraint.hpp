@@ -2,6 +2,7 @@
 #define EMP_CONSTRAINT_HPP
 #include <set>
 #include <vector>
+#include "core/coordinator.hpp"
 #include "core/entity.hpp"
 #include "core/system.hpp"
 #include "math/math_defs.hpp"
@@ -27,9 +28,6 @@ struct PositionalCorrectionInfo {
     float generalized_inverse_mass2;
     PositionalCorrectionInfo() {
     }
-    PositionalCorrectionInfo(
-            vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2
-    );
     PositionalCorrectionInfo(
             vec2f normal,
             Entity e1,
@@ -69,15 +67,15 @@ struct Constraint {
         } point_anchor;
     };
 
-    void solve(float delta_time);
+    void solve(float delta_time, Coordinator& ECS);
     static Constraint createPointAnchor(
-            Entity anchor,
-            Entity rigidbody,
+            Entity anchor, const Transform* anchor_trans,
+            Entity rigidbody,const Transform* rigid_trans,
             vec2f pinch_point_rotated = vec2f(0.f, 0.f)
     );
 
 private:
-    void m_solvePointAnchor(float delta_time);
+    void m_solvePointAnchor(float delta_time, Coordinator& ECS);
 };
 struct ConstraintSystem : public System<Constraint> {
     void update(float delta_time);

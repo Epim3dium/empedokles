@@ -1,6 +1,7 @@
 #ifndef EMP_TRANSFORM_HPP
 #define EMP_TRANSFORM_HPP
 #include <vector>
+#include "core/coordinator.hpp"
 #include "core/system.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "math/math_defs.hpp"
@@ -46,7 +47,7 @@ public:
         m_updateLocalTransform();
     }
     Transform(vec2f pos, float rot = 0.f, vec2f s = {1.f, 1.f})
-          : Transform(ECS.world(), pos, rot, s) {}
+          : Transform(Coordinator::world(), pos, rot, s) {}
 
     friend TransformSystem;
 };

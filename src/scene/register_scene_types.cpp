@@ -15,13 +15,13 @@
 
 namespace emp {
 template<class ...T>
-void registerComponents(TypePack<T...> pack) {
+void registerComponents(Coordinator& ECS, TypePack<T...> pack) {
     (ECS.registerComponent<T>(), ...);
 }
-void registerSceneTypes() {
-    registerComponents(AllComponentTypes());
+void registerSceneTypes(Coordinator& ECS) {
+    registerComponents(ECS, AllComponentTypes());
 }
-void registerSceneSystems(Device& device) {
+void registerSceneSystems(Device& device, Coordinator& ECS) {
     ECS.registerSystem<TransformSystem>();
     ECS.registerSystem<BehaviourSystem>();
 

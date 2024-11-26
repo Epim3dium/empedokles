@@ -21,7 +21,7 @@ float Rigidbody::generalizedInverseMass(vec2f radius, vec2f normal) const {
 void RigidbodySystem::updateMasses() {
     for (auto entity : entities) {
         auto& rigidobdy = getComponent<Rigidbody>(entity);
-        const auto collider = ECS.getComponent<Collider>(entity);
+        const auto collider = ECS().getComponent<Collider>(entity);
         if (rigidobdy.useAutomaticMass && collider != nullptr) {
 
             auto model =  collider->transformed_outline();

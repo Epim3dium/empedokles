@@ -1,6 +1,7 @@
 #ifndef EMP_APP_HPP
 #define EMP_APP_HPP
 #include "compute/compute_manager.hpp"
+#include "core/coordinator.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/debug_shape_system.hpp"
 #include "graphics/frame_info.hpp"
@@ -47,6 +48,7 @@ protected:
     static constexpr int height = 800;
     KeyboardController controller;
 
+    Coordinator ECS;
     Window window;
     Device device;
     Renderer renderer;

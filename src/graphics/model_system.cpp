@@ -34,7 +34,7 @@ void TexturedModelsSystem::updateBuffer(int frameIndex) {
         const auto& transform = getComponent<Transform>(e);
         TexturedModelInfo data{};
         data.modelMatrix = transform.global();
-        data.hasTexture[0][0] = ECS.hasComponent<Texture>(e);
+        data.hasTexture[0][0] = ECS().hasComponent<Texture>(e);
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }
     uboBuffers[frameIndex]->flush();

@@ -1,4 +1,6 @@
 #include "constraint.hpp"
+#include "core/coordinator.hpp"
+#include "physics/rigidbody.hpp"
 #include "physics_system.hpp"
 namespace emp {
 PositionalCorrectionInfo::PositionalCorrectionInfo(
@@ -17,8 +19,6 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
     if (rb1 == nullptr) {
         EMP_LOG(WARNING) << "no rigidbody to create PositionalCorrectionInfo";
     }
-    assert(ECS.hasComponent<Rigidbody>(e1));
-    assert(ECS.hasComponent<Rigidbody>(e2));
 
     isStatic1 = rb1->isStatic;
     inertia1 = rb1->inertia();
@@ -32,33 +32,6 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
         mass2 = rb2->mass();
         generalized_inverse_mass2 =
                 rb2->generalizedInverseMass(center_to_col2, normal);
-    } else {
-        isStatic2 = true;
-        inertia2 = 0.f;
-        mass2 = INFINITY;
-        generalized_inverse_mass2 = 0.f;
-    }
-}
-PositionalCorrectionInfo::PositionalCorrectionInfo(
-        vec2f normal, Entity e1, vec2f r1, Entity e2, vec2f r2
-)
-    : entity1(e1),
-      center_to_collision1(r1),
-      entity2(e2),
-      center_to_collision2(r2) {
-    assert(ECS.hasComponent<Rigidbody>(e1));
-    auto& rb1 = *ECS.getComponent<Rigidbody>(e1);
-    isStatic1 = rb1.isStatic;
-    inertia1 = rb1.inertia();
-    mass1 = rb1.mass();
-    generalized_inverse_mass1 = rb1.generalizedInverseMass(r1, normal);
-
-    if (ECS.hasComponent<Rigidbody>(e2)) {
-        auto& rb2 = *ECS.getComponent<Rigidbody>(e2);
-        isStatic2 = rb2.isStatic;
-        inertia2 = rb2.inertia();
-        mass2 = rb2.mass();
-        generalized_inverse_mass2 = rb2.generalizedInverseMass(r2, normal);
     } else {
         isStatic2 = true;
         inertia2 = 0.f;
@@ -100,29 +73,25 @@ PositionalCorrResult calcPositionalCorrection(
     return result;
 }
 Constraint Constraint::createPointAnchor(
-        Entity anchor, Entity rigidbody, vec2f pinch_point_rotated
+        Entity anchor, const Transform* anchor_trans,
+        Entity rigidbody,const Transform* rigid_trans,
+        vec2f pinch_point_rotated
 ) {
-    assert(ECS.hasComponent<Transform>(anchor));
-    assert(ECS.hasComponent<Transform>(rigidbody));
-    assert(ECS.hasComponent<Rigidbody>(rigidbody));
-
     Constraint result;
     result.type = eConstraintType::PointAnchor;
     result.entity_list = {anchor, rigidbody};
     result.disabled_collision_between_bodies = true;
 
-    const auto& anchor_trans = *ECS.getComponent<Transform>(anchor);
-    const auto& rigid_trans = *ECS.getComponent<Transform>(rigidbody);
 
     result.point_anchor.relative_position =
-            anchor_trans.position - rigid_trans.position;
+            anchor_trans->position - rigid_trans->position;
     result.point_anchor.pinch_point_model =
-            rotate(pinch_point_rotated, -rigid_trans.rotation);
+            rotate(pinch_point_rotated, -rigid_trans->rotation);
     auto rp = result.point_anchor.relative_position;
 
     return result;
 }
-void Constraint::m_solvePointAnchor(float delta_time) {
+void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
     Entity anchor = entity_list[0];
     Entity rigidbody = entity_list[1];
     assert(ECS.hasComponent<Transform>(anchor));
@@ -151,8 +120,10 @@ void Constraint::m_solvePointAnchor(float delta_time) {
                     norm,
                     rigidbody,
                     point_anchor.pinch_point_model,
+                    ECS.getComponent<Rigidbody>(rigidbody),
                     anchor,
-                    vec2f(0, 0)
+                    vec2f(0, 0),
+                    ECS.getComponent<Rigidbody>(anchor)
             ),
             c - damping_force,
             -norm,
@@ -160,10 +131,10 @@ void Constraint::m_solvePointAnchor(float delta_time) {
             compliance
     );
 }
-void Constraint::solve(float delta_time) {
+void Constraint::solve(float delta_time, Coordinator& ECS) {
     switch (type) {
     case emp::eConstraintType::PointAnchor:
-        m_solvePointAnchor(delta_time);
+        m_solvePointAnchor(delta_time, ECS);
         break;
     case emp::eConstraintType::Undefined:
         assert(false);
@@ -172,7 +143,7 @@ void Constraint::solve(float delta_time) {
 }
 void ConstraintSystem::update(float delta_time) {
     for (auto e : entities) {
-        getComponent<Constraint>(e).solve(delta_time);
+        getComponent<Constraint>(e).solve(delta_time, ECS());
     }
 }
 }; // namespace emp

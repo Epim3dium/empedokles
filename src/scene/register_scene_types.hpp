@@ -1,5 +1,6 @@
 #ifndef EMP_REGISTER_SCENE_TYPES_HPP
 #define EMP_REGISTER_SCENE_TYPES_HPP
+#include "core/coordinator.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/debug_shape.hpp"
@@ -28,7 +29,7 @@ namespace emp {
         Sprite,
         AnimatedSprite> AllComponentTypes;
 
-    void registerSceneTypes();
-    void registerSceneSystems(Device& device);
+    void registerSceneTypes(Coordinator& ECS);
+    void registerSceneSystems(Device& device, Coordinator& ECS);
 };
 #endif

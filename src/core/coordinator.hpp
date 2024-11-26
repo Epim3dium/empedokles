@@ -6,9 +6,8 @@
 #include "system_manager.hpp"
 namespace emp {
 class Coordinator {
-    Entity m_world;
 public:
-    const Entity world() const;
+    static const Entity world();
     void init();
 
     // Entity methods
@@ -66,6 +65,7 @@ public:
     template <typename SystemType, class... InitalizerValues>
     std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
         auto system = m_system_manager->registerSystem<SystemType>(inits...);
+        system->m_ECS = this;
 
         auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
         m_setSystemSignature<SystemType>(system_signature);
@@ -100,6 +100,5 @@ private:
     std::unique_ptr<EntityManager> m_entity_manager;
     std::unique_ptr<SystemManager> m_system_manager;
 };
-extern Coordinator ECS;
 }; // namespace emp
 #endif

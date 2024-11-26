@@ -251,19 +251,19 @@ void Demo::setupAnimationForProtagonist() {
             build.addNode("fall", MovingSprite::allFrames(falling_spr, 0.25f, false));
         }
 
-        build.addEdge("idle", "run", [](Entity owner) {
+        build.addEdge("idle", "run", [this](Entity owner) {
             return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) >
                    25.f;
         });
-        build.addEdge("run", "idle", [](Entity owner, bool isended) {
+        build.addEdge("run", "idle", [this](Entity owner, bool isended) {
             return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) <
                    25.f;
         });
-        auto isJumping = [](Entity owner) {
+        auto isJumping = [this](Entity owner) {
             return ECS.getComponent<Rigidbody>(owner)->velocity.y <
                    -100.f;
         };
-        auto isFalling = [](Entity owner) {
+        auto isFalling = [this](Entity owner) {
             return ECS.getComponent<Rigidbody>(owner)->velocity.y >
                    25.f;
         };
@@ -290,7 +290,7 @@ void Demo::onRender(Device&, const FrameInfo& frame) {
     }
     ImGui::ShowDemoWindow();
     if(ECS.isEntityAlive(hovered_entity)) {
-        (Inspector(hovered_entity));
+        (Inspector(hovered_entity, ECS));
     }
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 

@@ -190,7 +190,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
 }
 std::vector<CollidingPair> PhysicsSystem::m_broadPhase() {
     return SweepBroadPhase().findPotentialPairs(
-            entities.begin(), entities.end()
+            entities.begin(), entities.end(), ECS()
     );
 }
 std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
