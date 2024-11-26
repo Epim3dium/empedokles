@@ -39,6 +39,7 @@ public:
         for (auto const& pair : m_systems) {
             auto const& system = pair.second;
 
+            system->onEntityRemoved(entity);
             system->entities.erase(entity);
         }
     }
