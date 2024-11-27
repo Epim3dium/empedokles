@@ -81,6 +81,11 @@ class Inspector {
         ImGui::Checkbox("isSleeping", &rigidbody.isSleeping);
         ImGui::Checkbox("lock rotation", &rigidbody.isRotationLocked);
         ImGui::Checkbox("use auto mass", &rigidbody.useAutomaticMass);
+        if(!rigidbody.useAutomaticMass && !rigidbody.isStatic) {
+            ImGui::Indent();
+            ImGui::DragFloat("mass", &rigidbody.real_mass, 1.f, 1.f);
+            ImGui::Unindent();
+        }
         ImGui::DragFloat2("velocity", VecToPtr(rigidbody.velocity));
         ImGui::DragFloat("angular_vel", &rigidbody.angular_velocity, M_PI / 50.f);
     }

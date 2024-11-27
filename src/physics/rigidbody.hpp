@@ -5,9 +5,6 @@
 namespace emp {
 struct RigidbodySystem;
 class Rigidbody {
-    float real_inertia = 1.f;
-    float real_mass = 1.f;
-    float real_density = 1.f;
 
     vec2f prev_pos = vec2f(0.f, 0.f);
     vec2f velocity_pre_solve = vec2f(0.f, 0.f);
@@ -15,6 +12,9 @@ class Rigidbody {
     float prev_rot = 0.f;
     float ang_velocity_pre_solve = 0.f;
 public:
+    float real_inertia = 1.f;
+    float real_mass = 1.f;
+    float real_density = 1.f;
     inline vec2f previous_position() const {
         return prev_pos;
     }
@@ -22,10 +22,10 @@ public:
         return prev_rot;
     }
     inline vec2f previous_velocity() const {
-        return velocity_pre_solve;
+        return isStatic ? vec2f(0) : velocity_pre_solve;
     }
     inline float previous_angular_velocity() const {
-        return ang_velocity_pre_solve;
+        return isStatic ? 0.f : ang_velocity_pre_solve;
     }
     bool isStatic = false;
     bool isRotationLocked = false;
