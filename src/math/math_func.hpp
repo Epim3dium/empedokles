@@ -6,7 +6,7 @@ namespace emp {
 
 vec2f transformPoint(const TransformMatrix& mat, vec2f point);
 // vec2f transformPoint(const glm::mat4x4& transform, vec2f point);
-#define VERY_SMALL_AMOUNT 1e-10
+#define VERY_SMALL_AMOUNT 1e-5
 bool nearlyEqual(float a, float b, float dt = VERY_SMALL_AMOUNT);
 // returns true if a and b are nearly equal
 bool nearlyEqual(vec2f a, vec2f b, float dt = VERY_SMALL_AMOUNT);
