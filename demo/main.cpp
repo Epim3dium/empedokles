@@ -3,7 +3,6 @@
 #include "scene/app.hpp"
 #include <vector>
 #include <iostream>
-// Load SPIR-V shader code from file
 using namespace emp;
 
 class DebugSelectionSystem : public System<DebugShape, Transform> {
