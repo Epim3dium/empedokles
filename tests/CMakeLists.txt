@@ -1,3 +1,9 @@
+add_executable(
+    tests
+    test_main.cpp
+    core/test_coordinator.cpp
+    math/test_math.cpp
+)
 # Include FetchContent module
 include(FetchContent)
 
@@ -11,12 +17,6 @@ FetchContent_MakeAvailable(googletest)
 # Enable testing
 enable_testing()
 
-add_executable(
-    tests
-    test_main.cpp
-    core/test_coordinator.cpp
-    test.cpp
-)
 include(GoogleTest)
 gtest_discover_tests(tests)
 
