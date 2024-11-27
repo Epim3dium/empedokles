@@ -65,7 +65,7 @@ public:
     template <typename SystemType, class... InitalizerValues>
     std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
         auto system = m_system_manager->registerSystem<SystemType>(inits...);
-        system->m_ECS = this;
+        system->setECS(this);
 
         auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
         m_setSystemSignature<SystemType>(system_signature);

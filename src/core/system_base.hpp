@@ -6,6 +6,7 @@
 #include "core/entity.hpp"
 namespace emp {
 struct SystemManager;
+struct Coordinator;
 class SystemBase {
 public:
     const std::set<Entity>& getEntities() {
@@ -25,9 +26,14 @@ public:
 
     friend SystemManager;
 protected:
-    std::set<Entity> entities;
-    SystemBase() {
+    Coordinator* coordinator = nullptr;
+    inline Coordinator& ECS() {
+        assert(coordinator != nullptr && "system must be registered via coordinator");
+        return *coordinator;
     }
+
+    std::set<Entity> entities;
+    SystemBase() {}
 };
 
 template <class... ComponentTypes>
