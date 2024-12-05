@@ -1,6 +1,9 @@
 #include "physics_system.hpp"
 #include "core/coordinator.hpp"
+#include "debug/log.hpp"
+#include "math/math_func.hpp"
 #include "physics/constraint.hpp"
+#include "physics/rigidbody.hpp"
 namespace emp {
 float PhysicsSystem::m_calcRestitution(
         float coef,
@@ -149,10 +152,16 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.info.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
 
-    auto delta_p1 = pos1 - rb1.previous_position() + rotateVec(radius1, rot1) -
-                    rotateVec(radius1, rb1.previous_rotation());
-    auto delta_p2 = pos2 - rb2.previous_position() + rotateVec(radius2, rot2) -
-                    rotateVec(radius2, rb2.previous_rotation());
+    auto displacementOfPoint = [](vec2f pos, float rot, vec2f radius, Rigidbody& rb) {
+        if(rb.isStatic)
+            return vec2f(0, 0);
+        return pos - rb.previous_position() +
+               (rb.isRotationLocked ? vec2f(0)
+                   : rotateVec(radius, rot) -rotateVec(radius, rb.previous_rotation()));
+    };
+
+    auto delta_p1 = displacementOfPoint(pos1, rot1, radius1, rb1);
+    auto delta_p2 = displacementOfPoint(pos2, rot2, radius2, rb2);
     auto delta_p = delta_p1 - delta_p2;
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
@@ -161,6 +170,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
         return result;
     }
     auto tangent = delta_p_tangent / sliding_len;
+
     if (sliding_len < sfriction * penetration) {
         positional_correction = calcPositionalCorrection(
                 PositionalCorrectionInfo(
@@ -175,7 +185,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
                 sliding_len,
                 tangent,
                 delT,
-                0.01f
+                VERY_SMALL_AMOUNT
         );
         pos1 += positional_correction.pos1_correction;
         rot1 += positional_correction.rot1_correction;
