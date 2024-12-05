@@ -51,12 +51,15 @@ class Inspector {
     }
     template<class CompType>
     void inspect(Entity e, CompType& type) {
-        EMP_LOG_INTERVAL(WARNING, 1.f) << "Component: '" << typeid(CompType).name() << "' has no inspect implemented";
+        EMP_LOG_INTERVAL(WARNING, 1.f)
+            << "Component: '" << typeid(CompType).name()
+            << "' has no inspect implemented";
     }
     template<> 
     void inspect<Transform>(Entity e, Transform& transform) {
         ImGui::DragFloat2("position", VecToPtr(transform.position));
-        ImGui::DragFloat("rotation", &transform.rotation, 0.01f, -M_PI * 2.f, M_PI * 2.f);
+        constexpr float max_rotation = M_PI * 2.f;
+        ImGui::DragFloat("rotation", &transform.rotation, 0.01f, -max_rotation, max_rotation);
         ImGui::DragFloat2("scale", VecToPtr(transform.scale), 0.1f);
         DisplayMat4(transform.local(), "local transform");
         DisplayMat4(transform.global(), "global transform");
@@ -81,11 +84,15 @@ class Inspector {
         ImGui::Checkbox("isSleeping", &rigidbody.isSleeping);
         ImGui::Checkbox("lock rotation", &rigidbody.isRotationLocked);
         ImGui::Checkbox("use auto mass", &rigidbody.useAutomaticMass);
+        ImGui::Indent();
         if(!rigidbody.useAutomaticMass && !rigidbody.isStatic) {
-            ImGui::Indent();
             ImGui::DragFloat("mass", &rigidbody.real_mass, 1.f, 1.f);
-            ImGui::Unindent();
+            ImGui::DragFloat("inertia", &rigidbody.real_inertia, 1.f, 1.f);
+        }else {
+            ImGui::Text("%f mass", rigidbody.mass());
+            ImGui::Text("%f inertia", rigidbody.inertia());
         }
+        ImGui::Unindent();
         ImGui::DragFloat2("velocity", VecToPtr(rigidbody.velocity));
         ImGui::DragFloat("angular_vel", &rigidbody.angular_velocity, M_PI / 50.f);
     }
@@ -110,7 +117,8 @@ class Inspector {
     }
 public:
     Inspector(Entity e, Coordinator& ECS) {
-        ImGui::Begin("Entity Inspector", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        ImGui::Begin("Entity Inspector", nullptr, 
+            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
         inspectAll(e, ECS, AllComponentTypes());
         ImGui::End();
 
