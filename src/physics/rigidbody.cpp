@@ -28,7 +28,7 @@ void RigidbodySystem::updateMasses() {
             vec2f avg = std::reduce(model.begin(), model.end()) / static_cast<float>(model.size());
             for(auto& p : model) { p -= avg; }
 
-            auto MIA = calculateMassInertiaArea(collider->model_outline());
+            auto MIA = calculateMassInertiaArea(model);
             rigidobdy.real_mass = MIA.area * rigidobdy.real_density;
             rigidobdy.real_inertia = MIA.MMOI * rigidobdy.real_density;
         }
