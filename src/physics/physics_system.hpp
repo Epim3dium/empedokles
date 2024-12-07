@@ -84,7 +84,6 @@ public:
     bool m_isDormant(Entity e);
 
 
-    EMP_DEBUGCALL(std::vector<vec2f> debug_contactpoints);
     float gravity = 1.f;
     size_t substep_count = 8U;
     void update(

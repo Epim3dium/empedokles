@@ -434,7 +434,6 @@ void PhysicsSystem::update(
         ConstraintSystem& const_sys,
         float delT
 ) {
-    EMP_DEBUGCALL(debug_contactpoints.clear();)
     m_have_collided.reset();
     for (int i = 0; i < substep_count; i++) {
         m_step(trans_sys,
