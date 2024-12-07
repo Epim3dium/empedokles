@@ -140,8 +140,12 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
             normal,
             delT
     );
-    float delta_lagrange = penetration_correction.delta_lagrange;
+    pos1 += penetration_correction.pos1_correction;
+    rot1 += penetration_correction.rot1_correction;
+    pos2 += penetration_correction.pos2_correction;
+    rot2 += penetration_correction.rot2_correction;
 
+    float delta_lagrange = penetration_correction.delta_lagrange;
 
     result.info.normal_lagrange = delta_lagrange;
     const auto normal_impulse = delta_lagrange / delT;
@@ -160,11 +164,6 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
     
-    pos1 += penetration_correction.pos1_correction;
-    rot1 += penetration_correction.rot1_correction;
-    pos2 += penetration_correction.pos2_correction;
-    rot2 += penetration_correction.rot2_correction;
-
     if (sliding_len <= 0.f) {
         trans1.syncWithChange();
         trans2.syncWithChange();
