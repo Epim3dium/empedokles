@@ -110,8 +110,6 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     //      EMP_LOG_DEBUG << "fixed";
     //      return {false};
     //  }
-    EMP_DEBUGCALL(debug_contactpoints.push_back(p1));
-    EMP_DEBUGCALL(debug_contactpoints.push_back(p2));
 
     result.info.collision_normal = intersection.contact_normal;
     result.info.penetration = penetration;
@@ -128,7 +126,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.info.collider_radius = radius1;
     result.info.collidee_radius = radius2;
 
-    auto positional_correction = calcPositionalCorrection(
+    auto penetration_correction = calcPositionalCorrection(
             PositionalCorrectionInfo(
                     normal,
                     e1,
@@ -142,11 +140,7 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
             normal,
             delT
     );
-    float delta_lagrange = positional_correction.delta_lagrange;
-    pos1 += positional_correction.pos1_correction;
-    rot1 += positional_correction.rot1_correction;
-    pos2 += positional_correction.pos2_correction;
-    rot2 += positional_correction.rot2_correction;
+    float delta_lagrange = penetration_correction.delta_lagrange;
 
 
     result.info.normal_lagrange = delta_lagrange;
@@ -165,14 +159,21 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto delta_p = delta_p1 - delta_p2;
     auto delta_p_tangent = delta_p - dot(delta_p, normal) * normal;
     auto sliding_len = length(delta_p_tangent);
+    
+    pos1 += penetration_correction.pos1_correction;
+    rot1 += penetration_correction.rot1_correction;
+    pos2 += penetration_correction.pos2_correction;
+    rot2 += penetration_correction.rot2_correction;
 
     if (sliding_len <= 0.f) {
+        trans1.syncWithChange();
+        trans2.syncWithChange();
         return result;
     }
     auto tangent = delta_p_tangent / sliding_len;
 
     if (sliding_len < sfriction * penetration) {
-        positional_correction = calcPositionalCorrection(
+        auto friction_correction = calcPositionalCorrection(
                 PositionalCorrectionInfo(
                         tangent,
                         e1,
@@ -185,14 +186,14 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
                 sliding_len,
                 tangent,
                 delT,
-                VERY_SMALL_AMOUNT
+                0.f
         );
-        pos1 += positional_correction.pos1_correction;
-        rot1 += positional_correction.rot1_correction;
-        pos2 += positional_correction.pos2_correction;
-        rot2 += positional_correction.rot2_correction;
+        pos1 += friction_correction.pos1_correction;
+        rot1 += friction_correction.rot1_correction;
+        pos2 += friction_correction.pos2_correction;
+        rot2 += friction_correction.rot2_correction;
 
-        delta_lagrange = positional_correction.delta_lagrange;
+        delta_lagrange = friction_correction.delta_lagrange;
     }
     trans1.syncWithChange();
     trans2.syncWithChange();
@@ -402,7 +403,7 @@ void PhysicsSystem::m_processSleep(float delta_time) {
     }
 }
 bool PhysicsSystem::m_isDormant(Entity e) {
-    return m_have_been_slow_for[m_collision_islands.group(e)] > DORMANT_TIME;
+    return m_have_been_slow_for[m_collision_islands.group(e)] > DORMANT_TIME && useDeactivation;
 }
 void PhysicsSystem::m_step(
         TransformSystem& trans_sys,
