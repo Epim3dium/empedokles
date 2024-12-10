@@ -75,7 +75,7 @@ class Demo : public App {
         void onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller)override final;
 
         Demo()
-            : App({{"../assets/models/colored_cube.obj", "cube"}},
+            : App(800, 800, {{"../assets/models/colored_cube.obj", "cube"}},
                 {
                     {"../assets/textures/dummy.png", "dummy"},
                     {"../assets/textures/crate.jpg", "crate"},
