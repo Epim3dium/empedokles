@@ -29,6 +29,7 @@ set(SOURCE_FILES
     graphics/imgui/imgui_emp_impl.cpp
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
+    gui/console.cpp
 
     vulkan/buffer.cpp
     vulkan/descriptors.cpp
@@ -114,6 +115,8 @@ set(HEADER_FILES
     graphics/imgui/imgui_emp_impl.hpp
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
+    gui/console.hpp
+    gui/editor/inspector.hpp
 
     vulkan/buffer.hpp
     vulkan/descriptors.hpp
