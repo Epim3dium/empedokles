@@ -39,8 +39,8 @@ struct HelpCommand : public Console::Command {
         const std::set<std::string>& boolFlags,
         const std::map<std::string, std::string>& valueFlags) override
     {
-        if(arguments.size() != 0) return "arguments unexpected!";
-        if(boolFlags.size() != 0 || valueFlags.size() != 0) return "flags unexpected!";
+        if(arguments.size() != 0) return "arguments unexpected!, type 'help' to see all commands";
+        if(boolFlags.size() != 0 || valueFlags.size() != 0) return "flags unexpected!, type 'help' to see all commands";
         std::string result = "Available commands:\n";
         for(int i = 0; i < console->listCommands().size(); i++) {
             auto command_info = console->listCommands()[i];
