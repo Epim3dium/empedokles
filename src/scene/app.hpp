@@ -9,6 +9,7 @@
 #include "graphics/renderer.hpp"
 #include "graphics/systems/simple_render_system.hpp"
 #include "scene/compute_demo.hpp"
+#include "scene/renderer_context.hpp"
 #include "vulkan/descriptors.hpp"
 #include "vulkan/device.hpp"
 
@@ -35,54 +36,44 @@ public:
     virtual void onSetup(Window&, Device&) {
     }
 
-    App(std::vector<AssetInfo> models_to_load,
+    App(const int width, const int height,
+        std::vector<AssetInfo> models_to_load,
         std::vector<AssetInfo> textures_to_load);
     virtual ~App();
     App(const App&) = delete;
     App& operator=(const App&) = delete;
 
     void run();
-
 protected:
-    static constexpr int width = 800;
-    static constexpr int height = 800;
+    const int width = 800;
+    const int height = 800;
     KeyboardController controller;
 
     Coordinator ECS;
     Window window;
     Device device;
+
     Renderer renderer;
     ComputeManager compute;
     // order of declarations matters
-    std::unique_ptr<DescriptorPool> globalPool;
-    std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
-    void forcePhysicsTickrate(const float tick_rate);
 
+    void setPhysicsTickrate(const float tick_rate);
 private:
-    std::unique_ptr<SimpleRenderSystem> m_sprite_rend_sys;
-    std::unique_ptr<SimpleRenderSystem> m_debugShape_rend_sys;
-    std::unique_ptr<SimpleRenderSystem> m_debugShapeOutline_rend_sys;
-    std::unique_ptr<ComputeDemo> m_compute_demo;
 
     // synchronization systems
     std::condition_variable m_priority_access;
     std::mutex m_coordinator_access_mutex;
     std::atomic<bool> m_isRenderer_waiting = false;
     std::atomic<bool> m_isPhysics_waiting = false;
+
     std::atomic<float> m_physics_tick_rate = 60.f;
     std::atomic<bool> isAppRunning = true;
+
+    RendererContext renderer_context;
 
     std::vector<AssetInfo> m_models_to_load;
     std::vector<AssetInfo> m_textures_to_load;
 
-    std::vector<VkDescriptorSet> m_setupGlobalUBODescriptorSets(
-            DescriptorSetLayout& globalSetLayout,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
-            DescriptorPool& global_pool
-    );
-
-    std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers();
-    std::vector<std::unique_ptr<Buffer>> m_setupGlobalComputeUBOBuffers();
 
     void setupECS();
 
@@ -94,18 +85,10 @@ private:
 
     void renderFrame(
             Camera& camera,
-            float delta_time,
-            const std::vector<VkDescriptorSet>& global_descriptor_sets,
-            const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
-            const std::vector<std::unique_ptr<Buffer>>& computeUboBuffers
+            float delta_time
     );
     std::unique_ptr<std::thread> createRenderThread(
-            Camera& camera,
-            const std::vector<VkDescriptorSet>& global_descriptor_sets,
-            const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
-            const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
-            const std::vector<std::unique_ptr<Buffer>>& comute_uboBuffers
+            Camera& camera
     );
     std::unique_ptr<std::thread> createPhysicsThread();
 };

@@ -1,10 +1,12 @@
 #include "app.hpp"
+#include <ranges>
 
 #include "core/coordinator.hpp"
 #include "graphics/sprite_system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/systems/simple_render_system.hpp"
+#include "scene/renderer_context.hpp"
 #include "vulkan/buffer.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
@@ -26,92 +28,23 @@
 
 namespace emp {
 
-App::App(
-        std::vector<AssetInfo> models_to_load,
-        std::vector<AssetInfo> textures_to_load
-)
-    : m_models_to_load(models_to_load),
+App::App(const int w,
+    const int h,
+    std::vector<AssetInfo> models_to_load,
+    std::vector<AssetInfo> textures_to_load)
+    : width(w),
+      height(h),
+      m_models_to_load(models_to_load),
       m_textures_to_load(textures_to_load),
       window{width, height, "Vulkan MacOS M1"},
       device{window},
       renderer{window, device},
-      compute{device},
-      globalPool{} {
-    globalPool = DescriptorPool::Builder(device)
-                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .addPoolSize(
-                                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                 SwapChain::MAX_FRAMES_IN_FLIGHT
-                         )
-                         .build();
-
-    // build frame descriptor pools
-    frame_pools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-    auto framePoolBuilder =
-            DescriptorPool::Builder(device)
-                    .setMaxSets(1000)
-                    .addPoolSize(
-                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000
-                    )
-                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-                    .setPoolFlags(
-                            VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT
-                    );
-    for (auto& framePool : frame_pools) {
-        framePool = framePoolBuilder.build();
-    }
+      compute{device}
+{
 }
 
 App::~App() = default;
 
-std::vector<VkDescriptorSet> App::m_setupGlobalUBODescriptorSets(
-        DescriptorSetLayout& globalSetLayout,
-        const std::vector<std::unique_ptr<Buffer>>& uboBuffers,
-        DescriptorPool& global_pool
-) {
-    std::vector<VkDescriptorSet> globalDescriptorSets(
-            SwapChain::MAX_FRAMES_IN_FLIGHT
-    );
-    for (int i = 0; i < globalDescriptorSets.size(); i++) {
-        auto bufferInfo = uboBuffers[i]->descriptorInfo();
-        DescriptorWriter(globalSetLayout, *globalPool)
-                .writeBuffer(0, &bufferInfo)
-                .build(globalDescriptorSets[i]);
-    }
-    return globalDescriptorSets;
-}
-std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalComputeUBOBuffers() {
-    std::vector<std::unique_ptr<Buffer>> uboBuffers(
-            SwapChain::MAX_FRAMES_IN_FLIGHT
-    );
-    for (auto& uboBuffer : uboBuffers) {
-        uboBuffer = std::make_unique<Buffer>(
-                device,
-                sizeof(GlobalComputeUbo),
-                1,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-        );
-        uboBuffer->map();
-    }
-    return uboBuffers;
-}
-std::vector<std::unique_ptr<Buffer>> App::m_setupGlobalUBOBuffers() {
-    std::vector<std::unique_ptr<Buffer>> uboBuffers(
-            SwapChain::MAX_FRAMES_IN_FLIGHT
-    );
-    for (auto& uboBuffer : uboBuffers) {
-        uboBuffer = std::make_unique<Buffer>(
-                device,
-                sizeof(GlobalUbo),
-                1,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-        );
-        uboBuffer->map();
-    }
-    return uboBuffers;
-}
 void App::setupECS() {
     ECS.init();
     registerSceneTypes(ECS);
@@ -129,26 +62,8 @@ void App::run() {
     EMP_LOG(LogLevel::INFO) << "users onSetup...";
     onSetup(window, device);
 
-    EMP_LOG(LogLevel::INFO) << "ubo buffers...";
-    auto uboComputeBuffers = m_setupGlobalUBOBuffers();
-    auto uboBuffers = m_setupGlobalUBOBuffers();
-
-    auto globalSetLayout = DescriptorSetLayout::Builder(device)
-                               .addBinding(0,
-                                   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                   VK_SHADER_STAGE_ALL_GRAPHICS)
-                               .build();
-
-    auto global_descriptor_sets =
-            m_setupGlobalUBODescriptorSets(*globalSetLayout, uboBuffers, *globalPool);
-
-    auto computeGlobalSetLayout = DescriptorSetLayout::Builder(device)
-                               .addBinding(0,
-                                   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                   VK_SHADER_STAGE_ALL_GRAPHICS)
-                               .build();
-    auto global_compute_descriptor_sets =
-            m_setupGlobalUBODescriptorSets(*computeGlobalSetLayout, uboComputeBuffers, *globalPool);
+    EMP_LOG(LogLevel::INFO) << "renderer...";
+    renderer_context.setup(device, renderer);
 
     EMP_LOG(DEBUG3) << "Alignment: "
                     << device.properties.limits.minUniformBufferOffsetAlignment;
@@ -157,37 +72,6 @@ void App::run() {
 
     EMP_LOG(LogLevel::INFO) << "render systems...";
 
-    {
-        PipelineConfigInfo debug_shape_pipeline_config;
-        Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
-        Pipeline::enableAlphaBlending(debug_shape_pipeline_config);
-        m_debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(
-                device,
-                renderer.getSwapChainRenderPass(),
-                globalSetLayout->getDescriptorSetLayout(),
-                "../assets/shaders/debug_shape.vert.spv",
-                "../assets/shaders/debug_shape.frag.spv",
-                &debug_shape_pipeline_config
-        );
-        m_debugShapeOutline_rend_sys = std::make_unique<SimpleRenderSystem>(
-                device,
-                renderer.getSwapChainRenderPass(),
-                globalSetLayout->getDescriptorSetLayout(),
-                "../assets/shaders/debug_shape_outline.vert.spv",
-                "../assets/shaders/debug_shape.frag.spv",
-                &debug_shape_pipeline_config
-        );
-    }
-    m_sprite_rend_sys = std::make_unique<SimpleRenderSystem>(
-            device,
-            renderer.getSwapChainRenderPass(),
-            globalSetLayout->getDescriptorSetLayout(),
-            "../assets/shaders/sprite.vert.spv",
-            "../assets/shaders/sprite.frag.spv"
-    );
-    m_compute_demo = std::make_unique<ComputeDemo>(
-        device
-    );
     Camera camera{};
 
     auto viewer_object = ECS.createEntity();
@@ -207,11 +91,7 @@ void App::run() {
     EMP_LOG(LogLevel::INFO) << "creating threads...";
 #endif
 #if EMP_ENABLE_RENDER_THREAD
-    auto rendering_thread = createRenderThread(camera,
-        global_descriptor_sets,
-        global_compute_descriptor_sets,
-        uboBuffers,
-        uboComputeBuffers);
+    auto rendering_thread = createRenderThread(camera);
 #endif
 #if EMP_ENABLE_PHYSICS_THREAD
     auto physics_thread = createPhysicsThread();
@@ -272,7 +152,8 @@ void App::run() {
         );
 #endif
 #if not EMP_ENABLE_RENDER_THREAD
-        renderFrame(camera, delta_time, global_descriptor_sets, uboBuffers);
+    renderFrame(camera,
+        delta_time);
 #endif
 
         isAppRunning = isAppRunning && !window.shouldClose();
@@ -299,11 +180,7 @@ void App::run() {
     vkDeviceWaitIdle(device.device());
 }
 std::unique_ptr<std::thread> App::createRenderThread(
-        Camera& camera,
-        const std::vector<VkDescriptorSet>& global_descriptor_sets,
-        const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
-        const std::vector<std::unique_ptr<Buffer>>& ubo_buffers,
-        const std::vector<std::unique_ptr<Buffer>>& compute_ubo_buffers
+        Camera& camera
 ) {
     return std::move(std::make_unique<std::thread>([&]() {
         Stopwatch clock;
@@ -311,17 +188,14 @@ std::unique_ptr<std::thread> App::createRenderThread(
             float delta_time = clock.restart();
 
             renderFrame(camera,
-                delta_time,
-                global_descriptor_sets,
-                global_compute_descriptor_sets,
-                ubo_buffers, compute_ubo_buffers);
+                delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
         }
         EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
     }));
 }
-void App::forcePhysicsTickrate(const float tick_rate) {
+void App::setPhysicsTickrate(const float tick_rate) {
     m_physics_tick_rate = tick_rate;
 }
 std::unique_ptr<std::thread> App::createPhysicsThread() {
@@ -380,26 +254,24 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
 }
 void App::renderFrame(
         Camera& camera,
-        float delta_time,
-        const std::vector<VkDescriptorSet>& global_descriptor_sets,
-        const std::vector<VkDescriptorSet>& global_compute_descriptor_sets,
-        const std::vector<std::unique_ptr<Buffer>>& ubo_buffers,
-        const std::vector<std::unique_ptr<Buffer>>& compute_ubo_buffers
+        float delta_time
 ) {
+    auto& context = renderer_context;
+
     if (auto command_buffer = renderer.beginFrame()) {
         int frame_index = renderer.getFrameIndex();
-        frame_pools[frame_index]->resetPool();
+        context.frame_pools[frame_index]->resetPool();
         if(auto compute_buffer = compute.beginCompute(renderer)) {
             FrameInfo frame_info{
                 frame_index,
                 delta_time,
                 compute_buffer,
                 camera,
-                global_compute_descriptor_sets[frame_index],
-                *frame_pools[frame_index]
+                context.global_compute_descriptor_sets[frame_index],
+                *context.frame_pools[frame_index]
             };
 
-            m_compute_demo->performCompute(frame_info);
+            renderer_context.compute_demo->performCompute(frame_info);
             compute.endCompute();
         }
         FrameInfo frame_info{
@@ -407,8 +279,8 @@ void App::renderFrame(
             delta_time,
             command_buffer,
             camera,
-            global_descriptor_sets[frame_index],
-            *frame_pools[frame_index]
+            context.global_descriptor_sets[frame_index],
+            *context.frame_pools[frame_index]
         };
 
         {
@@ -419,8 +291,8 @@ void App::renderFrame(
             m_isRenderer_waiting = false;
 
             m_updateUBO(frame_info, camera,
-                *ubo_buffers[frame_index],
-                *compute_ubo_buffers[frame_index]);
+                *context.ubo_buffers[frame_index],
+                *context.ubo_compute_buffers[frame_index]);
 
             auto& debugshape_sys = *ECS.getSystem<DebugShapeSystem>();
             auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
@@ -434,11 +306,11 @@ void App::renderFrame(
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
 
-                debugshape_sys.render(frame_info, *m_debugShape_rend_sys);
-                debugshape_sys.render(frame_info, *m_debugShapeOutline_rend_sys);
-                sprite_sys.render(frame_info, *m_sprite_rend_sys);
-                animated_sprite_sys.render(frame_info, *m_sprite_rend_sys);
-                m_compute_demo->render(frame_info, *m_sprite_rend_sys);
+                debugshape_sys.render(frame_info, *renderer_context.debugShape_rend_sys);
+                debugshape_sys.render(frame_info, *renderer_context.debugShapeOutline_rend_sys);
+                sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
+                animated_sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
+                renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
                 onRender(device, frame_info);
 
