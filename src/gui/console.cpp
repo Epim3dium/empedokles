@@ -1,8 +1,10 @@
 //based on ImGui Console example
 #include "console.hpp"
 #include "imgui.h"
+#include <iterator>
 #include <memory>
 #include <sstream>
+#include <tuple>
 #include "debug/log.hpp"
 namespace emp {
 struct LogCommand : public Console::Command {
@@ -274,6 +276,7 @@ void Console::execCommand(std::string& command_line) {
             break;
         }
     m_history.push_back(command_line);
+
     
     std::stringstream ss(command_line);
     std::string expression;
@@ -289,19 +292,55 @@ void Console::execCommand(std::string& command_line) {
         addLog("Unknown command: '%s'\n", command_line.c_str());
         return;
     }
+    //convert space to delimiter
+    //this is needed to preserve spaces in quoutes, and use 'delim' as delimiter
+    //for stringstream
+    // command_line = ss.str();
+    // const char delim = '\x7';
+    // bool isStringStarted = false;
+    // bool ignoreNext = false;
+    // for(int i = 0; i < command_line.size(); i++) {
+    //     if(!isStringStarted && (command_line[i] == ' ' || command_line[i] == '\t')) {
+    //         command_line[i] = delim;
+    //     }
+    //     if(command_line[i] == '"' && !ignoreNext) {
+    //         isStringStarted = !isStringStarted;
+    //     }
+    //     ignoreNext = false;
+    //     if(command_line[i] == '\\') {
+    //         ignoreNext = true;
+    //     }
+    // }
+    // ss = std::stringstream(command_line);
+    //
     std::vector<std::string> arguments;
     std::set<std::string> boolFlags;
     std::map<std::string, std::string> valueFlags;
     std::string cur_arg;
+
+    auto cleanQuoutes = [](std::string in) {
+        int frontal = in.find('"');
+        int endal = in.rfind('"');
+        while(frontal != endal && frontal != std::string::npos && endal != std::string::npos) {
+            in.erase(frontal, 1);
+            in.erase(endal - 1, 1);
+            frontal = in.find('"');
+            endal = in.rfind('"');
+        }
+        return in;
+    };
     while(ss>>cur_arg) {
+        cur_arg = cleanQuoutes(cur_arg);
         if(cur_arg.front() != '-') {
             arguments.push_back(cur_arg);
         }else if(cur_arg.find("=") == std::string::npos) {
             boolFlags.insert(cur_arg.substr(1));
         }else {
             int split = cur_arg.find("=");
-            std::string key = cur_arg.substr(1, split);
+            std::string key = cur_arg.substr(1, split - 1);
             std::string value = cur_arg.substr(split + 1);
+
+
             valueFlags[key] = value;
         }
     }
