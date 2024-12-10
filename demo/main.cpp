@@ -1,4 +1,5 @@
 #include "graphics/animated_sprite.hpp"
+#include "gui/console.hpp"
 #include "gui/editor/inspector.hpp"
 #include "scene/app.hpp"
 #include <vector>
@@ -283,7 +284,8 @@ void Demo::onRender(Device&, const FrameInfo& frame) {
     if(controller.get(eKeyMappings::Ability2).held) {
         crate_texture = Texture("demo");
     }
-    ImGui::ShowDemoWindow();
+    static Console console;
+    console.draw("test console", nullptr);
     if(ECS.isEntityAlive(hovered_entity)) {
         (Inspector(hovered_entity, ECS));
     }
