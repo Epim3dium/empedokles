@@ -126,9 +126,12 @@ bool InputText(const char* label, std::string& str, ImGuiInputTextFlags flags = 
     return modified; // Return true if the text was modified
 }
 
-void Console::draw(const char* title, bool* p_open) {
+void Console::draw(const char* title) {
+    if(!isOpen)
+        return;
+
     ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin(title, p_open)) {
+    if (!ImGui::Begin(title, &isOpen)) {
         ImGui::End();
         return;
     }
@@ -137,11 +140,6 @@ void Console::draw(const char* title, bool* p_open) {
     // Begin() the last Item represent the title bar. So e.g.
     // IsItemHovered() will return true when hovering the title bar. Here we
     // create a context menu only available from the title bar.
-    if (ImGui::BeginPopupContextItem()) {
-        if (ImGui::MenuItem("Close Console"))
-            *p_open = false;
-        ImGui::EndPopup();
-    }
 
     ImGui::TextWrapped("Enter 'HELP' for help.");
 
