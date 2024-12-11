@@ -47,7 +47,6 @@ public:
 protected:
     const int width = 800;
     const int height = 800;
-    KeyboardController controller;
 
     Coordinator ECS;
     Window window;
@@ -56,6 +55,8 @@ protected:
     Renderer renderer;
     ComputeManager compute;
     // order of declarations matters
+    
+    KeyboardController controller;
 
     void setPhysicsTickrate(const float tick_rate);
 private:
