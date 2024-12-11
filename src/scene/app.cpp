@@ -37,6 +37,7 @@ App::App(const int w,
       m_models_to_load(models_to_load),
       m_textures_to_load(textures_to_load),
       window{width, height, "Vulkan MacOS M1"},
+      controller(window.getGLFWwindow()),
       device{window},
       renderer{window, device},
       compute{device}
@@ -112,9 +113,8 @@ void App::run() {
 
         float delta_time = delta_clock.restart();
 
-        controller.update(
-                window, *ECS.getComponent<Transform>(viewer_object)
-        );
+        controller.update( window, *ECS.getComponent<Transform>(viewer_object));
+
         onUpdate(delta_time, window, controller);
         {
             assert(ECS.hasComponent<Transform>(viewer_object));
