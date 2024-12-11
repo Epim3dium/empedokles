@@ -31,13 +31,14 @@ private:
     void registerCallbacks();
     int processTextInput();
 public:
+    bool isOpen = true;
     Console();
     ~Console();
 
     void addCommand(std::unique_ptr<Command>&& cmd);
     void clearLog();
     void addLog(const char* fmt, ...) IM_FMTARGS(2);
-    void draw(const char* title, bool* p_open);
+    void draw(const char* title);
     std::vector<std::pair<std::string, std::string>> listCommands();
 
     Console(const Console&) = delete;
