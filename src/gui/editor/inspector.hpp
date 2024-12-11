@@ -12,8 +12,14 @@ float* VecToPtr(Vec& vec) {
 }
 class Inspector {
     void DisplayMat4(const glm::mat4& mat, const char* label = "unnamed") {
+        ImGui::BeginGroup();
+
         ImGui::Text("%s", label);
-        if (ImGui::BeginTable(label, 4, ImGuiTableFlags_Borders)) {
+        if (ImGui::BeginTable(label, 4, ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX)) {
+            ImGui::TableSetupColumn("Column 1", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Column 2", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Column 3", ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Column 4", ImGuiTableColumnFlags_WidthFixed);
             for (int row = 0; row < 4; ++row) {
                 ImGui::TableNextRow();
                 for (int col = 0; col < 4; ++col) {
@@ -23,6 +29,7 @@ class Inspector {
             }
             ImGui::EndTable();
         }
+        ImGui::EndGroup();
     }
     template<class T>
     std::string prettyName() {
@@ -62,6 +69,7 @@ class Inspector {
         ImGui::DragFloat("rotation", &transform.rotation, 0.01f, -max_rotation, max_rotation);
         ImGui::DragFloat2("scale", VecToPtr(transform.scale), 0.1f);
         DisplayMat4(transform.local(), "local transform");
+        ImGui::SameLine();
         DisplayMat4(transform.global(), "global transform");
     }
     template<> 
