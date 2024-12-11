@@ -1,4 +1,5 @@
 #include "keyboard_controller.hpp"
+#include <GLFW/glfw3.h>
 #include "core/coordinator.hpp"
 #include "math/math_func.hpp"
 
@@ -7,6 +8,32 @@
 
 namespace emp {
 
+std::unordered_map<int, KeyState> KeyboardController::keys;
+
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        KeyboardController::keys[key].pressed = true;
+        KeyboardController::keys[key].held = true;
+    } else if (action == GLFW_RELEASE) {
+        KeyboardController::keys[key].released = true;
+        KeyboardController::keys[key].held = false;
+    }
+    KeyboardController::keys[key].mod_flags = mods;
+}
+void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        KeyboardController::keys[button].pressed = true;
+        KeyboardController::keys[button].held = true;
+    } else if (action == GLFW_RELEASE) {
+        KeyboardController::keys[button].released = true;
+        KeyboardController::keys[button].held = false;
+    }
+    KeyboardController::keys[button].mod_flags = mods;
+}
+KeyboardController::KeyboardController(GLFWwindow* window) {
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetMouseButtonCallback(window, MouseButtonCallback);
+}
 void KeyboardController::update(
         Window& window, const Transform& camera_transform
 ) {
@@ -17,47 +44,15 @@ void KeyboardController::update(
     m_mouse_pos = {xpos, ypos};
     m_global_mouse_pos = transformPoint(camera_transform.global(), m_mouse_pos);
 
-    for (int button = 0; button < 8; button++) {
-        int state = glfwGetMouseButton(window.getGLFWwindow(), button);
-        if (state == GLFW_PRESS) {
-            if (!keys[button].held) {
-                keys[button].pressed = true;
-            } else {
-                keys[button].pressed = false;
-            }
-            keys[button].held = true;
-        } else if (state == GLFW_RELEASE) {
-            keys[button].held = false;
-            keys[button].pressed = false;
-            keys[button].released = true;
-        } else {
-            keys[button].released = false;
-            keys[button].pressed = false;
-        }
-    }
-    for (int key = 32; key < 348; key++) {
-        int state = glfwGetKey(window.getGLFWwindow(), key);
-        if (state == GLFW_PRESS) {
-            if (!keys[key].held) {
-                keys[key].pressed = true;
-            } else {
-                keys[key].pressed = false;
-            }
-            keys[key].held = true;
-        } else if (state == GLFW_RELEASE) {
-            keys[key].held = false;
-            keys[key].pressed = false;
-            keys[key].released = true;
-        } else {
-            keys[key].released = false;
-            keys[key].pressed = false;
-        }
-    }
     m_key_states.clear();
     for (auto binding : m_mappings) {
         const auto& state = keys[binding.second];
 
         m_key_states[binding.first] = state;
+    }
+    for(auto& [code, k] : keys) {
+        k.released = false;
+        k.pressed = false;
     }
 }
 vec2f KeyboardController::movementInPlane2D() {
