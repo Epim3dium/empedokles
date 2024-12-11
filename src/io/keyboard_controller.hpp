@@ -6,10 +6,22 @@
 #include "window.hpp"
 
 namespace emp {
+enum class eKeyMods : uint32_t {
+    SHIFT = 0x0001,
+    CONTROL = 0x0002,
+    ALT = 0x0004,
+    SUPER = 0x0008,
+    CAPS_LOCK = 0x0010,
+    NUM_LOCK = 0x0020,
+};
 struct KeyState {
     bool held = false;
     bool pressed = false;
     bool released = false;
+    bool isMod(eKeyMods mod) {
+        return mod_flags & (uint32_t)mod;
+    }
+    uint32_t mod_flags = 0;
 };
 enum class eKeyMappings {
     LookLeft,
@@ -41,7 +53,7 @@ class KeyboardController {
 private:
     std::map<eKeyMappings, int> m_mappings;
     std::unordered_map<eKeyMappings, KeyState> m_key_states;
-    std::unordered_map<int, KeyState> keys;
+    static std::unordered_map<int, KeyState> keys;
     vec2f m_mouse_pos;
     vec2f m_global_mouse_pos;
 
@@ -61,6 +73,9 @@ public:
     vec2f movementInPlane2D();
     vec2f lookingInPlane2D();
     void update(Window& window, const Transform& camera_transform);
+    KeyboardController(GLFWwindow* window);
+    friend void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    friend void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 };
 } // namespace emp
 
