@@ -1,16 +1,24 @@
 #include "keyboard_controller.hpp"
 #include <GLFW/glfw3.h>
 #include "core/coordinator.hpp"
-#include "math/math_func.hpp"
 
 // std
 #include <limits>
+#include "math/math_func.hpp"
+#include "scene/scene_defs.hpp"
 
 namespace emp {
 
 std::unordered_map<int, KeyState> KeyboardController::keys;
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+#if EMP_USING_IMGUI 
+    ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+    if(ImGui::GetIO().WantCaptureKeyboard) {
+        KeyboardController::keys[key].held = false;
+        return;
+    }
+#endif
     if (action == GLFW_PRESS) {
         KeyboardController::keys[key].pressed = true;
         KeyboardController::keys[key].held = true;
@@ -19,8 +27,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         KeyboardController::keys[key].held = false;
     }
     KeyboardController::keys[key].mod_flags = mods;
+
 }
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+#if EMP_USING_IMGUI 
+    ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+    if(ImGui::GetIO().WantCaptureMouse) {
+        KeyboardController::keys[button].held = false;
+        return;
+    }
+#endif
     if (action == GLFW_PRESS) {
         KeyboardController::keys[button].pressed = true;
         KeyboardController::keys[button].held = true;
@@ -33,6 +49,15 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 KeyboardController::KeyboardController(GLFWwindow* window) {
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
+
+    // glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
+    // glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
+    // glfwSetCursorPosCallback(window, ImGui_ImplGlfw_CursorPosCallback);
+    // glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
+    // glfwSetScrollCallback(window, ImGui_ImplGlfw_ScrollCallback);
+    // glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
+    // glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
+    // glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
 }
 void KeyboardController::update(
         Window& window, const Transform& camera_transform
