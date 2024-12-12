@@ -20,7 +20,7 @@ enum LogLevel { ERROR, WARNING, INFO, DEBUG, DEBUG1, DEBUG2, DEBUG3 };
 
 class LogOutput {
 public:
-    virtual void Output(std::string msg) = 0;
+    virtual void Output(std::string msg, LogLevel level) = 0;
     virtual ~LogOutput() {
     }
 };
@@ -31,15 +31,15 @@ public:
     virtual ~Log();
     std::ostringstream& Get(LogLevel level = INFO);
 
-public:
     static std::unique_ptr<LogOutput> s_out;
     static std::mutex s_out_lock;
     static const std::thread::id s_main_thread;
 
     static LogLevel s_reporting_level;
-    static std::string ToString(LogLevel level);
+    static std::string ToString(LogLevel level, bool usingColors = false);
 
 protected:
+    LogLevel m_level;
     std::ostringstream os;
 
 private:
@@ -49,8 +49,8 @@ private:
 
 class Output2Cerr : public LogOutput {
 public:
-    void Output(std::string msg) override {
-        std::cerr << msg;
+    void Output(std::string msg, LogLevel level) override {
+        std::cerr << "[" << Log::ToString(level, true) <<"] "<< msg;
     }
 };
 
@@ -58,14 +58,7 @@ class Output2FILE : public LogOutput {
     std::ofstream file;
 
 public:
-    void Output(std::string msg) override {
-        auto begin_esc = msg.find('\033');
-        while (begin_esc != std::string::npos) {
-            auto end_esc = msg.find('m', begin_esc);
-            assert(end_esc != std::string::npos);
-            msg.erase(begin_esc, end_esc - begin_esc);
-            begin_esc = msg.find('\033');
-        }
+    void Output(std::string msg, LogLevel level) override {
         file << msg;
     }
     Output2FILE(std::string filename) : file(filename) {

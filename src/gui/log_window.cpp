@@ -1,8 +1,24 @@
 #include "log_window.hpp"
+#include "debug/log.hpp"
 namespace emp {
 LogWindow::LogWindow() {
+    EMP_LOG(LogLevel::INFO) << "GUI log window started capturing logs...";
     Log::s_out.reset();
     Log::s_out = std::make_unique<LogToGUIWindow>(this);
+}
+static const ImVec4 ImGUILogLevelColors[] = {
+    ImVec4(255 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f), 
+    ImVec4(255 / 255.0f, 255 / 255.0f, 0 / 255.0f, 1.0f), 
+    ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f), 
+    ImVec4(0 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.0f)
+};
+static ImVec4 getImVecColor(LogLevel level) {
+    return ImGUILogLevelColors[level];
 }
 void LogWindow::draw(const char* title) {
     if(!isOpen)
@@ -17,10 +33,6 @@ void LogWindow::draw(const char* title) {
     // Begin() the last Item represent the title bar. So e.g.
     // IsItemHovered() will return true when hovering the title bar. Here we
     // create a context menu only available from the title bar.
-
-    ImGui::TextWrapped("Enter 'HELP' for help.");
-
-    // TODO: display items starting from the bottom
 
     if (ImGui::SmallButton("Clear")) {
         clearLog();
@@ -45,6 +57,7 @@ void LogWindow::draw(const char* title) {
         ImGui::OpenPopup("Options");
     ImGui::SameLine();
     m_filter.Draw("Filter (\"incl,-excl\") (\"error\")", 180);
+    ImGui::SetItemDefaultFocus();
     ImGui::Separator();
 
     // Reserve enough left-over height for 1 separator + 1 input text
@@ -68,26 +81,16 @@ void LogWindow::draw(const char* title) {
         for (int i = 0; i < m_items.size(); i++) {
             auto& item = m_items[i];
             //TODO
-            if (!m_filter.PassFilter(item.c_str()))
+            if (!m_filter.PassFilter(item.first.c_str()))
                 continue;
             
             // Normally you would store more information in your item than
             // just a string. (e.g. make Items[] an array of structure,
             // store color/type etc.)
-            ImVec4 color;
-            bool has_color = false;
-            if (item.find("[error]") != std::string::npos) {
-                color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f);
-                has_color = true;
-            } else if (item.find("# ", 2) == 0) {
-                color = ImVec4(1.0f, 0.8f, 0.6f, 1.0f);
-                has_color = true;
-            }
-            if (has_color)
-                ImGui::PushStyleColor(ImGuiCol_Text, color);
-            ImGui::TextUnformatted(item.c_str());
-            if (has_color)
-                ImGui::PopStyleColor();
+            ImVec4 color= getImVecColor(item.second);
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
+            ImGui::TextUnformatted(item.first.c_str());
+            ImGui::PopStyleColor();
         }
         if (copy_to_clipboard)
             ImGui::LogFinish();
@@ -103,17 +106,13 @@ void LogWindow::draw(const char* title) {
         ImGui::PopStyleVar();
     }
     ImGui::EndChild();
-    ImGui::Separator();
-
-    // Auto-focus on window apparition
-    ImGui::SetItemDefaultFocus();
 
     ImGui::End();
 }
 void LogWindow::clearLog() {
     m_items.clear();
 }
-void LogWindow::addLog(const char* fmt, ...) IM_FMTARGS(2) {
+void LogWindow::addLog(LogLevel level, const char* fmt, ...) {
     // FIXME-OPT
     char buf[1024];
     va_list args;
@@ -121,6 +120,6 @@ void LogWindow::addLog(const char* fmt, ...) IM_FMTARGS(2) {
     vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
     buf[IM_ARRAYSIZE(buf) - 1] = 0;
     va_end(args);
-    m_items.push_back(buf);
+    m_items.push_back({buf, level});
 }
 }
