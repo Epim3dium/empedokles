@@ -30,6 +30,7 @@ set(SOURCE_FILES
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
     gui/console.cpp
+    gui/log_window.cpp
     gui/gui_manager.cpp
 
     vulkan/buffer.cpp
@@ -117,6 +118,7 @@ set(HEADER_FILES
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
     gui/console.hpp
+    gui/log_window.hpp
     gui/editor/inspector.hpp
     gui/gui_manager.hpp
 
