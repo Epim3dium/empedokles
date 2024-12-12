@@ -1,6 +1,9 @@
+#include "imgui.h"
 #include "graphics/animated_sprite.hpp"
 #include "gui/console.hpp"
 #include "gui/editor/inspector.hpp"
+#include "gui/gui_manager.hpp"
+#include "gui/log_window.hpp"
 #include "scene/app.hpp"
 #include <vector>
 #include <iostream>
@@ -34,6 +37,8 @@ enum CollisionLayers {
 };
 class Demo : public App {
     public:
+        GUIManager gui_manager;
+
         Texture crate_texture;
         Entity mouse_entity;
         Entity protagonist;
@@ -281,14 +286,11 @@ void Demo::setupAnimationForProtagonist() {
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
 void Demo::onRender(Device&, const FrameInfo& frame) {
-    if(controller.get(eKeyMappings::Ability2).held) {
-        crate_texture = Texture("demo");
-    }
     static Console console;
-    console.draw("test console", nullptr);
     if(ECS.isEntityAlive(hovered_entity)) {
-        (Inspector(hovered_entity, ECS));
+        Inspector(hovered_entity, ECS);
     }
+    gui_manager.draw(ECS);
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
@@ -370,7 +372,6 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
 int main()
 {
     {
-        std::cout << sizeof(Collider);
         Demo demo;
         demo
             .run();
