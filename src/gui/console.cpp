@@ -86,8 +86,6 @@ Console::Console() {
     registerCallbacks();
 }
 Console::~Console() {
-    clearLog();
-    m_history.clear();
 }
 
 void Console::addCommand(std::unique_ptr<Console::Command>&& cmd) {
@@ -130,7 +128,6 @@ void Console::draw(const char* title) {
     if(!isOpen)
         return;
 
-    ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(title, &isOpen)) {
         ImGui::End();
         return;
