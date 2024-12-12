@@ -1,6 +1,7 @@
 #ifndef EMP_KEYBOARD_CONTROLLER_HPP
 #define EMP_KEYBOARD_CONTROLLER_HPP
 
+#include <GLFW/glfw3.h>
 #include <map>
 #include "graphics/model_system.hpp"
 #include "window.hpp"
@@ -57,6 +58,7 @@ private:
     vec2f m_mouse_pos;
     vec2f m_global_mouse_pos;
 
+    static void initCallbacks(GLFWwindow* window);
 public:
     vec2f mouse_pos() const {
         return m_mouse_pos;

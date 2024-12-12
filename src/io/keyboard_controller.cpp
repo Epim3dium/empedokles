@@ -46,9 +46,15 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     }
     KeyboardController::keys[button].mod_flags = mods;
 }
-KeyboardController::KeyboardController(GLFWwindow* window) {
+void KeyboardController::initCallbacks(GLFWwindow* window) {
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
+}
+KeyboardController::KeyboardController(GLFWwindow* window) {
+    //means you are the first keyboard controller, so initialize
+    if(keys.size() == 0) {
+        KeyboardController::initCallbacks(window);
+    }
 
     // glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
     // glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
