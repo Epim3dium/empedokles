@@ -1,5 +1,6 @@
 #include "constraint.hpp"
 #include "core/coordinator.hpp"
+#include "math/math_func.hpp"
 #include "physics/rigidbody.hpp"
 #include "physics_system.hpp"
 namespace emp {
@@ -47,6 +48,9 @@ PositionalCorrResult calcPositionalCorrection(
         float compliance
 ) {
     PositionalCorrResult result;
+    if(nearlyEqual(c, 0.f)) {
+        return result;
+    }
 
     const auto w1 = info.generalized_inverse_mass1;
     const auto w2 = info.generalized_inverse_mass2;
