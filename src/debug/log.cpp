@@ -11,7 +11,7 @@ const std::thread::id Log::s_main_thread = std::this_thread::get_id();
 std::vector<std::unique_ptr<LogOutput>> Log::s_out;
         // 
 void Log::enableLoggingToCerr() {
-    s_out.emplace_back(std::move(std::make_unique<Output2Cerr>()));
+    s_out.emplace_back(std::move(std::make_unique<Output2Term>()));
 }
 void Log::enableLoggingToFlie(std::string filename) {
     s_out.emplace_back(std::make_unique<Output2FILE>(filename));
@@ -42,22 +42,6 @@ Log::~Log() {
     }
 }
 
-#ifdef __unix__
-std::string Log::ToString(LogLevel level) {
-    static const char* const buffer[] = {
-            "ERROR",
-            "WARNING",
-            "INFO",
-            "DEBUG",
-            "DEBUG1",
-            "DEBUG2",
-            "DEBUG3",
-            "DEBUG4",
-            "DEBUG5"
-    };
-    return buffer[level];
-}
-#else
 std::string Log::ToString(LogLevel level, bool usingColors) {
     static const char* const colors[] = {
             "\033[0;31m", 
@@ -86,7 +70,6 @@ std::string Log::ToString(LogLevel level, bool usingColors) {
         return std::string(colors[level]) + buffer[level] + reset;
     return buffer[level];
 }
-#endif
 
 std::string FormatTime(std::chrono::system_clock::time_point tp) {
     std::stringstream ss;
