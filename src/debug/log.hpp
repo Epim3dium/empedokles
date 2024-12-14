@@ -53,10 +53,10 @@ private:
     Log& operator=(const Log&);
 };
 
-class Output2Cerr : public LogOutput {
+class Output2Term : public LogOutput {
 public:
     void Output(std::string msg, LogLevel level) override {
-        std::cerr << "[" << Log::ToString(level, true) <<"] "<< msg;
+        std::cout << "[" << Log::ToString(level, true) <<"] "<< msg;
     }
 };
 
