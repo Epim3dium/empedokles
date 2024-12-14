@@ -2,6 +2,7 @@
 #include "graphics/animated_sprite.hpp"
 #include "gui/console.hpp"
 #include "gui/editor/inspector.hpp"
+#include "gui/editor/tree-view.hpp"
 #include "gui/gui_manager.hpp"
 #include "gui/log_window.hpp"
 #include "scene/app.hpp"
@@ -130,6 +131,7 @@ void Demo::onSetup(Window& window, Device& device) {
 
     // coordinator.addComponent(cube, Model("cube"));
     protagonist = ECS.createEntity();
+    gui_manager.alias(protagonist, "protagonist");
 
     ECS.getSystem<ColliderSystem>()
         ->onCollisionEnter(protagonist,
@@ -149,6 +151,7 @@ void Demo::onSetup(Window& window, Device& device) {
             });
 
     mouse_entity = ECS.createEntity();
+    gui_manager.alias(mouse_entity, "mouse_entity");
     ECS.addComponent(mouse_entity, Transform({0.f, 0.f}));
 
     {
@@ -172,6 +175,9 @@ void Demo::onSetup(Window& window, Device& device) {
         ECS.addComponent(protagonist, mat);
 
         setupAnimationForProtagonist();
+        auto child = ECS.createEntity();
+        gui_manager.alias(child, "child");
+        ECS.addComponent(child, Transform(protagonist, vec2f(0, 0)));
     }
 
     std::pair<vec2f, float> ops[4] = {
@@ -183,6 +189,7 @@ void Demo::onSetup(Window& window, Device& device) {
     debug_cube_shape.fill_color = glm::vec4(0.5, 0.5, 0.5, 1);
     for (auto o : ops) {
         auto platform = ECS.createEntity();
+        gui_manager.alias(platform, "platform");
         ECS.addComponent(
                 platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
         );
@@ -285,11 +292,11 @@ void Demo::setupAnimationForProtagonist() {
 }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
+
 void Demo::onRender(Device&, const FrameInfo& frame) {
-    static Console console;
-    if(ECS.isEntityAlive(hovered_entity)) {
-        Inspector(hovered_entity, ECS);
-    }
+    // if(ECS.isEntityAlive(hovered_entity)) {
+    //     Inspector(hovered_entity, ECS);
+    // }
     gui_manager.draw(ECS);
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
@@ -348,6 +355,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         auto col = Collider(cube_model_shape);
         col.collider_layer = ITEM;
         auto entity = ECS.createEntity();
+        gui_manager.alias(entity, "cube");
         last_created_crate = entity;
         ECS.addComponent(
                 entity, Transform(vec2f(controller.global_mouse_pos()), 0.f)
