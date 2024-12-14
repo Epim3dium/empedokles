@@ -131,8 +131,11 @@ class Inspector {
         (inspectProxy<Ts>(e, ECS), ...);
     }
 public:
-    Inspector(Entity e, Coordinator& ECS) {
-        ImGui::Begin("Entity Inspector", nullptr, 
+    bool isOpen = true;
+    void draw(Entity e, Coordinator& ECS) {
+        if(!isOpen)
+            return;
+        ImGui::Begin("Entity Inspector", &isOpen, 
             ImGuiWindowFlags_AlwaysVerticalScrollbar);
         inspectAll(e, ECS, AllComponentTypes());
         ImGui::End();

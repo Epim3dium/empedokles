@@ -18,6 +18,7 @@ private:
     };
     TreeNode m_root;
     Entity visible_entity = 0;
+    bool just_selected = false;
 
     void log(TreeNode& node, int indent = 0) {
         for (auto& child : node.children ) {
@@ -48,7 +49,7 @@ private:
             }
         }
     }
-    void drawTreeNode(TreeNode& node) {
+    void drawTreeNode(TreeNode& node, std::function<std::string(Entity)> dispFunc ) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::PushID(node.entity);
@@ -58,28 +59,38 @@ private:
         if (node.entity == visible_entity)
             tree_flags |= ImGuiTreeNodeFlags_Selected;
         if (node.children.size() == 0)
-            tree_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
+            tree_flags |= ImGuiTreeNodeFlags_Leaf;
         //DISPLAY COMPONENTS
         std::string name = "entity_" + std::to_string(node.entity);
+        if(dispFunc != nullptr)
+            name = dispFunc(node.entity);
         bool node_open = ImGui::TreeNodeEx("", tree_flags, "%s", name.c_str());
+        auto prev_visible = visible_entity;
         if (ImGui::IsItemFocused()) {
             visible_entity = node.entity;
+        }
+        if(prev_visible != visible_entity) {
+            just_selected = true;
         }
         if (node_open)
         {
             for (TreeNode& child : node.children)
-                drawTreeNode(child);
+                drawTreeNode(child, dispFunc);
             ImGui::TreePop();
         }
         ImGui::PopID();
     }
 public:
+    Entity getVisible() const { return visible_entity; }
+    bool isJustSelected() const { return just_selected; }
     bool isOpen = true;
     void log() {
         log(m_root, 1);
     }
-    void draw(const char* title, Coordinator& ECS) {
+    void draw(const char* title, Coordinator& ECS, std::function<std::string(Entity)> dispFunc = nullptr) {
         if(!isOpen)return;
+
+        just_selected = false;
         constructTree(ECS);
 
         if (ImGui::Begin(title, &isOpen))
@@ -90,7 +101,7 @@ public:
             if (ImGui::BeginTable("##bg", 1, ImGuiTableFlags_RowBg))
             {
                 for (auto& node : m_root.children)
-                    drawTreeNode(node);
+                    drawTreeNode(node, dispFunc);
                 ImGui::EndTable();
             }
             ImGui::End();
