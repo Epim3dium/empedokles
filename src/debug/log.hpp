@@ -65,7 +65,7 @@ class Output2FILE : public LogOutput {
 
 public:
     void Output(std::string msg, LogLevel level) override {
-        file << msg;
+        file << "[" << Log::ToString(level) <<"]" << msg;
     }
     Output2FILE(std::string filename) : file(filename) {
     }
