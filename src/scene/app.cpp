@@ -32,16 +32,15 @@ App::App(const int w,
     const int h,
     std::vector<AssetInfo> models_to_load,
     std::vector<AssetInfo> textures_to_load)
-    : width(w),
-      height(h),
+    : m_width(w),
+      m_height(h),
       m_models_to_load(models_to_load),
       m_textures_to_load(textures_to_load),
-      window{width, height, "Vulkan MacOS M1"},
+      window{w, h, "Vulkan MacOS M1"},
       controller(window.getGLFWwindow()),
       device{window},
       renderer{window, device},
-      compute{device}
-{
+      compute{device} {
 }
 
 App::~App() = default;
@@ -52,12 +51,13 @@ void App::setupECS() {
     registerSceneSystems(device, ECS);
 }
 void App::run() {
+    Log::enableLoggingToCerr();
+    Log::enableLoggingToFlie("log.log");
     EMP_LOG(LogLevel::INFO) << "start running ...";
     EMP_LOG(LogLevel::INFO) << "ECS...";
     setupECS();
 
     EMP_LOG(LogLevel::INFO) << "assets...";
-
     Sprite::init(device);
     loadAssets();
     EMP_LOG(LogLevel::INFO) << "users onSetup...";
@@ -129,13 +129,15 @@ void App::run() {
             );
 
 #if EMP_SCENE_2D
-            float width = window.getSize().width;
-            float height = window.getSize().height;
-            float min_size = std::fmin(width, height);
+            m_width = window.getSize().width;
+            m_height = window.getSize().height;
+            float min_size = std::fmin(getWidth(), getHeight());
 
             camera.setOrthographicProjection(
-                    -width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f
-            );
+                -getWidth() * 0.5f,
+                getWidth() * 0.5f,
+                -getHeight() * 0.5f,
+                getHeight() * 0.5f);
 #else
             camera.setPerspectiveProjection(
                     glm::radians(50.f), aspect, 0.1f, 100.f
@@ -313,6 +315,7 @@ void App::renderFrame(
                 renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
                 onRender(device, frame_info);
+                gui_manager.draw(ECS);
 
                 renderer.endSwapChainRenderPass(command_buffer);
             }

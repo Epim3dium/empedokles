@@ -3,8 +3,7 @@
 namespace emp {
 LogWindow::LogWindow() {
     EMP_LOG(LogLevel::INFO) << "GUI log window started capturing logs...";
-    Log::s_out.reset();
-    Log::s_out = std::make_unique<LogToGUIWindow>(this);
+    Log::addLoggingOutput(std::move(std::make_unique<LogToGUIWindow>(this)));
 }
 static const ImVec4 ImGUILogLevelColors[] = {
     ImVec4(255 / 255.0f, 0 / 255.0f, 0 / 255.0f, 1.0f), 

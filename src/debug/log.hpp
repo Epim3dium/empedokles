@@ -2,6 +2,7 @@
 #define EMP_LOG_H
 #include <stdio.h>
 #include <cassert>
+#include <list>
 #include <thread>
 #include <chrono>
 #include <fstream>
@@ -9,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace emp {
 
@@ -21,8 +23,7 @@ enum LogLevel { ERROR, WARNING, INFO, DEBUG, DEBUG1, DEBUG2, DEBUG3 };
 class LogOutput {
 public:
     virtual void Output(std::string msg, LogLevel level) = 0;
-    virtual ~LogOutput() {
-    }
+    virtual ~LogOutput() {}
 };
 
 class Log {
@@ -31,14 +32,19 @@ public:
     virtual ~Log();
     std::ostringstream& Get(LogLevel level = INFO);
 
-    static std::unique_ptr<LogOutput> s_out;
+    static std::string ToString(LogLevel level, bool usingColors = false);
+
+    static void enableLoggingToCerr();
+    static void enableLoggingToFlie(std::string);
+    static void addLoggingOutput(std::unique_ptr<LogOutput>&& output);
+
+    static LogLevel s_reporting_level;
+protected:
+    static std::vector<std::unique_ptr<LogOutput>> s_out;
     static std::mutex s_out_lock;
     static const std::thread::id s_main_thread;
 
-    static LogLevel s_reporting_level;
-    static std::string ToString(LogLevel level, bool usingColors = false);
 
-protected:
     LogLevel m_level;
     std::ostringstream os;
 

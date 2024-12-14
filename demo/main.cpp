@@ -38,7 +38,6 @@ enum CollisionLayers {
 };
 class Demo : public App {
     public:
-        GUIManager gui_manager;
 
         Texture crate_texture;
         Entity mouse_entity;
@@ -81,7 +80,7 @@ class Demo : public App {
         void onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller)override final;
 
         Demo()
-            : App(800, 800, {{"../assets/models/colored_cube.obj", "cube"}},
+            : App(1440, 810, {{"../assets/models/colored_cube.obj", "cube"}},
                 {
                     {"../assets/textures/dummy.png", "dummy"},
                     {"../assets/textures/crate.jpg", "crate"},
@@ -96,7 +95,7 @@ void Demo::onSetup(Window& window, Device& device) {
     ECS.registerSystem<DebugSelectionSystem>();
 
     crate_texture = Texture("crate");
-    if(false){
+    if(true){
         auto& tex = Texture("invalid").texture();
         auto pixels = tex.getPixelsFromGPU();
         auto h = tex.getExtent().height;
@@ -181,17 +180,17 @@ void Demo::onSetup(Window& window, Device& device) {
     }
 
     std::pair<vec2f, float> ops[4] = {
-            {vec2f(0.f, 400.0f), 0.f},
-            {vec2f(400.f, 0.0f), M_PI / 2.f},
-            {vec2f(0.f, -400.0f), 0.f},
-            {vec2f(-400.f, 0.0f), M_PI / 2.f}
+            {vec2f(0.f, getHeight() / 2), 0.f},
+            {vec2f(getWidth()/ 2, 0.0f), M_PI / 2.f},
+            {vec2f(0.f, -getHeight() / 2), 0.f},
+            {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
     };
     debug_cube_shape.fill_color = glm::vec4(0.5, 0.5, 0.5, 1);
     for (auto o : ops) {
         auto platform = ECS.createEntity();
         gui_manager.alias(platform, "platform");
         ECS.addComponent(
-                platform, Transform(o.first, o.second, {width / cube_side_len, 1.f})
+                platform, Transform(o.first, o.second, {getWidth() / cube_side_len, 1.f})
         );
         auto db_shape = DebugShape(device, cube_model_shape);
         db_shape.fill_color *= 0.5f;
@@ -294,10 +293,6 @@ void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardControl
 }
 
 void Demo::onRender(Device&, const FrameInfo& frame) {
-    // if(ECS.isEntityAlive(hovered_entity)) {
-    //     Inspector(hovered_entity, ECS);
-    // }
-    gui_manager.draw(ECS);
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
