@@ -33,8 +33,8 @@ float PhysicsSystem::m_calcDynamicFriction(
 ) {
     auto normal_impulse = normal_lagrange / sub_dt;
     return fmin(
-            -(coef * abs(normal_impulse)),
-            (tangent_speed / generalized_inv_mass_sum)
+            (coef * abs(normal_impulse)),
+            tangent_speed / generalized_inv_mass_sum
     );
 }
 vec2f PhysicsSystem::m_calcContactVel(vec2f vel, float ang_vel, vec2f r) {
@@ -104,7 +104,6 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     const auto penetration = intersection.overlap;
     auto p1 = intersection.cp1;
     auto p2 = intersection.cp2;
-    auto d = dot(p2 - p1, normal);
     // TODO fix contact points
     //  if(d > penetration * 2.f) {
     //      EMP_LOG_DEBUG << "fixed";
@@ -148,7 +147,6 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     float delta_lagrange = penetration_correction.delta_lagrange;
 
     result.info.normal_lagrange = delta_lagrange;
-    const auto normal_impulse = delta_lagrange / delT;
 
     auto displacementOfPoint = [](vec2f pos, float rot, vec2f radius, Rigidbody& rb) {
         if(rb.isStatic)
@@ -171,7 +169,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     }
     auto tangent = delta_p_tangent / sliding_len;
 
-    if (sliding_len < sfriction * penetration) {
+
+    if (sliding_len <= sfriction * penetration) {
         auto friction_correction = calcPositionalCorrection(
                 PositionalCorrectionInfo(
                         tangent,
@@ -309,19 +308,18 @@ void PhysicsSystem::m_solveVelocities(
         const float sfriction = constraint.sfriction;
         const float dfriction = constraint.dfriction;
         // Compute dynamic friction
-        if (abs(tangent_speed) > 0.f) {
+        if (abs(tangent_speed) > 0.f ) {
             const auto tangent = tangent_vel / tangent_speed;
             const auto w1 = rb1.generalizedInverseMass(r1model, tangent);
             const auto w2 = rb2.generalizedInverseMass(r2model, tangent);
-            const auto friction_impulse = m_calcDynamicFriction(
+            auto friction_impulse = m_calcDynamicFriction(
                     dfriction,
                     tangent_speed,
                     w1 + w2,
                     constraint.info.normal_lagrange,
                     delT
             );
-            p += friction_impulse * tangent;
-            // constraint.contact.tangent_impulse += friction_impulse;
+            p -= tangent * friction_impulse;
         }
         if (!rb1.isStatic) {
             const auto delta_lin_vel = p / rb1.mass();
