@@ -77,7 +77,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
 public:
     DisjointSet<MAX_ENTITIES> m_collision_islands;
     std::bitset<MAX_ENTITIES> m_have_collided;
-    bool useDeactivation = true;
+    bool useDeactivation = false;
     static constexpr float SLOW_VEL = 15.f;
     static constexpr float DORMANT_TIME = 3.f;
     float m_have_been_slow_for[MAX_ENTITIES] {0.f};
