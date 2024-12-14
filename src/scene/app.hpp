@@ -8,6 +8,7 @@
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/systems/simple_render_system.hpp"
+#include "gui/gui_manager.hpp"
 #include "scene/compute_demo.hpp"
 #include "scene/renderer_context.hpp"
 #include "vulkan/descriptors.hpp"
@@ -45,13 +46,12 @@ public:
 
     void run();
 protected:
-    const int width = 800;
-    const int height = 800;
 
     Coordinator ECS;
     Window window;
     Device device;
 
+    GUIManager gui_manager;
     Renderer renderer;
     ComputeManager compute;
     // order of declarations matters
@@ -59,7 +59,15 @@ protected:
     KeyboardController controller;
 
     void setPhysicsTickrate(const float tick_rate);
+    float getWidth() const {
+        return m_width;
+    }
+    float getHeight() const {
+        return m_height;
+    }
 private:
+    float m_width = 800;
+    float m_height = 800;
 
     // synchronization systems
     std::condition_variable m_priority_access;

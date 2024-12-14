@@ -51,9 +51,9 @@ void GUIManager::draw(Coordinator& coordinator) {
     m_inspector.draw(m_tree_view.getVisible(), coordinator);
 }
 GUIManager::GUIManager() {
-    m_inspector.isOpen = false;
-    m_console.isOpen = false;
+    m_inspector.isOpen  = false;
+    m_console.isOpen    = false;
     m_log_window.isOpen = false;
-    m_tree_view.isOpen = false;
+    m_tree_view.isOpen  = false;
 }
 }

@@ -375,9 +375,7 @@ void Console::registerCallbacks() {
             }
 
             if (candidates.size() == 0) {
-                addLog("No match for \"%.*s\"!\n",
-                       (int)(word_end - word_start),
-                       word_start);
+                addLog("No match for \"%s\"!\n", input.c_str());
             } else if (candidates.size() == 1) {
                 data->DeleteChars(word_start,
                     word_end - word_start);

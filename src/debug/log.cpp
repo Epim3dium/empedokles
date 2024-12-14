@@ -8,9 +8,17 @@ namespace emp {
 LogLevel Log::s_reporting_level = DEBUG3;
 const std::thread::id Log::s_main_thread = std::this_thread::get_id();
 
-std::unique_ptr<LogOutput> Log::s_out =
-        std::make_unique<Output2Cerr>(Output2Cerr());
-        // std::make_unique<LogToGUIConsole>();
+std::vector<std::unique_ptr<LogOutput>> Log::s_out;
+        // 
+void Log::enableLoggingToCerr() {
+    s_out.emplace_back(std::move(std::make_unique<Output2Cerr>()));
+}
+void Log::enableLoggingToFlie(std::string filename) {
+    s_out.emplace_back(std::make_unique<Output2FILE>(filename));
+}
+void Log::addLoggingOutput(std::unique_ptr<LogOutput>&& output) {
+    s_out.emplace_back(std::move(output));
+}
 
 std::mutex Log::s_out_lock;
 
@@ -29,7 +37,9 @@ std::ostringstream& Log::Get(LogLevel level) {
 Log::~Log() {
     os << std::endl;
     std::lock_guard<std::mutex> lock(s_out_lock);
-    s_out->Output(os.str(), m_level);
+    for(auto& output : s_out) {
+        output->Output(os.str(), m_level);
+    }
 }
 
 #ifdef __unix__
