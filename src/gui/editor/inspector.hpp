@@ -118,6 +118,13 @@ class Inspector {
         ImGui::SliderFloat("speed", &sprite.animation_speed, 0.f, 10.f);
         ImGui::DragFloat2("offset", VecToPtr(sprite.position_offset));
     }
+    template<> 
+    void inspect<Sprite>(Entity e, Sprite& sprite) {
+        ImGui::Checkbox("flip horizontal", &sprite.flipX);
+        ImGui::Checkbox("flip vertical", &sprite.flipY);
+        ImGui::ColorEdit4("sprite color", VecToPtr(sprite.color));
+        ImGui::Text("texture: %s", sprite.textureID().c_str());
+    }
 
     template<class ...Ts>
     void inspectAll(Entity e, Coordinator& ECS, TypePack<Ts...>) {
@@ -126,7 +133,7 @@ class Inspector {
 public:
     Inspector(Entity e, Coordinator& ECS) {
         ImGui::Begin("Entity Inspector", nullptr, 
-            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+            ImGuiWindowFlags_AlwaysVerticalScrollbar);
         inspectAll(e, ECS, AllComponentTypes());
         ImGui::End();
 
