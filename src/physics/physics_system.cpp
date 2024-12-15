@@ -169,8 +169,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     }
     auto tangent = delta_p_tangent / sliding_len;
 
-
-    if (sliding_len <= sfriction * penetration) {
+    static const float sliding_tolerance = 0.001f;
+    if (sliding_len <= sfriction * penetration ||
+        nearlyEqual(sfriction * penetration - sliding_len, 0.f, sliding_tolerance)) 
+    {
         auto friction_correction = calcPositionalCorrection(
                 PositionalCorrectionInfo(
                         tangent,
