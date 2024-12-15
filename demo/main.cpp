@@ -86,6 +86,7 @@ class Demo : public App {
                 }) {}
 };
 void Demo::onSetup(Window& window, Device& device) {
+    gui_manager.alias(ECS.world(), "world_entity");
     ECS.registerSystem<DebugSelectionSystem>();
 
     crate_texture = Texture("crate");

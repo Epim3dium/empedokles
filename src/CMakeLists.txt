@@ -30,7 +30,9 @@ set(SOURCE_FILES
     # graphics/systems/point_light_system.cpp
     graphics/systems/simple_render_system.cpp
     gui/console.cpp
+    gui/overlay.cpp
     gui/log_window.cpp
+    gui/spatial_visualizer.cpp
     gui/gui_manager.cpp
 
     vulkan/buffer.cpp
@@ -120,6 +122,7 @@ set(HEADER_FILES
     gui/console.hpp
     gui/overlay.hpp
     gui/log_window.hpp
+    gui/spatial_visualizer.hpp
     gui/editor/inspector.hpp
     gui/gui_manager.hpp
 
