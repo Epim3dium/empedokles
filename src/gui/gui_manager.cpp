@@ -4,20 +4,20 @@
 #include <string>
 #include "gui/editor/inspector.hpp"
 namespace emp  {
-void GUIManager::addRendererFPS(float fps) {
+void GUIManager::addRendererFPSSample(float fps) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
 
-    auto frac = 1.f / est_count;
+    auto frac = 1.f / estimation_count;
     FPS_renderer = frac * fps + (1.f - frac) * FPS_renderer;
 }
-void GUIManager::addPhysicsTPS(float tps) {
+void GUIManager::addPhysicsTPSSample(float tps) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
-    auto frac = 1.f / est_count;
+    auto frac = 1.f / estimation_count;
     TPS_physics = frac * tps + (1.f - frac) * TPS_physics;
 }
-void GUIManager::addUpdateTPS(float tps) {
+void GUIManager::addUpdateTPSSample(float tps) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
-    auto frac = 1.f / est_count;
+    auto frac = 1.f / estimation_count;
     TPS_update = frac * tps + (1.f - frac) * TPS_update;
 }
 void GUIManager::alias(Entity entity, std::string name) {
@@ -36,29 +36,30 @@ void GUIManager::drawMainMenuBar() {
     {
         if (ImGui::BeginMenu("File"))
         {
-            if(ImGui::MenuItem("Demo", NULL, m_showDemoWindow)) m_showDemoWindow = true;
+            if(ImGui::MenuItem("Demo", NULL, m_showDemoWindow)) m_showDemoWindow = !m_showDemoWindow;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            if(ImGui::MenuItem("Entity Tree View", NULL, m_tree_view.isOpen)) m_tree_view.isOpen = true;
+            if(ImGui::MenuItem("Entity Tree View", NULL, m_tree_view.isOpen)) m_tree_view.isOpen = !m_tree_view.isOpen;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("View"))
         {
-            if(ImGui::MenuItem("FPS Overlay", NULL, m_FPS_overlay.isOpen)) m_FPS_overlay.isOpen = true;
+            if(ImGui::MenuItem("FPS Overlay", NULL, m_FPS_overlay.isOpen)) m_FPS_overlay.isOpen = !m_FPS_overlay.isOpen;
+            if(ImGui::MenuItem("Show entities", NULL, m_visualizer.isOpen)) m_visualizer.isOpen = !m_visualizer.isOpen;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if(ImGui::MenuItem("Log Window", NULL, m_log_window.isOpen)) m_log_window.isOpen = true;
-            if(ImGui::MenuItem("Console", NULL, m_console.isOpen)) m_console.isOpen = true;
+            if(ImGui::MenuItem("Log Window", NULL, m_log_window.isOpen)) m_log_window.isOpen = !m_log_window.isOpen;
+            if(ImGui::MenuItem("Console", NULL, m_console.isOpen)) m_console.isOpen = !m_console.isOpen;
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
 }
-void GUIManager::draw(Coordinator& coordinator) {
+void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
     drawMainMenuBar();
     if(m_showDemoWindow)
@@ -66,26 +67,30 @@ void GUIManager::draw(Coordinator& coordinator) {
 
     m_console.draw("Console");
     m_log_window.draw("Log Window");
-    m_tree_view.draw("Tree view of entities", coordinator, [&](Entity e) {
+    auto naming_function = [&](Entity e) {
         auto& map = m_names_aliased;
         return map.find(e) == map.end() ? "entity_" + std::to_string(e) : map.at(e);
-    });
+    };
+    m_tree_view.draw("Tree view of entities", coordinator, naming_function);
 
     if(m_tree_view.isJustSelected()) {
         m_inspector.isOpen = true;
+        m_entity_selected = m_tree_view.getSelected();
     }
-    m_inspector.draw(m_tree_view.getVisible(), coordinator);
+    m_inspector.draw(m_tree_view.getSelected(), coordinator);
 
     m_FPS_overlay.draw([&](){
         ImGui::Text("renderer FPS: %f", FPS_renderer);
         ImGui::Text("physics  TPS: %f", TPS_physics);
         ImGui::Text("onUpdate TPS: %f", TPS_update);
     });
+    m_visualizer.draw("visualizer", coordinator, naming_function, camera);
 }
 GUIManager::GUIManager() {
     m_inspector.isOpen  = false;
     m_console.isOpen    = false;
     m_log_window.isOpen = false;
     m_tree_view.isOpen  = false;
+    m_visualizer.isOpen = false;
 }
 }

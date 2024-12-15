@@ -81,7 +81,7 @@ private:
         ImGui::PopID();
     }
 public:
-    Entity getVisible() const { return visible_entity; }
+    Entity getSelected() const { return visible_entity; }
     bool isJustSelected() const { return just_selected; }
     bool isOpen = true;
     void log() {

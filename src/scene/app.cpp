@@ -115,7 +115,7 @@ void App::run() {
 
         controller.update( window, *ECS.getComponent<Transform>(viewer_object));
 
-        gui_manager.addUpdateTPS(1.f / delta_time);
+        gui_manager.addUpdateTPSSample(1.f / delta_time);
         onUpdate(delta_time, window, controller);
         {
             assert(ECS.hasComponent<Transform>(viewer_object));
@@ -194,7 +194,7 @@ std::unique_ptr<std::thread> App::createRenderThread(
                 delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
-            gui_manager.addRendererFPS(1.f / delta_time);
+            gui_manager.addRendererFPSSample(1.f / delta_time);
         }
         EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
     }));
@@ -245,7 +245,7 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
                     constraint_sys,
                     delta_time
             );
-            gui_manager.addPhysicsTPS(1.f / delta_time);
+            gui_manager.addPhysicsTPSSample(1.f / delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{physics thread}: " << 1.f / delta_time << " TPS";
             EMP_LOG_INTERVAL(DEBUG3, 5.f)
@@ -318,7 +318,7 @@ void App::renderFrame(
                 renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
                 onRender(device, frame_info);
-                gui_manager.draw(ECS);
+                gui_manager.draw(ECS, camera);
 
                 renderer.endSwapChainRenderPass(command_buffer);
             }
