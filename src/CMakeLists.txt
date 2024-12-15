@@ -118,6 +118,7 @@ set(HEADER_FILES
     # graphics/systems/point_light_system.hpp
     graphics/systems/simple_render_system.hpp
     gui/console.hpp
+    gui/overlay.hpp
     gui/log_window.hpp
     gui/editor/inspector.hpp
     gui/gui_manager.hpp
