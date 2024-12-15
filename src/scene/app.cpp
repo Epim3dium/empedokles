@@ -51,7 +51,7 @@ void App::setupECS() {
     registerSceneSystems(device, ECS);
 }
 void App::run() {
-    Log::enableLoggingToCerr();
+    // Log::enableLoggingToCerr();
     Log::enableLoggingToFlie("log.log");
     EMP_LOG(LogLevel::INFO) << "start running ...";
     EMP_LOG(LogLevel::INFO) << "ECS...";
@@ -115,6 +115,7 @@ void App::run() {
 
         controller.update( window, *ECS.getComponent<Transform>(viewer_object));
 
+        gui_manager.addUpdateTPS(1.f / delta_time);
         onUpdate(delta_time, window, controller);
         {
             assert(ECS.hasComponent<Transform>(viewer_object));
@@ -193,6 +194,7 @@ std::unique_ptr<std::thread> App::createRenderThread(
                 delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
+            gui_manager.addRendererFPS(1.f / delta_time);
         }
         EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
     }));
@@ -243,6 +245,7 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
                     constraint_sys,
                     delta_time
             );
+            gui_manager.addPhysicsTPS(1.f / delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{physics thread}: " << 1.f / delta_time << " TPS";
             EMP_LOG_INTERVAL(DEBUG3, 5.f)
