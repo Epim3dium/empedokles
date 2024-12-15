@@ -65,12 +65,6 @@ class Demo : public App {
         // static constexpr int markers_count = 64;
         // Entity markers[markers_count];
         Entity last_created_crate = 0;
-        DebugShape debug_cube_shape = DebugShape(
-                device,
-                cube_model_shape,
-                glm::vec4(1, 0, 0, 1),
-                glm::vec4(0, 0, 1, 1)
-        );
 
 
         void setupAnimationForProtagonist();
@@ -95,23 +89,6 @@ void Demo::onSetup(Window& window, Device& device) {
     ECS.registerSystem<DebugSelectionSystem>();
 
     crate_texture = Texture("crate");
-    if(true){
-        auto& tex = Texture("invalid").texture();
-        auto pixels = tex.getPixelsFromGPU();
-        auto h = tex.getExtent().height;
-        auto w = tex.getExtent().width;
-        for(int i = 0; i < h; i += 1) {
-            for(int ii = 0; ii < w; ii += 1) {
-                auto r = (int)(pixels)[i * w + ii].red;
-                auto g = (int)(pixels)[i * w + ii].green;
-                auto b = (int)(pixels)[i * w + ii].blue;
-                std::cout << "\033[38;2;" << r << ";" << g << ";" << b << "m";
-                std::cout << "\u2588";
-            }
-            std::cout << '\n';
-        }
-        std::cout << "\033[0m";
-    }
     controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
 
     controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
@@ -185,7 +162,6 @@ void Demo::onSetup(Window& window, Device& device) {
             {vec2f(0.f, -getHeight() / 2), 0.f},
             {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
     };
-    debug_cube_shape.fill_color = glm::vec4(0.5, 0.5, 0.5, 1);
     for (auto o : ops) {
         auto platform = ECS.createEntity();
         gui_manager.alias(platform, "platform");
@@ -206,10 +182,10 @@ void Demo::onSetup(Window& window, Device& device) {
     //     coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
     //     coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
     // }
-    debug_cube_shape.fill_color = glm::vec4(1, 1, 0, 1);
 
     ECS.getSystem<PhysicsSystem>()->gravity = 1000.f;
-    ECS.getSystem<PhysicsSystem>()->substep_count = 8;
+    ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
+    this->setPhysicsTickrate(60.f);
     
 }
 
@@ -355,10 +331,10 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         ECS.addComponent(
                 entity, Transform(vec2f(controller.global_mouse_pos()), 0.f)
         );
-        ECS.addComponent(entity, debug_cube_shape);
         ECS.addComponent(entity, col);
         ECS.addComponent(entity, rb);
-        ECS.addComponent(entity, Material());
+        Material mat; mat.static_friction = 0.8f;
+        ECS.addComponent(entity, mat);
         ECS.addComponent(entity, spr);
     }
     

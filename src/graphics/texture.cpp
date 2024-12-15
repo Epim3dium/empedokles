@@ -14,7 +14,7 @@
 namespace emp {
 Texture::Texture(std::string model_id) : m_id(model_id) {
     if(!isLoaded(model_id)) {
-        EMP_LOG(LogLevel::WARNING) << "texture: " << model_id << " was not loaded, defaulting";
+        EMP_LOG(LogLevel::WARNING) << "texture: \"" << model_id << "\" was not loaded, defaulting";
         m_id = "default";
     }
 }
