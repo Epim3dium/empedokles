@@ -28,6 +28,7 @@ public:
         return *this->ECS().template getComponent<T>(entity);
     }
 };
+struct AllEntitiesSystem : public System<> {};
 }; // namespace emp
 
 #endif

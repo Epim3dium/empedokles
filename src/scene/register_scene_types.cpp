@@ -1,5 +1,6 @@
 #include "register_scene_types.hpp"
 #include "core/coordinator.hpp"
+#include "core/system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/debug_shape.hpp"
 #include "graphics/debug_shape_system.hpp"
@@ -22,6 +23,8 @@ void registerSceneTypes(Coordinator& ECS) {
     registerComponents(ECS, AllComponentTypes());
 }
 void registerSceneSystems(Device& device, Coordinator& ECS) {
+    ECS.registerSystem<AllEntitiesSystem>();
+
     ECS.registerSystem<TransformSystem>();
     ECS.registerSystem<BehaviourSystem>();
 
