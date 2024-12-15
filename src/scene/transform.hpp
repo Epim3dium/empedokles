@@ -53,6 +53,7 @@ public:
 };
 class TransformSystem : public System<Transform> {
 public:
+    void performDFS(std::function<void(Entity, Transform&)>&& action);
     void update();
     void onEntityRemoved(Entity entity) override final;
     void onEntityAdded(Entity entity) override final;
