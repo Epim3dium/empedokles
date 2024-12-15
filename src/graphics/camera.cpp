@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include "debug/log.hpp"
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/ext/matrix_clip_space.hpp"
@@ -10,6 +11,24 @@
 
 namespace emp {
 #if EMP_SCENE_2D
+vec2f Camera::convertWorldToScreenPosition(vec2f position) {
+    glm::vec4 screen= projectionMatrix * (viewMatrix * glm::vec4(position.x, position.y, 1, 1));
+    glm::vec2 result = vec2f{screen.x / screen.w + 1.f, screen.y / screen.w + 1.f} / 2.f;
+
+    auto width = 2.f / projectionMatrix[0][0];
+    auto height = 2.f / projectionMatrix[1][1];
+    result.x *= width;
+    result.y *= height;
+
+    // auto cam_pos = getPosition();
+    // result += vec2f(cam_pos);
+
+    return result;
+}
+vec2f Camera::convertWorldToScreenVector(vec2f position) {
+    auto result = projectionMatrix * viewMatrix * glm::vec4(position.x, position.y, 0, 0);
+    return result;
+}
 void Camera::setOrthographicProjection(
         float left, float right, float top, float bottom
 ) {

@@ -1,6 +1,7 @@
 #ifndef EMP_CAMERA_HPP
 #define EMP_CAMERA_HPP
 
+#include "math/math_defs.hpp"
 #include "scene/scene_defs.hpp"
 
 // libs
@@ -61,6 +62,8 @@ public:
     );
 
     void setView(glm::vec2 position, float rotation);
+    vec2f convertWorldToScreenPosition(vec2f position);
+    vec2f convertWorldToScreenVector(vec2f offset);
 #endif
 
 protected:
