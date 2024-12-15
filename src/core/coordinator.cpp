@@ -8,7 +8,8 @@ void Coordinator::init() {
     m_component_manager = std::make_unique<ComponentManager>();
     m_entity_manager = std::make_unique<EntityManager>();
     m_system_manager = std::make_unique<SystemManager>();
-    assert(createEntity() == world());
+    auto world_entity = createEntity();
+    assert(world_entity == world());
 }
 
 // Entity methods
