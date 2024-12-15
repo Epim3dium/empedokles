@@ -31,10 +31,7 @@ void Transform::setScaleNow(vec2f s) {
     scale = s;
     syncWithChange();
 }
-void TransformSystem::update() {
-EMP_DEBUGCALL(
-    bool updated_entities[MAX_ENTITIES]{0};
-)
+void TransformSystem::performDFS(std::function<void(Entity, Transform&)>&& action) {
     std::stack<Entity> to_process;
     to_process.push(Coordinator::world());
 
@@ -42,28 +39,36 @@ EMP_DEBUGCALL(
         auto entity = to_process.top();
         to_process.pop();
         auto& transform = getComponent<Transform>(entity);
-        transform.m_updateLocalTransform();
-        transform.m_global_transform =
-                transform.m_parents_global_transform * transform.m_local_transform;
+        action(entity, transform);
 
         for(const auto child : transform.children()) {
             auto& childs_trans = getComponent<Transform>(child);
             childs_trans.m_parents_global_transform = transform.global();
             to_process.push(child);
         }
+    }
+}
+void TransformSystem::update() {
+EMP_DEBUGCALL(
+    bool updated_entities[MAX_ENTITIES]{0};
+)
+    this->performDFS([&](Entity entity, Transform& transform) {
+        transform.m_updateLocalTransform();
+        transform.m_global_transform =
+                transform.m_parents_global_transform * transform.m_local_transform;
 EMP_DEBUGCALL(
         updated_entities[entity] = true;
 )
-    }
+    });
 
 EMP_DEBUGCALL(
-        for(auto e : entities) {
-            if(!updated_entities[e]) {
-                EMP_LOG(WARNING) << "didn't updatede transform: " << e
-                                 << ", because of invalid parent";
-            }
+    for(auto e : entities) {
+        if(!updated_entities[e]) {
+            EMP_LOG(WARNING) << "didn't updatede transform: " << e
+                             << ", because of invalid parent";
         }
-)
+    })
+}
     // for (auto entity : entities) {
     //     auto& trans = getComponent<Transform>(entity);
     //     trans.m_parents_global_transform = glm::mat4x4(1.f);
@@ -71,7 +76,6 @@ EMP_DEBUGCALL(
     //     trans.m_global_transform =
     //             trans.m_parents_global_transform * trans.m_local_transform;
     // }
-}
     void TransformSystem::onEntityAdded(Entity entity) {
         if(entity == Coordinator::world())
             return;
