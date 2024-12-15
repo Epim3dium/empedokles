@@ -46,7 +46,7 @@ void GUIManager::drawMainMenuBar() {
         }
         if (ImGui::BeginMenu("View"))
         {
-            if(ImGui::MenuItem("FPS Overlay", NULL, m_tree_view.isOpen)) m_tree_view.isOpen = true;
+            if(ImGui::MenuItem("FPS Overlay", NULL, m_FPS_overlay.isOpen)) m_FPS_overlay.isOpen = true;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
