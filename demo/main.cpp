@@ -5,22 +5,21 @@
 #include "gui/editor/tree-view.hpp"
 #include "gui/gui_manager.hpp"
 #include "gui/log_window.hpp"
+#include "io/keyboard_controller.hpp"
+#include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include <vector>
 #include <iostream>
 using namespace emp;
 
-class DebugSelectionSystem : public System<DebugShape, Transform> {
+class MouseSelectionSystem : public System<Transform, Collider, Rigidbody> {
 public:
     std::vector<Entity> query(vec2f point) {
         std::vector<Entity> result;
         for(auto e : entities) {
-            auto& shape = getComponent<DebugShape>(e);
+            auto& shape = getComponent<Collider>(e);
             auto& transform = getComponent<Transform>(e);
-            auto transformed_outline = shape.outline();
-            for(auto& p : transformed_outline) {
-                p = transformPoint(transform.global(), p);
-            }
+            auto transformed_outline = shape.transformed_outline();
             
             auto overlap = isOverlappingPointPoly(point, transformed_outline);
             if(overlap) {
@@ -42,7 +41,6 @@ class Demo : public App {
         Texture crate_texture;
         Entity mouse_entity;
         Entity protagonist;
-        Entity hovered_entity = -1;
 
         
         float protagonist_speed = 600.f;
@@ -87,7 +85,7 @@ class Demo : public App {
 };
 void Demo::onSetup(Window& window, Device& device) {
     gui_manager.alias(ECS.world(), "world_entity");
-    ECS.registerSystem<DebugSelectionSystem>();
+    ECS.registerSystem<MouseSelectionSystem>();
 
     crate_texture = Texture("crate");
     controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
@@ -273,8 +271,6 @@ void Demo::onRender(Device&, const FrameInfo& frame) {
 }
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
-    EMP_LOG_INTERVAL(DEBUG2, 3.0f) << "{main thread}: " << 1.f / delta_time;
-
     auto& phy_sys = *ECS.getSystem<PhysicsSystem>();
     for(auto e : phy_sys.getEntities()) {
         if(!ECS.getComponent<DebugShape>(e)) {
@@ -338,14 +334,31 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         ECS.addComponent(entity, spr);
     }
     
-    if (controller.get(eKeyMappings::Shoot).pressed && !ImGui::GetIO().WantCaptureMouse) {
+    if (controller.get(eKeyMappings::Shoot).pressed) {
         auto mouse_pos = controller.global_mouse_pos();
-        auto entities= ECS.getSystem<DebugSelectionSystem>()->query(mouse_pos);
+        auto entities= ECS.getSystem<MouseSelectionSystem>()->query(mouse_pos);
         if(entities.size() != 0) {
-            hovered_entity = entities.front();
-        }else {
-            hovered_entity = -1;
+            if(ECS.isEntityAlive(mouse_entity)) {
+                ECS.removeComponentIfExists<Constraint>(mouse_entity);
+            }else {
+                mouse_entity = ECS.createEntity();
+            }
+            auto target = entities.front();
+            auto mouse_transform = ECS.getComponent<Transform>(mouse_entity);
+            auto target_transform = ECS.getComponent<Transform>(target);
+            auto mouse_obj_constr = Constraint::createPointAnchor(mouse_entity,
+                mouse_transform,
+                target,
+                target_transform,
+                vec2f(0, 0), false,
+                mouse_pos - target_transform->position);
+            mouse_obj_constr.compliance = 0.1e-7f;
+            ECS.addComponent(mouse_entity, mouse_obj_constr);
+            EMP_LOG(INFO) << "constraint added";
         }
+    }
+    if(controller.get(eKeyMappings::Shoot).released) {
+        ECS.removeComponentIfExists<Constraint>(mouse_entity);
     }
 }
 int main()
