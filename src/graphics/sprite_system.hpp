@@ -11,11 +11,12 @@ struct SpriteInfo {
     glm::mat4 pivot_matrix{1.f};
     glm::mat4 size_matrix{1.f};
 
+    glm::vec4 color = {1, 1, 1, 1};
+    glm::vec4 color_override = {1, 0, 1, 0};
+
     glm::vec2 rect_min = {0, 0};
     glm::vec2 rect_max = {1, 1};
     glm::vec2 flip = {0, 0}; // only 0.f or 1.f
-
-    glm::vec4 color = {1, 1, 1, 1};
 };
 struct SpriteSystem : public System<Sprite, Transform> {
     SpriteSystem(Device& device);

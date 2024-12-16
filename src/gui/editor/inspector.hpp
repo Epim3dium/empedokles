@@ -114,7 +114,13 @@ class Inspector {
     void inspect<AnimatedSprite>(Entity e, AnimatedSprite& sprite) {
         ImGui::Checkbox("flip horizontal", &sprite.flipX);
         ImGui::Checkbox("flip vertical", &sprite.flipY);
-        ImGui::ColorEdit4("sprite color", VecToPtr(sprite.color));
+        ImGui::ColorEdit4("sprite tint", VecToPtr(sprite.color));
+        ImGui::Checkbox("override color", &sprite.isOverridingColor);
+        if(sprite.isOverridingColor) {
+            ImGui::Indent();
+            ImGui::ColorEdit4("sprite color", VecToPtr(sprite.color_override));
+            ImGui::Unindent();
+        }
         ImGui::SliderFloat("speed", &sprite.animation_speed, 0.f, 10.f);
         ImGui::DragFloat2("offset", VecToPtr(sprite.position_offset));
     }
@@ -122,7 +128,13 @@ class Inspector {
     void inspect<Sprite>(Entity e, Sprite& sprite) {
         ImGui::Checkbox("flip horizontal", &sprite.flipX);
         ImGui::Checkbox("flip vertical", &sprite.flipY);
-        ImGui::ColorEdit4("sprite color", VecToPtr(sprite.color));
+        ImGui::ColorEdit4("sprite tint", VecToPtr(sprite.color));
+        ImGui::Checkbox("override color", &sprite.isOverridingColor);
+        if(sprite.isOverridingColor) {
+            ImGui::Indent();
+            ImGui::ColorEdit4("sprite color", VecToPtr(sprite.color_override));
+            ImGui::Unindent();
+        }
         ImGui::Text("texture: %s", sprite.textureID().c_str());
     }
 

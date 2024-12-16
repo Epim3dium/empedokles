@@ -25,7 +25,10 @@ public:
     bool flipX = false;
     bool flipY = false;
     // used for shaders stuff
-    glm::vec4 color;
+    glm::vec4 color = {1, 1, 1, 1};
+
+    bool isOverridingColor = false;
+    glm::vec4 color_override = {1, 1, 1, 1};
 
     AABB rect() const;
     AABB shader_rect() const;

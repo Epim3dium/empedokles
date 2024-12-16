@@ -5,7 +5,7 @@ layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 uv;
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 fragPosWorld;
 layout(location = 2) out vec2 fragUv;
 
@@ -29,11 +29,12 @@ layout(set = 1, binding = 0) uniform SpriteInfo {
     mat4 pivot_matrix;
     mat4 size_matrix;
 
+    vec4 color;
+    vec4 color_override;
+
     vec2 rect_min;
     vec2 rect_max;
     vec2 flip; // only 0.f or 1.f
-       
-    vec4 color;
 } sprite;
 
 
@@ -41,7 +42,7 @@ void main() {
     vec4 positionWorld = sprite.model_matrix * sprite.offset_matrix * sprite.pivot_matrix * sprite.size_matrix * vec4(position, 1.0);
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
-    fragColor = sprite.color.xyz;
+    fragColor = vec4(color, 1);
     vec2 uv_range = sprite.rect_max - sprite.rect_min;
     vec2 uv_scaled = vec2(uv.x * uv_range.x, uv.y * uv_range.y);
     if(sprite.flip.x == 1) {
