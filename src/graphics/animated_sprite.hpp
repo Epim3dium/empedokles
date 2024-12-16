@@ -38,7 +38,10 @@ public:
     bool flipX = false;
     bool flipY = false;
     // used for shaders stuff
-    glm::vec4 color;
+    glm::vec4 color = {1, 1, 1, 1};
+
+    bool isOverridingColor = false;
+    glm::vec4 color_override = {1, 1, 1, 1};
 
     inline std::string current_sprite_frame() const {
         return m_state_machine.state();

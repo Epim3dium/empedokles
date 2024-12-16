@@ -68,6 +68,9 @@ void SpriteSystem::updateBuffer(int frameIndex) {
         data.rect_max = rect.max;
 
         data.flip = {sprite.flipX, sprite.flipY}; // only 0.f or 1.f
+        if(sprite.isOverridingColor) {
+            data.color_override = sprite.color_override;
+        }
         data.color = sprite.color;
 
         uboBuffers[frameIndex]->writeToIndex(&data, e);

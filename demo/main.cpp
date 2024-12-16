@@ -322,12 +322,11 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     if (controller.get(eKeyMappings::Ability1).pressed) {
         last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
-        Rigidbody rb;
-        rb.useAutomaticMass = true;
-        auto col = Collider(cube_model_shape);
-        col.collider_layer = ITEM;
+        Rigidbody rb; rb.useAutomaticMass = true;
+        auto col = Collider(cube_model_shape); col.collider_layer = ITEM;
         auto entity = ECS.createEntity();
         gui_manager.alias(entity, "cube");
+
         last_created_crate = entity;
         ECS.addComponent(
                 entity, Transform(vec2f(controller.global_mouse_pos()), 0.f)

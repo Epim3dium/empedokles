@@ -76,7 +76,10 @@ namespace emp {
             data.rect_max = rect.max;
 
             data.flip = {animated.sprite().flipX ^ animated.flipX, animated.sprite().flipY ^ animated.flipY}; // only 0.f or 1.f
-            data.color = animated.sprite().color;
+            data.color = animated.color;
+            if(animated.isOverridingColor) {
+                data.color_override = animated.color_override;
+            }
 
             uboBuffers[frameIndex]->writeToIndex(&data, entity);
         }
