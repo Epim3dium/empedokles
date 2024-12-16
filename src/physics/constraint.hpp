@@ -55,7 +55,7 @@ PositionalCorrResult calcPositionalCorrection(
 );
 struct Constraint {
     std::vector<Entity> entity_list;
-    float compliance = 0;
+    float compliance = 0.0;
     float damping = 1.f;
     bool disabled_collision_between_bodies = false;
     eConstraintType type;
@@ -63,6 +63,7 @@ struct Constraint {
     union {
         struct {
             vec2f relative_position;
+            bool anchor_affected_by_rotation;
             vec2f pinch_point_model;
         } point_anchor;
     };
@@ -71,6 +72,8 @@ struct Constraint {
     static Constraint createPointAnchor(
             Entity anchor, const Transform* anchor_trans,
             Entity rigidbody,const Transform* rigid_trans,
+            vec2f offset_from_anchor = vec2f(0, 0),
+            bool affect_anchor_offset_by_rotation = false,
             vec2f pinch_point_rotated = vec2f(0.f, 0.f)
     );
 

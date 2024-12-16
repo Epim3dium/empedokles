@@ -1,5 +1,6 @@
 #include "constraint.hpp"
 #include "core/coordinator.hpp"
+#include "debug/log.hpp"
 #include "math/math_func.hpp"
 #include "physics/rigidbody.hpp"
 #include "physics_system.hpp"
@@ -35,7 +36,7 @@ PositionalCorrectionInfo::PositionalCorrectionInfo(
                 rb2->generalizedInverseMass(center_to_col2, normal);
     } else {
         isStatic2 = true;
-        inertia2 = 0.f;
+        inertia2 = INFINITY;
         mass2 = INFINITY;
         generalized_inverse_mass2 = 0.f;
     }
@@ -77,9 +78,11 @@ PositionalCorrResult calcPositionalCorrection(
     return result;
 }
 Constraint Constraint::createPointAnchor(
-        Entity anchor, const Transform* anchor_trans,
-        Entity rigidbody,const Transform* rigid_trans,
-        vec2f pinch_point_rotated
+            Entity anchor, const Transform* anchor_trans,
+            Entity rigidbody,const Transform* rigid_trans,
+            vec2f offset_from_anchor,
+            bool affect_anchor_offset_by_rotation ,
+            vec2f pinch_point_rotated 
 ) {
     Constraint result;
     result.type = eConstraintType::PointAnchor;
@@ -87,53 +90,58 @@ Constraint Constraint::createPointAnchor(
     result.disabled_collision_between_bodies = true;
 
 
-    result.point_anchor.relative_position =
-            anchor_trans->position - rigid_trans->position;
+    result.point_anchor.anchor_affected_by_rotation= affect_anchor_offset_by_rotation;
+    result.point_anchor.relative_position = offset_from_anchor;
     result.point_anchor.pinch_point_model =
             rotate(pinch_point_rotated, -rigid_trans->rotation);
-    auto rp = result.point_anchor.relative_position;
 
     return result;
 }
 void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
-    Entity anchor = entity_list[0];
-    Entity rigidbody = entity_list[1];
-    assert(ECS.hasComponent<Transform>(anchor));
-    assert(ECS.hasComponent<Transform>(rigidbody));
-    assert(ECS.hasComponent<Rigidbody>(rigidbody));
+    Entity anchor_entity = entity_list[0];
+    Entity dynamic_entity = entity_list[1];
+    assert(ECS.hasComponent<Transform>(anchor_entity));
+    assert(ECS.hasComponent<Transform>(dynamic_entity));
+    assert(ECS.hasComponent<Rigidbody>(dynamic_entity));
 
     auto target = point_anchor.relative_position;
-    const auto& anchor_trans = *ECS.getComponent<Transform>(anchor);
-    auto& rigid_trans = *ECS.getComponent<Transform>(rigidbody);
-    auto& rb = *ECS.getComponent<Rigidbody>(rigidbody);
+    const auto& anchor_trans = *ECS.getComponent<Transform>(anchor_entity);
+    auto& dynamic_trans = *ECS.getComponent<Transform>(dynamic_entity);
+    auto& rigidbody = *ECS.getComponent<Rigidbody>(dynamic_entity);
 
     const vec2f& pos1 = anchor_trans.position;
-    const vec2f& pos2 = rigid_trans.position;
-    auto diff = pos1 - point_anchor.relative_position -
-                (pos2 +
-                 rotate(point_anchor.pinch_point_model, rigid_trans.rotation));
+    const vec2f& pos2 = dynamic_trans.position;
+    auto anchor_point = pos1;
+    if(point_anchor.anchor_affected_by_rotation){
+        anchor_point -= rotateVec(point_anchor.relative_position, anchor_trans.rotation);
+    }else {
+        anchor_point -= point_anchor.relative_position;
+    }
+    auto dynamic_pinch = rotate(point_anchor.pinch_point_model, dynamic_trans.rotation);
+    auto dynamic_point = (pos2 + dynamic_pinch);
+    auto diff = dynamic_point - anchor_point ;
     auto norm = normal(diff);
     auto c = length(diff);
+    if(nearlyEqual(c, 0.f))
+        return;
 
-    auto damping_force = dot(rb.velocity, norm) * damping * delta_time;
-    if (length(rb.velocity) == 0.f) {
-        damping_force = 0.f;
-    }
-    calcPositionalCorrection(
+    auto correction = calcPositionalCorrection(
             PositionalCorrectionInfo(
                     norm,
-                    rigidbody,
-                    point_anchor.pinch_point_model,
-                    ECS.getComponent<Rigidbody>(rigidbody),
-                    anchor,
-                    vec2f(0, 0),
-                    ECS.getComponent<Rigidbody>(anchor)
+                    dynamic_entity,
+                    dynamic_pinch,
+                    ECS.getComponent<Rigidbody>(dynamic_entity),
+                    anchor_entity,
+                    vec2f(0),
+                    nullptr
             ),
-            c - damping_force,
-            -norm,
+            c,
+            norm,
             delta_time,
             compliance
     );
+    dynamic_trans.position += correction.pos1_correction;
+    dynamic_trans.rotation += correction.rot1_correction;
 }
 void Constraint::solve(float delta_time, Coordinator& ECS) {
     switch (type) {
