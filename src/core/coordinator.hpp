@@ -34,6 +34,12 @@ public:
     }
 
     template <typename T>
+    inline void removeComponentIfExists(Entity entity) {
+        if(!hasComponent<T>(entity))
+            return;
+        removeComponent<T>(entity);
+    }
+    template <typename T>
     inline void removeComponent(Entity entity) {
         m_component_manager->removeComponent<T>(entity);
 
