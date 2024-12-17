@@ -1,5 +1,6 @@
 #ifndef EMP_CONSTRAINT_HPP
 #define EMP_CONSTRAINT_HPP
+#include <cmath>
 #include <set>
 #include <vector>
 #include "core/coordinator.hpp"
@@ -11,7 +12,8 @@
 namespace emp {
 enum class eConstraintType {
     Undefined,
-    PointAnchor, // 2bodies
+    SwivelPoint, // 2bodies
+    SwivelPointAnchored, // 2bodies
 };
 struct PositionalCorrectionInfo {
     Entity entity1;
@@ -57,28 +59,51 @@ struct Constraint {
     std::vector<Entity> entity_list;
     float compliance = 0.0;
     float damping = 1.f;
-    bool disabled_collision_between_bodies = false;
-    eConstraintType type;
+    bool enabled_collision_between_bodies = false;
+    eConstraintType type = eConstraintType::Undefined;
 
     union {
         struct {
-            vec2f relative_position;
-            bool anchor_affected_by_rotation;
+            vec2f anchor_point_model;
             vec2f pinch_point_model;
-        } point_anchor;
+        } swivel_anchored;
+        struct {
+            vec2f pinch_point_model1;
+            vec2f pinch_point_model2;
+        } swivel_dynamic;
+    };
+    struct Builder {
+    private:
+        std::pair<Entity, const Transform*> anchor = {-1, nullptr};
+        std::vector<std::pair<Entity, const Transform*>> entity_list;
+        float compliance = 0.0;
+        float damping = 1.f;
+        eConstraintType type = eConstraintType::Undefined;
+        vec2f global_point = {NAN, NAN};
+        vec2f point_rel1 = {NAN, NAN};
+        vec2f point_rel2 = {NAN, NAN};
+
+        bool enabled_collision_between_bodies = false;
+    public:
+        Builder& addConstrainedEntity(Entity entity, const Transform&);
+        Builder& addAnchorEntity(Entity entity, const Transform&);
+
+        Builder& setCompliance(float compliance);
+        Builder& setDamping(float damping);
+
+        Builder& enableCollision(bool enable = true);
+
+        Builder& setConnectionGlobalPoint(vec2f point);
+        Builder& setConnectionRelativePoint(vec2f point_rel1, vec2f point_rel2);
+
+        Constraint build();
     };
 
     void solve(float delta_time, Coordinator& ECS);
-    static Constraint createPointAnchor(
-            Entity anchor, const Transform* anchor_trans,
-            Entity rigidbody,const Transform* rigid_trans,
-            vec2f offset_from_anchor = vec2f(0, 0),
-            bool affect_anchor_offset_by_rotation = false,
-            vec2f pinch_point_rotated = vec2f(0.f, 0.f)
-    );
 
 private:
     void m_solvePointAnchor(float delta_time, Coordinator& ECS);
+    void m_solvePointSwivel(float delta_time, Coordinator& ECS);
 };
 struct ConstraintSystem : public System<Constraint> {
     void update(float delta_time);

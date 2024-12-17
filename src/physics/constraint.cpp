@@ -1,4 +1,5 @@
 #include "constraint.hpp"
+#include <glm/ext/quaternion_common.hpp>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
 #include "math/math_func.hpp"
@@ -77,25 +78,95 @@ PositionalCorrResult calcPositionalCorrection(
 
     return result;
 }
-Constraint Constraint::createPointAnchor(
-            Entity anchor, const Transform* anchor_trans,
-            Entity rigidbody,const Transform* rigid_trans,
-            vec2f offset_from_anchor,
-            bool affect_anchor_offset_by_rotation ,
-            vec2f pinch_point_rotated 
-) {
+typedef Constraint::Builder Builder;
+Builder& Builder::addConstrainedEntity(Entity entity, const Transform& transform) {
+    entity_list.push_back({entity, &transform});
+    return *this;
+}
+Builder& Builder::addAnchorEntity(Entity entity, const Transform& transform) {
+    anchor = {entity, &transform};
+    return *this;
+}
+
+Builder& Builder::setCompliance(float compliance_) {
+    this->compliance = compliance_;
+    return *this;
+}
+Builder& Builder::setDamping(float damping_) {
+    this->damping = damping_;
+    return *this;
+}
+
+Builder& Builder::enableCollision(bool enable ) {
+    this->enabled_collision_between_bodies = enable;
+    return *this;
+}
+
+Builder& Builder::setConnectionGlobalPoint(vec2f point) {
+    assert(this->type == eConstraintType::Undefined && "trying to change constraint type");
+    type = eConstraintType::SwivelPoint;
+    global_point = point;
+    return *this;
+}
+Builder& Builder::setConnectionRelativePoint(vec2f rel1, vec2f rel2) {
+    assert(this->type == eConstraintType::Undefined && "trying to change constraint type");
+    type = eConstraintType::SwivelPoint;
+    point_rel1 = rel1;
+    point_rel2 = rel2;
+    return *this;
+}
+
+Constraint Builder::build() {
+    assert(type != eConstraintType::Undefined && "too little information in constraint builder - no type");
     Constraint result;
-    result.type = eConstraintType::PointAnchor;
-    result.entity_list = {anchor, rigidbody};
-    result.disabled_collision_between_bodies = true;
-
-
-    result.point_anchor.anchor_affected_by_rotation= affect_anchor_offset_by_rotation;
-    result.point_anchor.relative_position = offset_from_anchor;
-    result.point_anchor.pinch_point_model =
-            rotate(pinch_point_rotated, -rigid_trans->rotation);
-
+    result.damping = damping;
+    result.compliance = compliance;
+    result.enabled_collision_between_bodies = this->enabled_collision_between_bodies;
+    //conversion of constraint types if anchor set (static object)
+    bool usingAnchor = anchor.first != -1 && anchor.second != nullptr;
+    if(usingAnchor) {
+        switch(type) {
+            case eConstraintType::SwivelPoint:
+                type = eConstraintType::SwivelPointAnchored;
+            break;
+            default:
+            break;
+        }
+        entity_list.insert(entity_list.begin(), anchor);
+    }
+    for(auto [e, _] : entity_list) {
+        result.entity_list.push_back(e);
+    }
+    result.type = type;
+    switch(type) {
+        case eConstraintType::SwivelPointAnchored:
+            assert(usingAnchor);
+            if(!glm::isnan(global_point.x)) {
+                point_rel1 = global_point - anchor.second->position;
+                point_rel1 = rotate(point_rel1, -anchor.second->rotation);
+                point_rel2 = global_point - entity_list.back().second->position;
+                point_rel2 = rotate(point_rel2, -entity_list.back().second->rotation);
+            }
+            result.swivel_anchored.anchor_point_model = point_rel1;
+            result.swivel_anchored.pinch_point_model = point_rel2;
+        break;
+        case eConstraintType::SwivelPoint:
+            assert(!usingAnchor && entity_list.size() == 2);
+            if(!glm::isnan(global_point.x)) {
+                point_rel1 = global_point - entity_list.front().second->position;
+                point_rel1 = rotate(point_rel1, -entity_list.front().second->rotation);
+                point_rel2 = global_point - entity_list.back().second->position;
+                point_rel2 = rotate(point_rel2, -entity_list.back().second->rotation);
+            }
+            result.swivel_dynamic.pinch_point_model1 = point_rel1;
+            result.swivel_dynamic.pinch_point_model2 = point_rel2;
+        break;
+        default:
+        break;
+    }
     return result;
+}
+void Constraint::m_solvePointSwivel(float delta_time, Coordinator& ECS) {
 }
 void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
     Entity anchor_entity = entity_list[0];
@@ -104,20 +175,15 @@ void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
     assert(ECS.hasComponent<Transform>(dynamic_entity));
     assert(ECS.hasComponent<Rigidbody>(dynamic_entity));
 
-    auto target = point_anchor.relative_position;
+    auto target = swivel_anchored.anchor_point_model;
     const auto& anchor_trans = *ECS.getComponent<Transform>(anchor_entity);
     auto& dynamic_trans = *ECS.getComponent<Transform>(dynamic_entity);
     auto& rigidbody = *ECS.getComponent<Rigidbody>(dynamic_entity);
 
     const vec2f& pos1 = anchor_trans.position;
     const vec2f& pos2 = dynamic_trans.position;
-    auto anchor_point = pos1;
-    if(point_anchor.anchor_affected_by_rotation){
-        anchor_point -= rotateVec(point_anchor.relative_position, anchor_trans.rotation);
-    }else {
-        anchor_point -= point_anchor.relative_position;
-    }
-    auto dynamic_pinch = rotate(point_anchor.pinch_point_model, dynamic_trans.rotation);
+    auto anchor_point = pos1 + rotate(swivel_anchored.anchor_point_model, anchor_trans.rotation);
+    auto dynamic_pinch = rotate(swivel_anchored.pinch_point_model, dynamic_trans.rotation);
     auto dynamic_point = (pos2 + dynamic_pinch);
     auto diff = dynamic_point - anchor_point ;
     auto norm = normal(diff);
@@ -145,7 +211,10 @@ void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
 }
 void Constraint::solve(float delta_time, Coordinator& ECS) {
     switch (type) {
-    case emp::eConstraintType::PointAnchor:
+    case emp::eConstraintType::SwivelPointAnchored:
+        m_solvePointAnchor(delta_time, ECS);
+        break;
+    case emp::eConstraintType::SwivelPoint:
         m_solvePointAnchor(delta_time, ECS);
         break;
     case emp::eConstraintType::Undefined:
