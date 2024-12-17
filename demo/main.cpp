@@ -1,6 +1,7 @@
 #include "graphics/animated_sprite.hpp"
 #include "gui/gui_manager.hpp"
 #include "io/keyboard_controller.hpp"
+#include "physics/collider.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include <vector>
@@ -27,6 +28,7 @@ public:
 enum CollisionLayers {
     GROUND,
     PLAYER,
+    FRIENDLY,
     ITEM
 };
 class Demo : public App {
@@ -80,6 +82,7 @@ class Demo : public App {
 void Demo::onSetup(Window& window, Device& device) {
     gui_manager.alias(ECS.world(), "world_entity");
     ECS.registerSystem<MouseSelectionSystem>();
+    ECS.getSystem<ColliderSystem>()->disableCollision(FRIENDLY, FRIENDLY);
 
     crate_texture = Texture("crate");
     controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
@@ -328,8 +331,8 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         ECS.addComponent(entity, spr);
     }
     
+    auto mouse_pos = controller.global_mouse_pos();
     if (controller.get(eKeyMappings::Shoot).pressed) {
-        auto mouse_pos = controller.global_mouse_pos();
         auto entities= ECS.getSystem<MouseSelectionSystem>()->query(mouse_pos);
         if(entities.size() != 0) {
             if(ECS.isEntityAlive(mouse_entity)) {
@@ -349,10 +352,28 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
                 .build();
                 
             ECS.addComponent(mouse_entity, mouse_obj_constr);
-            EMP_LOG(INFO) << "constraint added";
+            EMP_LOG(INFO) << "anchor added";
         }
     }
     if(controller.get(eKeyMappings::Shoot).released) {
+        auto entities= ECS.getSystem<MouseSelectionSystem>()->query(mouse_pos);
+        if(entities.size() == 2 && ECS.getComponent<Constraint>(entities.front()) == nullptr) {
+            assert(ECS.getComponent<Transform>(entities.front()) && ECS.getComponent<Transform>(entities.back()));
+            assert(ECS.getComponent<Collider>(entities.front()) && ECS.getComponent<Collider>(entities.back()));
+            assert(ECS.getComponent<Rigidbody>(entities.front()) && ECS.getComponent<Rigidbody>(entities.back()));
+            auto chain = Constraint::Builder()
+                .setCompliance(0.1e-6f)
+                .enableCollision()
+                .setConnectionGlobalPoint(mouse_pos)
+                .addConstrainedEntity(entities.front(), *ECS.getComponent<Transform>(entities.front()))
+                .addConstrainedEntity(entities.back(), *ECS.getComponent<Transform>(entities.back()))
+                .build();
+            ECS.getComponent<Collider>(entities.front())->collider_layer = FRIENDLY;
+            ECS.getComponent<Collider>(entities.back())->collider_layer = FRIENDLY;
+            EMP_LOG(INFO) << "constraint added";
+            ECS.addComponent(entities.front(), chain);
+
+        }
         ECS.removeComponentIfExists<Constraint>(mouse_entity);
     }
 }
