@@ -1,7 +1,7 @@
 #ifndef EMP_COORDINATOR_HPP
 #define EMP_COORDINATOR_HPP
 #include "component_manager.hpp"
-#include "debug/log.hpp"
+#include "debug/debug.hpp"
 #include "entity_manager.hpp"
 #include "system_manager.hpp"
 namespace emp {
@@ -19,6 +19,7 @@ public:
 
     template <typename T>
     inline void registerComponent() {
+        EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered component: " << typeid(T).name();)
         m_component_manager->registerComponent<T>();
     }
 
@@ -70,6 +71,7 @@ public:
     // System methods
     template <typename SystemType, class... InitalizerValues>
     std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
+        EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered system: " << typeid(SystemType).name();)
         auto system = m_system_manager->registerSystem<SystemType>(inits...);
         system->setECS(this);
 
