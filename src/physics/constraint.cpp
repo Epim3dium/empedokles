@@ -1,4 +1,6 @@
 #include "constraint.hpp"
+#include <algorithm>
+#include <random>
 #include <glm/ext/quaternion_common.hpp>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
@@ -167,6 +169,50 @@ Constraint Builder::build() {
     return result;
 }
 void Constraint::m_solvePointSwivel(float delta_time, Coordinator& ECS) {
+    Entity entity1 = entity_list[0];
+    Entity entity2 = entity_list[1];
+    assert(ECS.hasComponent<Transform>(entity1));
+    assert(ECS.hasComponent<Rigidbody>(entity1));
+    assert(ECS.hasComponent<Transform>(entity2));
+    assert(ECS.hasComponent<Rigidbody>(entity2));
+
+    auto& transform1 = *ECS.getComponent<Transform>(entity1);
+    const auto& rigidbody1 = *ECS.getComponent<Rigidbody>(entity1);
+    auto& transform2 = *ECS.getComponent<Transform>(entity2);
+    const auto& rigidbody2 = *ECS.getComponent<Rigidbody>(entity2);
+
+    const vec2f& pos1 = transform1.position;
+    const vec2f& pos2 = transform2.position;
+
+    const auto dynamic_pinch1 = rotate(swivel_dynamic.pinch_point_model1, transform1.rotation);
+    const auto dynamic_pinch2 = rotate(swivel_dynamic.pinch_point_model2, transform2.rotation);
+    auto dynamic_point1 = (pos1 + dynamic_pinch1);
+    auto dynamic_point2 = (pos2 + dynamic_pinch2);
+    auto diff = dynamic_point1 - dynamic_point2;
+    auto norm = normal(diff);
+    auto c = length(diff);
+    if(nearlyEqual(c, 0.f))
+        return;
+
+    auto correction = calcPositionalCorrection(
+            PositionalCorrectionInfo(
+                    norm,
+                    entity1,
+                    dynamic_pinch1,
+                    &rigidbody1,
+                    entity2,
+                    dynamic_pinch2,
+                    &rigidbody2
+            ),
+            c,
+            norm,
+            delta_time,
+            compliance
+    );
+    transform1.position += correction.pos1_correction;
+    transform1.rotation += correction.rot1_correction;
+    transform2.position += correction.pos2_correction;
+    transform2.rotation += correction.rot2_correction;
 }
 void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
     Entity anchor_entity = entity_list[0];
@@ -215,7 +261,7 @@ void Constraint::solve(float delta_time, Coordinator& ECS) {
         m_solvePointAnchor(delta_time, ECS);
         break;
     case emp::eConstraintType::SwivelPoint:
-        m_solvePointAnchor(delta_time, ECS);
+        m_solvePointSwivel(delta_time, ECS);
         break;
     case emp::eConstraintType::Undefined:
         assert(false);
@@ -223,7 +269,9 @@ void Constraint::solve(float delta_time, Coordinator& ECS) {
     }
 }
 void ConstraintSystem::update(float delta_time) {
-    for (auto e : entities) {
+    std::vector<Entity> v(entities.begin(), entities.end());
+    std::shuffle(v.begin(), v.end(), std::mt19937{std::random_device{}()});
+    for (auto e : v) {
         getComponent<Constraint>(e).solve(delta_time, ECS());
     }
 }
