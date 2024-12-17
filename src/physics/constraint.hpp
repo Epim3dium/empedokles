@@ -1,6 +1,7 @@
 #ifndef EMP_CONSTRAINT_HPP
 #define EMP_CONSTRAINT_HPP
 #include <cmath>
+#include <functional>
 #include <set>
 #include <vector>
 #include "core/coordinator.hpp"
@@ -106,6 +107,8 @@ private:
     void m_solvePointSwivel(float delta_time, Coordinator& ECS);
 };
 struct ConstraintSystem : public System<Constraint> {
+    typedef const std::vector<Entity>* EntityListRef_t;
+    std::vector< EntityListRef_t> getConstrainedGroups() const;
     void update(float delta_time);
 };
 }; // namespace emp
