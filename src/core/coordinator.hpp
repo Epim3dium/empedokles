@@ -52,6 +52,14 @@ public:
     }
 
     template <typename T>
+    inline const T* getComponent(Entity entity) const {
+        if (!hasComponent<T>(entity)) {
+            return nullptr;
+        }
+        return &m_component_manager->getComponent<T>(entity);
+    }
+
+    template <typename T>
     inline T* getComponent(Entity entity) {
         if (!hasComponent<T>(entity)) {
             return nullptr;
@@ -64,7 +72,7 @@ public:
         return m_component_manager->getComponentType<T>();
     }
     template <typename T>
-    inline bool hasComponent(Entity entity) {
+    inline bool hasComponent(Entity entity) const {
         return m_component_manager->hasComponent<T>(entity);
     }
 
