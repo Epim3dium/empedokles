@@ -34,6 +34,7 @@ set(SOURCE_FILES
     gui/log_window.cpp
     gui/spatial_visualizer.cpp
     gui/gui_manager.cpp
+    gui/editor/tree-view.cpp
 
     vulkan/buffer.cpp
     vulkan/descriptors.cpp
@@ -124,6 +125,7 @@ set(HEADER_FILES
     gui/log_window.hpp
     gui/spatial_visualizer.hpp
     gui/editor/inspector.hpp
+    gui/editor/tree-view.hpp
     gui/gui_manager.hpp
 
     vulkan/buffer.hpp
