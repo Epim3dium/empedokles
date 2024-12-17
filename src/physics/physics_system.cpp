@@ -1,4 +1,5 @@
 #include "physics_system.hpp"
+#include <glm/vector_relational.hpp>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
 #include "math/math_func.hpp"
@@ -365,7 +366,14 @@ void PhysicsSystem::m_applyAirDrag() {
         }
     }
 }
-void PhysicsSystem::m_processSleep(float delta_time) {
+void PhysicsSystem::m_processSleep(float delta_time, ConstraintSystem& constr_sys) {
+    auto all_groups = constr_sys.getConstrainedGroups();
+    for(const auto& group : all_groups) {
+        auto prev = group->back();
+        for(auto entity : *group) {
+            m_collision_islands.merge(entity, prev);
+        }
+    }
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         if(rb.isStatic)
@@ -413,7 +421,7 @@ void PhysicsSystem::m_step(
 ) {
     m_applyGravity();
     m_applyAirDrag();
-    m_processSleep(delta_time);
+    m_processSleep(delta_time, const_sys);
     rb_sys.integrate(delta_time);
     trans_sys.update();
     col_sys.update();
