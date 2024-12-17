@@ -268,6 +268,14 @@ void Constraint::solve(float delta_time, Coordinator& ECS) {
         break;
     }
 }
+std::vector< ConstraintSystem::EntityListRef_t> ConstraintSystem::getConstrainedGroups() const {
+    std::vector< ConstraintSystem::EntityListRef_t> result;
+    for(auto entity : entities) {
+        auto& entity_list = getComponent<Constraint>(entity).entity_list;
+        result.push_back(&entity_list);
+    }
+    return result;
+}
 void ConstraintSystem::update(float delta_time) {
     std::vector<Entity> v(entities.begin(), entities.end());
     std::shuffle(v.begin(), v.end(), std::mt19937{std::random_device{}()});
