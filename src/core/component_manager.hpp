@@ -29,7 +29,7 @@ public:
         return m_component_types.at(type_code);
     }
     template <typename T>
-    bool hasComponent(Entity entity) {
+    bool hasComponent(Entity entity) const {
         return getComponentArray<T>().hasData(entity);
     }
 
@@ -69,6 +69,15 @@ private:
 
     template <typename T>
     ComponentArray<T>& getComponentArray() {
+        std::size_t type_code = typeid(T).hash_code();
+        assert(m_component_types.find(type_code) != m_component_types.end() &&
+               "Component not registered before use.");
+
+        return *std::static_pointer_cast<ComponentArray<T>>(
+                m_component_arrays.at(type_code));
+    }
+    template <typename T>
+    const ComponentArray<T>& getComponentArray() const {
         std::size_t type_code = typeid(T).hash_code();
         assert(m_component_types.find(type_code) != m_component_types.end() &&
                "Component not registered before use.");

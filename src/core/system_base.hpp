@@ -31,6 +31,10 @@ protected:
         assert(coordinator != nullptr && "system must be registered via coordinator");
         return *coordinator;
     }
+    inline const Coordinator& ECS() const {
+        assert(coordinator != nullptr && "system must be registered via coordinator");
+        return *coordinator;
+    }
 
     std::set<Entity> entities;
     SystemBase() {}
