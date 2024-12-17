@@ -1,17 +1,15 @@
 # 🎯 TODO:
 
 - collision
-    - more constraints
+    - more constraints+
     - collision optimization
         - tighter locked critical section
 - graphics
     - instanced rendering
-    - separate command queue for ui only changed when imgui is interacted with
     - 2d lighting
 - core
     - serialization / deserialization
     - message bus
-    - command terminal
 - networking?
 
 ---
@@ -21,13 +19,15 @@
 ---
 
 # ⚠️ ISSUES:
+- weird error message when closing window
 - when spawing overlapping colliders they explode
-- restitution unreliability
+- 'drifting' physics problem
 ---
 
 # ✅ DONE:
 
-- weird error message when closing window
+- collision
+    - added more constraints
 - graphics
     - imgui inspector for basic components
     - basic animation system
@@ -38,6 +38,7 @@
         - collision idle state
     - collision triggers
 - graphics
+    - gui - mainly for debuggin for now
     - resizable window
     - render system abstraction
     - basic animation system
