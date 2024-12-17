@@ -24,6 +24,7 @@ class GUIManager {
 
     TreeView m_tree_view;
     Inspector m_inspector;
+    bool* inspectorMaster = nullptr;
     Console m_console;
     LogWindow m_log_window;
     SpatialVisualizer m_visualizer;

@@ -76,6 +76,16 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
     if(m_tree_view.isJustSelected()) {
         m_inspector.isOpen = true;
         m_entity_selected = m_tree_view.getSelected();
+        
+        inspectorMaster = &m_tree_view.isOpen;
+        m_inspector.isOpen = true;
+    }
+    if(inspectorMaster) {
+        if(!m_inspector.isOpen || !*inspectorMaster) {
+            *inspectorMaster = false;
+            m_inspector.isOpen = false;
+            inspectorMaster = nullptr;
+        }
     }
     m_inspector.draw(m_tree_view.getSelected(), coordinator);
 
