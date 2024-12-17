@@ -1,15 +1,9 @@
-#include "imgui.h"
 #include "graphics/animated_sprite.hpp"
-#include "gui/console.hpp"
-#include "gui/editor/inspector.hpp"
-#include "gui/editor/tree-view.hpp"
 #include "gui/gui_manager.hpp"
-#include "gui/log_window.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include <vector>
-#include <iostream>
 using namespace emp;
 
 class MouseSelectionSystem : public System<Transform, Collider, Rigidbody> {
@@ -346,13 +340,14 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             auto target = entities.front();
             auto mouse_transform = ECS.getComponent<Transform>(mouse_entity);
             auto target_transform = ECS.getComponent<Transform>(target);
-            auto mouse_obj_constr = Constraint::createPointAnchor(mouse_entity,
-                mouse_transform,
-                target,
-                target_transform,
-                vec2f(0, 0), false,
-                mouse_pos - target_transform->position);
-            mouse_obj_constr.compliance = 0.1e-7f;
+            auto mouse_obj_constr = Constraint::Builder()
+                .setCompliance(0.1e-7f)
+                .enableCollision()
+                .setConnectionGlobalPoint(mouse_pos)
+                .addAnchorEntity(mouse_entity, *mouse_transform)
+                .addConstrainedEntity(target, *target_transform)
+                .build();
+                
             ECS.addComponent(mouse_entity, mouse_obj_constr);
             EMP_LOG(INFO) << "constraint added";
         }
