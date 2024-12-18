@@ -9,14 +9,15 @@ namespace emp {
 class SystemManager {
 public:
     template <typename T, class... InitializerValues>
-    std::shared_ptr<T> registerSystem(InitializerValues... inits) {
+    T& registerSystem(InitializerValues... inits) {
         std::size_t type_code = typeid(T).hash_code();
         assert(m_systems.find(type_code) == m_systems.end() &&
                "Registering system more than once.");
 
-        auto system = std::make_shared<T>(inits...);
-        m_systems.insert({type_code, system});
-        return system;
+        auto system = std::make_unique<T>(inits...);
+        auto& ref = *system.get();
+        m_systems.insert({type_code, std::move(system)});
+        return ref;
     }
     template <typename T>
     T* getSystem() {
@@ -67,7 +68,7 @@ public:
 
 private:
     std::unordered_map<std::size_t, Signature> m_signatures{};
-    std::unordered_map<std::size_t, std::shared_ptr<SystemBase>> m_systems{};
+    std::unordered_map<std::size_t, std::unique_ptr<SystemBase>> m_systems{};
 };
 }; // namespace emp
 #endif

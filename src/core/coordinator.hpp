@@ -76,12 +76,12 @@ public:
 
     // System methods
     template <typename SystemType, class... InitalizerValues>
-    std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
-        EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered system: " << typeid(SystemType).name();)
-        auto system = m_system_manager.registerSystem<SystemType>(inits...);
-        system->setECS(this);
+    SystemType& registerSystem(InitalizerValues... inits) {
+        EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered system: " << typeid(SystemType).name(););
+        auto& system = m_system_manager.registerSystem<SystemType>(inits...);
+        system.setECS(this);
 
-        auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
+        auto system_signature = m_getSignatureSystemOf<SystemType>(system);
         m_setSystemSignature<SystemType>(system_signature);
         return system;
     }
