@@ -47,7 +47,6 @@ public:
     void run();
 protected:
 
-    Coordinator ECS;
     Window window;
     Device device;
 
@@ -57,6 +56,7 @@ protected:
     // order of declarations matters
     
     KeyboardController controller;
+    Coordinator ECS;
 
     void setPhysicsTickrate(const float tick_rate);
     float getWidth() const {

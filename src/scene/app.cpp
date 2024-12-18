@@ -46,7 +46,6 @@ App::App(const int w,
 App::~App() = default;
 
 void App::setupECS() {
-    ECS.init();
     registerSceneTypes(ECS);
     registerSceneSystems(device, ECS);
 }
@@ -173,7 +172,6 @@ void App::run() {
 
     vkDeviceWaitIdle(device.device());
     EMP_LOG(LogLevel::DEBUG) << "destroying ECS...";
-    ECS.destroy();
     EMP_LOG(LogLevel::DEBUG) << "destroying models...";
     Model::destroyAll();
     EMP_LOG(LogLevel::DEBUG) << "destroying textures...";
