@@ -6,12 +6,6 @@ using namespace emp;
 class CoordinatorTest : public testing::Test {
 protected:
     Coordinator coord;
-    CoordinatorTest() {
-        coord.init();
-    }
-    ~CoordinatorTest() override {
-        coord.destroy();
-    }
 };
 TEST_F(CoordinatorTest, EntityCreation) {
     auto entity1 = coord.createEntity();

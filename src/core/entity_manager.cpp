@@ -21,7 +21,7 @@ Entity EntityManager::createEntity() {
     return id;
 }
 
-bool EntityManager::isEntityAlive(Entity entity) {
+bool EntityManager::isEntityAlive(Entity entity) const {
     if(entity >= MAX_ENTITIES)
         return false;
     return m_signatures[entity].test(MAX_COMPONENTS - 1);

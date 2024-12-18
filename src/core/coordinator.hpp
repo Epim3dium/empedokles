@@ -7,31 +7,29 @@
 namespace emp {
 class Coordinator {
 public:
+    Coordinator();
     static const Entity world();
-    void init();
 
     // Entity methods
     Entity createEntity();
     bool isEntityAlive(Entity entity) const;
     void destroyEntity(Entity entity);
 
-    void destroy();
-
     template <typename T>
     inline void registerComponent() {
         EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered component: " << typeid(T).name();)
-        m_component_manager->registerComponent<T>();
+        m_component_manager.registerComponent<T>();
     }
 
     template <typename T>
     inline void addComponent(Entity entity, T component) {
-        m_component_manager->addComponent<T>(entity, component);
+        m_component_manager.addComponent<T>(entity, component);
 
-        auto signature = m_entity_manager->getSignature(entity);
-        signature.set(m_component_manager->getComponentType<T>(), true);
-        m_entity_manager->setSignature(entity, signature);
+        auto signature = m_entity_manager.getSignature(entity);
+        signature.set(m_component_manager.getComponentType<T>(), true);
+        m_entity_manager.setSignature(entity, signature);
 
-        m_system_manager->EntitySignatureChanged(entity, signature);
+        m_system_manager.EntitySignatureChanged(entity, signature);
     }
 
     template <typename T>
@@ -42,13 +40,13 @@ public:
     }
     template <typename T>
     inline void removeComponent(Entity entity) {
-        m_component_manager->removeComponent<T>(entity);
+        m_component_manager.removeComponent<T>(entity);
 
-        auto signature = m_entity_manager->getSignature(entity);
-        signature.set(m_component_manager->getComponentType<T>(), false);
-        m_entity_manager->setSignature(entity, signature);
+        auto signature = m_entity_manager.getSignature(entity);
+        signature.set(m_component_manager.getComponentType<T>(), false);
+        m_entity_manager.setSignature(entity, signature);
 
-        m_system_manager->EntitySignatureChanged(entity, signature);
+        m_system_manager.EntitySignatureChanged(entity, signature);
     }
 
     template <typename T>
@@ -56,7 +54,7 @@ public:
         if (!hasComponent<T>(entity)) {
             return nullptr;
         }
-        return &m_component_manager->getComponent<T>(entity);
+        return &m_component_manager.getComponent<T>(entity);
     }
 
     template <typename T>
@@ -64,23 +62,23 @@ public:
         if (!hasComponent<T>(entity)) {
             return nullptr;
         }
-        return &m_component_manager->getComponent<T>(entity);
+        return &m_component_manager.getComponent<T>(entity);
     }
 
     template <typename T>
     inline ComponentType getComponentType() {
-        return m_component_manager->getComponentType<T>();
+        return m_component_manager.getComponentType<T>();
     }
     template <typename T>
     inline bool hasComponent(Entity entity) const {
-        return m_component_manager->hasComponent<T>(entity);
+        return m_component_manager.hasComponent<T>(entity);
     }
 
     // System methods
     template <typename SystemType, class... InitalizerValues>
     std::shared_ptr<SystemType> registerSystem(InitalizerValues... inits) {
         EMP_DEBUGCALL( EMP_LOG(DEBUG2) << "registered system: " << typeid(SystemType).name();)
-        auto system = m_system_manager->registerSystem<SystemType>(inits...);
+        auto system = m_system_manager.registerSystem<SystemType>(inits...);
         system->setECS(this);
 
         auto system_signature = m_getSignatureSystemOf<SystemType>(*system);
@@ -89,7 +87,7 @@ public:
     }
     template <typename SystemType>
     inline SystemType* getSystem() {
-        return m_system_manager->getSystem<SystemType>();
+        return m_system_manager.getSystem<SystemType>();
     }
 
 private:
@@ -102,19 +100,19 @@ private:
 
         Signature system_signature;
         (system_signature.set(
-                 m_component_manager->getComponentType<ComponentType>()),
+                 m_component_manager.getComponentType<ComponentType>()),
          ...);
         return system_signature;
     }
 
     template <typename T>
     void m_setSystemSignature(Signature signature) {
-        m_system_manager->setSignature<T>(signature);
+        m_system_manager.setSignature<T>(signature);
     }
 
-    std::unique_ptr<ComponentManager> m_component_manager;
-    std::unique_ptr<EntityManager> m_entity_manager;
-    std::unique_ptr<SystemManager> m_system_manager;
+    ComponentManager m_component_manager;
+    EntityManager m_entity_manager;
+    SystemManager m_system_manager;
 };
 }; // namespace emp
 #endif
