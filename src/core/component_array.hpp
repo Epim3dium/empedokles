@@ -58,12 +58,14 @@ public:
     T& GetData(Entity entity) {
         assert(m_entity_to_index_map[entity] != INVALID_INDEX &&
                "Retrieving non-existent component.");
-
         // Return a reference to the entity's component
         return m_component_array[m_entity_to_index_map[entity]];
     }
     const T& GetData(Entity entity) const {
-        return GetData(entity);
+        assert(m_entity_to_index_map[entity] != INVALID_INDEX &&
+               "Retrieving non-existent component.");
+        // Return a reference to the entity's component
+        return m_component_array[m_entity_to_index_map[entity]];
     }
 
     void EntityDestroyed(Entity entity) override {
