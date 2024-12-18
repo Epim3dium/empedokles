@@ -52,7 +52,14 @@ public:
     Sprite(Texture tex, vec2f size = vec2f(0.f, 0.f));
 
     static constexpr uint32_t s_vertex_count = 6U;
-    static const Vertex s_verticies[s_vertex_count];
+    static constexpr Vertex s_verticies[s_vertex_count]= {
+        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f} }, //     -'*
+        Vertex{glm::vec3(0.5f, -0.5f, 0.f), {}, {}, glm::vec2{1.f, 0.f} },  //   ./  |
+        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f} },   //  *----*
+        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f} }, //  *----*
+        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f} },   //  |  _'
+        Vertex{glm::vec3(-0.5f, 0.5f, 0.f), {}, {}, glm::vec2{0.f, 1.f} },  //  *:'
+    };
     static std::unique_ptr<Buffer> s_vertex_buffer;
 
     static void init(Device& device);

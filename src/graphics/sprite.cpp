@@ -2,21 +2,6 @@
 #include "debug/log.hpp"
 namespace emp {
 std::unique_ptr<Buffer> Sprite::s_vertex_buffer;
-const Vertex Sprite::s_verticies[6] = {
-        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
-        }, //     -'*
-        Vertex{glm::vec3(0.5f, -0.5f, 0.f), {}, {}, glm::vec2{1.f, 0.f}
-        }, //   ./  |
-        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f}
-        }, //  *----*
-
-        Vertex{glm::vec3(-0.5f, -0.5f, 0.f), {}, {}, glm::vec2{0.f, 0.f}
-        }, //  *----*
-        Vertex{glm::vec3(0.5f, 0.5f, 0.f), {}, {}, glm::vec2{1.f, 1.f}
-        }, //  |  _'
-        Vertex{glm::vec3(-0.5f, 0.5f, 0.f), {}, {}, glm::vec2{0.f, 1.f}
-        }, //  *:'
-};
 AABB Sprite::shader_rect() const {
     AABB actual_rect = rect();
     vec2f texture_size = texture().getSize();
