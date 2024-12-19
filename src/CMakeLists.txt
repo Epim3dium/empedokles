@@ -57,6 +57,7 @@ set(SOURCE_FILES
 
     io/keyboard_controller.cpp
     io/window.cpp
+    io/serializer.cpp
 )
 set(HEADER_FILES
     memory/parallel_iterator.hpp
@@ -151,6 +152,7 @@ set(HEADER_FILES
 
     io/keyboard_controller.hpp
     io/window.hpp
+    io/serializer.hpp
 
     external/tinyobjloader/tiny_obj_loader.h
     external/stbimage/stb_image.h
