@@ -3,6 +3,7 @@ add_executable(
     test_main.cpp
     core/test_coordinator.cpp
     io/test_serializer.cpp
+    memory/test_relative_pointer.cpp
     math/test_geometry.cpp
     math/test_math.cpp
 )
