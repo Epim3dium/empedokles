@@ -2,6 +2,7 @@ add_executable(
     tests
     test_main.cpp
     core/test_coordinator.cpp
+    io/test_serializer.cpp
     math/test_geometry.cpp
     math/test_math.cpp
 )
