@@ -24,6 +24,8 @@ void SerialConvert<type>::decode(type& var, IGlobReader& reader) {\
     var = *(type*)reader.get(sizeof(type));\
 }
 SIMPLE_ENCODE_DECODE(float)
+SIMPLE_ENCODE_DECODE(int64_t)
+SIMPLE_ENCODE_DECODE(uint64_t)
 SIMPLE_ENCODE_DECODE(int32_t)
 SIMPLE_ENCODE_DECODE(uint32_t)
 SIMPLE_ENCODE_DECODE(uint8_t)
@@ -41,6 +43,7 @@ void SerialConvert<AABB>::decode(AABB& var, IGlobReader& reader) {
     reader.decode(var.max);
 }
 void SerialConvert<std::string>::encode(const std::string& var, IGlobWriter& writer) {
+    writer.markNotMappable();
     writer.encode(var.size());
     for(int i = 0; i < var.size(); i++) {
         writer.encode(var[i]);
