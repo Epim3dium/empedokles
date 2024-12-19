@@ -63,6 +63,7 @@ set(HEADER_FILES
     memory/parallel_iterator.hpp
     memory/pool_allocator.hpp
     memory/allocator.hpp
+    memory/relative_pointer.hpp
 
     debug/log.hpp
     debug/debug.hpp
