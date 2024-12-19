@@ -1,7 +1,11 @@
 #ifndef EMP_SERIALIZER_HPP
 #define EMP_SERIALIZER_HPP
+#include <unistd.h>
 #include <cstddef>
 #include <cstdint>
+#include <map>
+#include <set>
+#include <unordered_set>
 #include <vector>
 #include "math/math_defs.hpp"
 #include "math/shapes/AABB.hpp"
@@ -82,6 +86,16 @@ struct SerialConvert<uint32_t> {
     void decode(uint32_t& var, IGlobReader& reader);
 };
 template<>
+struct SerialConvert<int64_t> {
+    void encode(const int64_t& var, IGlobWriter& writer);
+    void decode(int64_t& var, IGlobReader& reader);
+};
+template<>
+struct SerialConvert<uint64_t> {
+    void encode(const uint64_t& var, IGlobWriter& writer);
+    void decode(uint64_t& var, IGlobReader& reader);
+};
+template<>
 struct SerialConvert<int8_t> {
     void encode(const int8_t& var, IGlobWriter& writer);
     void decode(int8_t& var, IGlobReader& reader);
@@ -116,51 +130,6 @@ struct SerialConvert<std::string> {
     void encode(const std::string& var, IGlobWriter& writer);
     void decode(std::string& var, IGlobReader& reader);
 };
-
-template<glm::length_t L, typename T>
-struct SerialConvert<glm::vec<L, T>> {
-    void encode(const glm::vec<L, T>& var, IGlobWriter& writer) {
-        for(int i = 0; i < var.length(); i++) {
-            writer.encode(var[i]);
-        }
-    }
-    void decode(glm::vec<L, T>& var, IGlobReader& reader) {
-        for(int i = 0; i < var.length(); i++) {
-            reader.decode(var[i]);
-        }
-    }
-};
-
-template<class T, size_t Size>
-struct SerialConvert<std::array<T, Size>> {
-    void encode(const std::array<T, Size>& var, IGlobWriter& writer) {
-        for(int i = 0; i < Size; i++) {
-            writer.encode(var[i]);
-        }
-    }
-    void decode(std::array<T, Size>& var, IGlobReader& reader) {
-        for(int i = 0; i < Size; i++) {
-            reader.decode(var[i]);
-        }
-    }
-};
-template<class U>
-struct SerialConvert<std::vector<U>> {
-    void encode(const std::vector<U>& var, IGlobWriter& writer) {
-        writer.markNotMappable();
-        writer.encode(var.size());
-        for(int i = 0; i < var.size(); i++) {
-            writer.encode(var[i]);
-        }
-    }
-    void decode(std::vector<U>& var, IGlobReader& reader) {
-        size_t size;
-        reader.decode(size);
-        var.resize(size);
-        for(int i = 0; i < var.size(); i++) {
-            reader.decode(var[i]);
-        }
-    }
-};
 }
+#include "serialized_containers.inl"
 #endif
