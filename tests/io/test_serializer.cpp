@@ -47,6 +47,7 @@ TEST(SerializerTest, WriteReadArrays) {
     for(int i = 0; i < arr.size(); i++) {
         ASSERT_EQ(arr[i], arr_read[i]);
     }
+    ASSERT_TRUE(glob.isMappable());
 }
 TEST(SerializerTest, WriteReadVectors) {
     Glob glob;
@@ -58,6 +59,7 @@ TEST(SerializerTest, WriteReadVectors) {
     for(int i = 0; i < vec.size(); i++) {
         ASSERT_EQ(vec[i], vec_read[i]);
     }
+    ASSERT_FALSE(glob.isMappable());
 }
 TEST(SerializerTest, WriteReadString) {
     Glob glob;
@@ -67,4 +69,59 @@ TEST(SerializerTest, WriteReadString) {
     std::string str_read;
     glob.decode(str_read);
     ASSERT_EQ(str, str_read);
+    ASSERT_FALSE(glob.isMappable());
+}
+TEST(SerializerTest, WriteReadMaps) {
+    {
+        Glob glob;
+        std::map<std::string, int> map;
+        map["hello"] = 1;
+        map["world"] = 2;
+        map["!"] = 3;
+        glob.encode(map);
+        
+        decltype(map) map_read;
+        glob.decode(map_read);
+        ASSERT_EQ(map, map_read);
+    }
+    {
+        Glob glob;
+        std::unordered_map<std::string, int> map;
+        map["hello"] = 1;
+        map["world"] = 2;
+        map["!"] = 3;
+        glob.encode(map);
+        
+        decltype(map) map_read;
+        glob.decode(map_read);
+        ASSERT_EQ(map, map_read);
+    }
+}
+TEST(SerializerTest, WriteReadSets) {
+    {
+        Glob glob;
+        std::set<int> set;
+        set.insert(2);
+        set.insert(3);
+        set.insert(5);
+        set.insert(7);
+        glob.encode(set);
+        
+        decltype(set) set_read;
+        glob.decode(set_read);
+        ASSERT_EQ(set, set_read);
+    }
+    {
+        Glob glob;
+        std::unordered_set<int> set;
+        set.insert(2);
+        set.insert(3);
+        set.insert(5);
+        set.insert(7);
+        glob.encode(set);
+        
+        decltype(set) set_read;
+        glob.decode(set_read);
+        ASSERT_EQ(set, set_read);
+    }
 }
