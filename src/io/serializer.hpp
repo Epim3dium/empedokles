@@ -3,11 +3,7 @@
 #include <unistd.h>
 #include <cstddef>
 #include <cstdint>
-#include <map>
-#include <set>
-#include <unordered_set>
 #include <vector>
-#include "math/math_defs.hpp"
 #include "math/shapes/AABB.hpp"
 namespace emp {
 typedef uint8_t byte;
@@ -56,9 +52,13 @@ public:
 };
 template<class T>
 struct SerialConvert {
-    static_assert(false);
-    void encode(const T& var, IGlobWriter& writer) {}
-    void decode(T& var, IGlobReader& reader) {}
+    static_assert(std::is_trivially_copyable_v<T> == true && std::is_fundamental<T>::value == true);
+    void encode(const T& var, IGlobWriter& writer) {
+        writer.copy(&var, sizeof(T));
+    }
+    void decode(T& var, IGlobReader& reader) {
+        var = *(T*)reader.get(sizeof(T));
+    }
 };
 template<class T>
 void IGlobWriter::encode(const T& var) {
@@ -70,56 +70,6 @@ void IGlobReader::decode(T& var) {
 }
 
 
-template<>
-struct SerialConvert<float> {
-    void encode(const float& var, IGlobWriter& writer);
-    void decode(float& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<int32_t> {
-    void encode(const int32_t& var, IGlobWriter& writer);
-    void decode(int32_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<uint32_t> {
-    void encode(const uint32_t& var, IGlobWriter& writer);
-    void decode(uint32_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<int64_t> {
-    void encode(const int64_t& var, IGlobWriter& writer);
-    void decode(int64_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<uint64_t> {
-    void encode(const uint64_t& var, IGlobWriter& writer);
-    void decode(uint64_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<int8_t> {
-    void encode(const int8_t& var, IGlobWriter& writer);
-    void decode(int8_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<uint8_t> {
-    void encode(const uint8_t& var, IGlobWriter& writer);
-    void decode(uint8_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<char> {
-    void encode(const char& var, IGlobWriter& writer);
-    void decode(char& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<size_t> {
-    void encode(const size_t& var, IGlobWriter& writer);
-    void decode(size_t& var, IGlobReader& reader);
-};
-template<>
-struct SerialConvert<bool> {
-    void encode(const bool& var, IGlobWriter& writer);
-    void decode(bool& var, IGlobReader& reader);
-};
 template<>
 struct SerialConvert<AABB> {
     void encode(const AABB& var, IGlobWriter& writer);

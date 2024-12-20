@@ -16,23 +16,23 @@ void* Glob::get(size_t size) {
     read_next += size;
     return result;
 }
-#define SIMPLE_ENCODE_DECODE(type)\
-void SerialConvert<type>::encode(const type& var, IGlobWriter& writer) {\
-    writer.copy(&var, sizeof(type));\
-}\
-void SerialConvert<type>::decode(type& var, IGlobReader& reader) {\
-    var = *(type*)reader.get(sizeof(type));\
-}
-SIMPLE_ENCODE_DECODE(float)
-SIMPLE_ENCODE_DECODE(int64_t)
-SIMPLE_ENCODE_DECODE(uint64_t)
-SIMPLE_ENCODE_DECODE(int32_t)
-SIMPLE_ENCODE_DECODE(uint32_t)
-SIMPLE_ENCODE_DECODE(uint8_t)
-SIMPLE_ENCODE_DECODE(int8_t)
-SIMPLE_ENCODE_DECODE(char)
-SIMPLE_ENCODE_DECODE(size_t)
-SIMPLE_ENCODE_DECODE(bool)
+// #define SIMPLE_ENCODE_DECODE(type)\
+// void SerialConvert<type>::encode(const type& var, IGlobWriter& writer) {\
+//     writer.copy(&var, sizeof(type));\
+// }\
+// void SerialConvert<type>::decode(type& var, IGlobReader& reader) {\
+//     var = *(type*)reader.get(sizeof(type));\
+// }
+// SIMPLE_ENCODE_DECODE(float)
+// SIMPLE_ENCODE_DECODE(int64_t)
+// SIMPLE_ENCODE_DECODE(uint64_t)
+// SIMPLE_ENCODE_DECODE(int32_t)
+// SIMPLE_ENCODE_DECODE(uint32_t)
+// SIMPLE_ENCODE_DECODE(uint8_t)
+// SIMPLE_ENCODE_DECODE(int8_t)
+// SIMPLE_ENCODE_DECODE(char)
+// SIMPLE_ENCODE_DECODE(size_t)
+// SIMPLE_ENCODE_DECODE(bool)
 
 void SerialConvert<AABB>::encode(const AABB& var, IGlobWriter& writer) {
     writer.encode(var.min);
