@@ -38,10 +38,12 @@ RelativePointer<T>::RelativePointer(T* raw) {
 template<typename T>
 RelativePointer<T>& RelativePointer<T>::operator= (const RelativePointer<T>& other) {
     set(other.get());
+    return *this;
 }
 template<typename T>
 RelativePointer<T>& RelativePointer<T>::operator= (T* raw) {
     set(raw);
+    return *this;
 }
 template<typename T>
 bool RelativePointer<T>::is_equal(const RelativePointer& other) const {
