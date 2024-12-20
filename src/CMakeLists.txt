@@ -115,6 +115,7 @@ set(HEADER_FILES
     templates/disjoint_set.hpp
     templates/free_list.hpp
     templates/finite_state_machine.hpp
+    templates/relative_vector.hpp
 
     debug/log.hpp
     debug/debug.hpp
