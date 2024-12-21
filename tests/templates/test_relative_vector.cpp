@@ -73,3 +73,12 @@ TEST(RelativeVectorTest, UpSizing) {
     ASSERT_EQ(8, vec.size());
     ASSERT_NO_THROW(vec[6]);
 }
+TEST(RelativeVectorTest, STDVectorIntegration) {
+    std::vector<int> vec = {1, 2, 3, 4};
+    RelativeVector<int> rel_vec = vec;
+    ASSERT_EQ(4, rel_vec.size());
+    ASSERT_EQ(1, rel_vec[0]);
+    ASSERT_EQ(2, rel_vec[1]);
+    ASSERT_EQ(3, rel_vec[2]);
+    ASSERT_EQ(4, rel_vec[3]);
+}
