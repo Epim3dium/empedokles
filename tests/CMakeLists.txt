@@ -5,6 +5,7 @@ add_executable(
     io/test_serializer.cpp
     memory/test_relative_pointer.cpp
     templates/test_relative_vector.cpp
+    templates/test_relative_string.cpp
     math/test_geometry.cpp
     math/test_math.cpp
 )
