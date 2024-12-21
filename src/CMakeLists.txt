@@ -116,6 +116,7 @@ set(HEADER_FILES
     templates/free_list.hpp
     templates/finite_state_machine.hpp
     templates/relative_vector.hpp
+    templates/relative_string.hpp
 
     debug/log.hpp
     debug/debug.hpp
