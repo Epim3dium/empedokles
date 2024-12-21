@@ -1,6 +1,7 @@
 
 #ifndef EMP_RELATIVE_VECTOR
 #define EMP_RELATIVE_VECTOR
+#include <cstring>
 #include <initializer_list>
 #include <stdexcept>
 #include "memory/relative_pointer.hpp"
@@ -37,6 +38,11 @@ public:
             push_back(elem);
         }
     }
+    RelativeVector(const std::vector<T>& vector)
+        : m_data(new T[vector.size()]), m_capacity(vector.size()), m_size(vector.size()) 
+    {
+        memcpy(m_data, vector.data(), sizeof(T) * m_size);
+    }
 
     ~RelativeVector() {
         delete[] m_data;
@@ -56,6 +62,15 @@ public:
     }
     size_t size() const {
         return m_size;
+    }
+    size_t capacity() const {
+        return m_capacity;
+    }
+    void reserve(size_t extra_space) {
+        if(m_size + extra_space <= m_capacity)
+            return;
+        //reserve exactly what the user needs
+        increase_capacity(m_size + extra_space);
     }
 
     bool empty() const {
