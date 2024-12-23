@@ -2,21 +2,22 @@
 #define EMP_RELATIVE_POINTER
 #include <cstdint>
 namespace emp {
+typedef uint64_t offset_t;
 template <class T>
 struct RelativePointer {
     T* get() const;
 
     bool is_equal(const RelativePointer& other) const;
-    bool is_null() const;
-    bool is_not_null() const;
+    bool is_null() const ;
+    bool is_not_null() const ;
 
     // Operator overloading to give a cleaner interface
     T* operator->() const;
     T& operator*() const;
     operator T*() const;
     
-    void set(void* raw_pointer);
-    void set_null();
+    void set(void* raw_pointer) ;
+    void set_null() ;
 
     RelativePointer& operator= (T*);
     RelativePointer& operator= (const RelativePointer&);
@@ -25,7 +26,7 @@ struct RelativePointer {
     RelativePointer(T*);
     RelativePointer(const RelativePointer&);
 
-    uint64_t offset;
+    offset_t offset;
 };
 template<typename T>
 RelativePointer<T>::RelativePointer(const RelativePointer<T>& other) {
