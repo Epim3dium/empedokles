@@ -69,9 +69,8 @@ TEST(SerializerTest, WriteReadString) {
     ASSERT_EQ(str, str_read);
 }
 TEST(SerializerTest, WriteReadMaps) {
-    {
+    auto insertAndTest = [](auto map) {
         Glob glob;
-        std::map<std::string, int> map;
         map["hello"] = 1;
         map["world"] = 2;
         map["!"] = 3;
@@ -80,24 +79,15 @@ TEST(SerializerTest, WriteReadMaps) {
         decltype(map) map_read;
         glob.decode(map_read);
         ASSERT_EQ(map, map_read);
-    }
-    {
-        Glob glob;
-        std::unordered_map<std::string, int> map;
-        map["hello"] = 1;
-        map["world"] = 2;
-        map["!"] = 3;
-        glob.encode(map);
-        
-        decltype(map) map_read;
-        glob.decode(map_read);
-        ASSERT_EQ(map, map_read);
-    }
+        ASSERT_EQ(3, map.at("!"));
+    };
+    
+    insertAndTest(std::map<std::string, int>());
+    insertAndTest(std::unordered_map<std::string, int>());
 }
 TEST(SerializerTest, WriteReadSets) {
-    {
+    auto insertAndTest = [](auto set) {
         Glob glob;
-        std::set<int> set;
         set.insert(2);
         set.insert(3);
         set.insert(5);
@@ -107,18 +97,8 @@ TEST(SerializerTest, WriteReadSets) {
         decltype(set) set_read;
         glob.decode(set_read);
         ASSERT_EQ(set, set_read);
-    }
-    {
-        Glob glob;
-        std::unordered_set<int> set;
-        set.insert(2);
-        set.insert(3);
-        set.insert(5);
-        set.insert(7);
-        glob.encode(set);
-        
-        decltype(set) set_read;
-        glob.decode(set_read);
-        ASSERT_EQ(set, set_read);
-    }
+        ASSERT_TRUE(set.contains(5));
+    };
+    insertAndTest(std::set<int>());
+    insertAndTest(std::unordered_set<int>());
 }
