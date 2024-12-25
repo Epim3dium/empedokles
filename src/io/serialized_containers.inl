@@ -42,7 +42,6 @@ struct SerialConvert<std::array<T, Size>> {
 template<class U>
 struct SerialConvert<std::vector<U>> {
     void encode(const std::vector<U>& var, IGlobWriter& writer) {
-        writer.markNotMappable();
         writer.encode(var.size());
         for(int i = 0; i < var.size(); i++) {
             writer.encode(var[i]);
@@ -59,7 +58,6 @@ struct SerialConvert<std::vector<U>> {
 };
 template<class Map>
 void encodeMap(const Map& var, IGlobWriter& writer) {
-    writer.markNotMappable();
     writer.encode(var.size());
     for(auto [key, value] : var) {
         writer.encode(key);
@@ -98,7 +96,6 @@ struct SerialConvert<std::unordered_map<K, V>> {
 };
 template<class Set>
 void encodeSet(const Set& var, IGlobWriter& writer) {
-    writer.markNotMappable();
     writer.encode(var.size());
     for(auto key : var) {
         writer.encode(key);

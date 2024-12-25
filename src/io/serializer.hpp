@@ -8,12 +8,9 @@
 namespace emp {
 typedef uint8_t byte;
 class IGlobWriter {
-    bool m_isMappable = true;
     uint32_t m_version = 0;
 public:
     uint32_t version() const { return m_version; }
-    bool isMappable() const { return m_isMappable; }
-    void markNotMappable() { m_isMappable = false; }
 
     virtual void copy(const void* source, size_t size) = 0;
 

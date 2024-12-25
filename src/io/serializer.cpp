@@ -43,7 +43,6 @@ void SerialConvert<AABB>::decode(AABB& var, IGlobReader& reader) {
     reader.decode(var.max);
 }
 void SerialConvert<std::string>::encode(const std::string& var, IGlobWriter& writer) {
-    writer.markNotMappable();
     writer.encode(var.size());
     for(int i = 0; i < var.size(); i++) {
         writer.encode(var[i]);
@@ -51,9 +50,12 @@ void SerialConvert<std::string>::encode(const std::string& var, IGlobWriter& wri
 }
 void SerialConvert<std::string>::decode(std::string& var, IGlobReader& reader) {
     size_t size;
-    reader.decode(size); var.resize(size);
-    for(int i = 0; i < var.size(); i++) {
-        reader.decode(var[i]);
-    }
+    reader.decode(size); 
+    var.resize(size);
+    if(size == 0) return;
+    memcpy(&var[0], reader.get(size), size * sizeof(char));
+    // for(int i = 0; i < var.size(); i++) {
+    //     reader.decode(var[i]);
+    // }
 }
 }
