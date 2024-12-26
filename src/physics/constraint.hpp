@@ -11,8 +11,8 @@
 #include "physics/rigidbody.hpp"
 #include "scene/transform.hpp"
 namespace emp {
-enum class eConstraintType {
-    Undefined,
+enum eConstraintType : int {
+    Undefined = 0,
     SwivelPoint, // 2bodies
     SwivelPointAnchored, // 2bodies
 };
