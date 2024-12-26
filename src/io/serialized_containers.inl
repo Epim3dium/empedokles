@@ -25,6 +25,23 @@ struct SerialConvert<glm::vec<L, T>> {
         }
     }
 };
+template<glm::length_t C, glm::length_t R, typename T>
+struct SerialConvert<glm::mat<C, R, T>> {
+    void encode(const glm::mat<C, R, T>& var, IGlobWriter& writer) {
+        for(int i = 0; i < C; i++) {
+            for(int ii = 0; ii < R; ii++) {
+                writer.encode(var[i][ii]);
+            }
+        }
+    }
+    void decode(glm::mat<C, R, T>& var, IGlobReader& reader) {
+        for(int i = 0; i < C; i++) {
+            for(int ii = 0; ii < R; ii++) {
+                reader.decode(var[i][ii]);
+            }
+        }
+    }
+};
 
 template<class T, size_t Size>
 struct SerialConvert<std::array<T, Size>> {
@@ -56,12 +73,22 @@ struct SerialConvert<std::vector<U>> {
         }
     }
 };
+template<class T1, class T2>
+struct SerialConvert<std::pair<T1, T2>> {
+    void encode(const std::pair<T1, T2>& var, IGlobWriter& writer) {
+        writer.encode(var.first);
+        writer.encode(var.second);
+    }
+    void decode(std::pair<T1, T2>& var, IGlobReader& reader) {
+        reader.decode(var.first);
+        reader.decode(var.second);
+    }
+};
 template<class Map>
 void encodeMap(const Map& var, IGlobWriter& writer) {
     writer.encode(var.size());
-    for(auto [key, value] : var) {
-        writer.encode(key);
-        writer.encode(value);
+    for(auto row : var) {
+        writer.encode(row);
     }
 }
 template<class Map, class Key, class Value>
@@ -69,11 +96,9 @@ void decodeMap(Map& var, IGlobReader& reader) {
     size_t size;
     reader.decode(size);
     for(int i = 0; i < size; i++) {
-        Key key;
-        Value value;
-        reader.decode(key);
-        reader.decode(value);
-        var.insert({key, value});
+        std::pair<Key, Value> row;
+        reader.decode(row);
+        var.insert({row.first, row.second});
     }
 }
 template<class K, class V>
