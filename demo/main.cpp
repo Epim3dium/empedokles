@@ -164,9 +164,6 @@ void Demo::onSetup(Window& window, Device& device) {
         ECS.addComponent(
                 platform, Transform(o.first, o.second, {getWidth() / cube_side_len, 1.f})
         );
-        auto db_shape = DebugShape(device, cube_model_shape);
-        db_shape.fill_color *= 0.5f;
-        ECS.addComponent(platform, db_shape);
         auto col = Collider(cube_model_shape);
         col.collider_layer = GROUND;
         ECS.addComponent(platform, col);
@@ -269,16 +266,8 @@ void Demo::onRender(Device&, const FrameInfo& frame) {
 void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& controller) 
 {
     auto& phy_sys = *ECS.getSystem<PhysicsSystem>();
-    for(auto e : phy_sys.getEntities()) {
-        if(!ECS.getComponent<DebugShape>(e)) {
-            continue;
-        }
-    }
-    int i = 0;
-    {
-        ECS.getComponent<Transform>(mouse_entity)->position =
-                controller.global_mouse_pos();
-    }
+    ECS.getComponent<Transform>(mouse_entity)->position =
+        controller.global_mouse_pos();
     if(ECS.isEntityAlive(protagonist)){
         isProtagonistGroundedSec += delta_time;
         if(isProtagonistGrounded) {
@@ -315,7 +304,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     if (controller.get(eKeyMappings::Ability1).pressed) {
         last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
-        Rigidbody rb; rb.useAutomaticMass = true;
+        Rigidbody rb;
         auto col = Collider(cube_model_shape); col.collider_layer = ITEM;
         auto entity = ECS.createEntity();
         gui_manager.alias(entity, "cube");

@@ -3,7 +3,6 @@
 #include "compute/compute_manager.hpp"
 #include "core/coordinator.hpp"
 #include "graphics/camera.hpp"
-#include "graphics/debug_shape_system.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"

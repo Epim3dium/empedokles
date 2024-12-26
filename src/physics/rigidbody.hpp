@@ -46,7 +46,8 @@ public:
     }
     float generalizedInverseMass(vec2f radius, vec2f normal) const;
 
-    Rigidbody(bool is_static = false, bool is_rot_locked = false, bool use_automatic_mass = true, float density = 1.f);
+    Rigidbody() {}
+    Rigidbody(bool is_static, bool is_rot_locked = false, bool use_automatic_mass = true, float density = 1.f);
     friend RigidbodySystem;
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {

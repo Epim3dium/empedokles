@@ -84,7 +84,6 @@ void App::run() {
     auto& constraint_sys = *ECS.getSystem<ConstraintSystem>();
     auto& collider_sys = *ECS.getSystem<ColliderSystem>();
 
-    auto& debugshape_sys = *ECS.getSystem<DebugShapeSystem>();
     auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
 
 #if EMP_ENABLE_RENDER_THREAD || EMP_ENABLE_PHYSICS_THREAD
@@ -297,20 +296,16 @@ void App::renderFrame(
                 *context.ubo_buffers[frame_index],
                 *context.ubo_compute_buffers[frame_index]);
 
-            auto& debugshape_sys = *ECS.getSystem<DebugShapeSystem>();
             auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
             auto& animated_sprite_sys = *ECS.getSystem<AnimatedSpriteSystem>();
 
             // models_sys->updateBuffer(frameIndex);
-            debugshape_sys.updateBuffer(frame_index);
             sprite_sys.updateBuffer(frame_index);
             animated_sprite_sys.updateTransitions(delta_time);
             animated_sprite_sys.updateBuffer(frame_index);
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
 
-                debugshape_sys.render(frame_info, *renderer_context.debugShape_rend_sys);
-                debugshape_sys.render(frame_info, *renderer_context.debugShapeOutline_rend_sys);
                 sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
                 animated_sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
                 renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);

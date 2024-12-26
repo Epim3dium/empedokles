@@ -44,8 +44,6 @@ set(SOURCE_FILES
 
     graphics/camera.cpp
     graphics/model_system.cpp
-    graphics/debug_shape.cpp
-    graphics/debug_shape_system.cpp
     graphics/vertex.cpp
     graphics/model.cpp
     graphics/renderer.cpp
@@ -141,8 +139,6 @@ set(HEADER_FILES
     graphics/camera.hpp
     graphics/frame_info.hpp
     graphics/model_system.hpp
-    graphics/debug_shape.hpp
-    graphics/debug_shape_system.hpp
     graphics/vertex.hpp
     graphics/model.hpp
     graphics/renderer.hpp

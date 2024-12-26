@@ -3,8 +3,6 @@
 #include "core/coordinator.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "graphics/animated_sprite_system.hpp"
-#include "graphics/debug_shape.hpp"
-#include "graphics/debug_shape_system.hpp"
 #include "graphics/model.hpp"
 #include "graphics/sprite_system.hpp"
 #include "graphics/texture.hpp"
@@ -18,14 +16,14 @@
 namespace emp {
     struct Device;
 
-    typedef TypePack<Transform,
+    typedef TypePack<
+        Transform,
         Behaviour,
         Constraint,
         Material,
         Collider,
         Rigidbody,
         Model,
-        DebugShape,
         Sprite,
         AnimatedSprite> AllComponentTypes;
 
