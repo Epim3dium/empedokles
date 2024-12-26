@@ -36,15 +36,19 @@ class Glob : public IGlobWriter, public IGlobReader {
     std::vector<byte> data;
     static constexpr uint32_t current_version =  1;
 public:
+    struct Header {
+        uint32_t version;
+        char reserved[12];
+    };
     void copy(const void* source, size_t size) override;
     void* get(size_t size) override;
 
     //initialize to current version if initializing from memory
     Glob() : IGlobWriter(current_version), IGlobReader(current_version) {
         //load to data current version
-        uint32_t dummy;
-        encode(current_version);
-        decode(dummy);
+        Header header {current_version};
+        encode(header);
+        decode(header);
     }
 };
 template<class T>
@@ -66,6 +70,11 @@ void IGlobReader::decode(T& var) {
     SerialConvert<T>().decode(var, *this);
 }
 
+template<>
+struct SerialConvert<Glob::Header> {
+    void encode(const Glob::Header& var, IGlobWriter& writer);
+    void decode(Glob::Header& var, IGlobReader& reader);
+};
 
 template<>
 struct SerialConvert<AABB> {
@@ -77,6 +86,7 @@ struct SerialConvert<std::string> {
     void encode(const std::string& var, IGlobWriter& writer);
     void decode(std::string& var, IGlobReader& reader);
 };
+
 }
 #include "serialized_containers.inl"
 #endif

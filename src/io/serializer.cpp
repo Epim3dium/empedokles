@@ -23,17 +23,14 @@ void* Glob::get(size_t size) {
 // void SerialConvert<type>::decode(type& var, IGlobReader& reader) {\
 //     var = *(type*)reader.get(sizeof(type));\
 // }
-// SIMPLE_ENCODE_DECODE(float)
-// SIMPLE_ENCODE_DECODE(int64_t)
-// SIMPLE_ENCODE_DECODE(uint64_t)
-// SIMPLE_ENCODE_DECODE(int32_t)
-// SIMPLE_ENCODE_DECODE(uint32_t)
-// SIMPLE_ENCODE_DECODE(uint8_t)
-// SIMPLE_ENCODE_DECODE(int8_t)
-// SIMPLE_ENCODE_DECODE(char)
-// SIMPLE_ENCODE_DECODE(size_t)
-// SIMPLE_ENCODE_DECODE(bool)
 
+void SerialConvert<Glob::Header>::encode(const Glob::Header& var, IGlobWriter& writer) {
+    writer.copy(&var, sizeof(Glob::Header));
+}
+void SerialConvert<Glob::Header>::decode(Glob::Header& var, IGlobReader& reader) {
+    typedef Glob::Header Hdr;
+    var = *(Hdr*)reader.get(sizeof(Hdr));
+}
 void SerialConvert<AABB>::encode(const AABB& var, IGlobWriter& writer) {
     writer.encode(var.min);
     writer.encode(var.max);
@@ -52,10 +49,8 @@ void SerialConvert<std::string>::decode(std::string& var, IGlobReader& reader) {
     size_t size;
     reader.decode(size); 
     var.resize(size);
-    if(size == 0) return;
-    memcpy(&var[0], reader.get(size), size * sizeof(char));
-    // for(int i = 0; i < var.size(); i++) {
-    //     reader.decode(var[i]);
-    // }
+    for(int i = 0; i < var.size(); i++) {
+        reader.decode(var[i]);
+    }
 }
 }
