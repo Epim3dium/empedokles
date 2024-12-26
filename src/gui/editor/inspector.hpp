@@ -105,12 +105,6 @@ class Inspector {
         ImGui::DragFloat("angular_vel", &rigidbody.angular_velocity, M_PI / 50.f);
     }
     template<> 
-    void inspect<DebugShape>(Entity e, DebugShape& shape) {
-        ImGui::ColorEdit4("shape fill color", VecToPtr(shape.fill_color));
-        ImGui::ColorEdit4("shape outline color", VecToPtr(shape.outline_color));
-        ImGui::SliderFloat("outline width", &shape.outline_width, 0.f, 20.f);
-    }
-    template<> 
     void inspect<AnimatedSprite>(Entity e, AnimatedSprite& sprite) {
         ImGui::Checkbox("flip horizontal", &sprite.flipX);
         ImGui::Checkbox("flip vertical", &sprite.flipY);
