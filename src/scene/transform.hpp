@@ -4,6 +4,7 @@
 #include "core/coordinator.hpp"
 #include "core/system.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
+#include "io/serializer.hpp"
 #include "math/math_defs.hpp"
 
 namespace emp {
@@ -50,6 +51,7 @@ public:
           : Transform(Coordinator::world(), pos, rot, s) {}
 
     friend TransformSystem;
+    friend SerialConvert<Transform>;
 };
 class TransformSystem : public System<Transform> {
 public:
