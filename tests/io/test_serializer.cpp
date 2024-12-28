@@ -61,7 +61,7 @@ TEST(SerializerTest, EncodeDecodeArrays) {
     std::array<int, 4> arr = {1, 2, 3, 4};
     glob.encode(arr);
 
-    std::array<int, 4> arr_read;
+    std::array<int, 4> arr_read = {-1};
     glob.decode(arr_read);
     for(int i = 0; i < arr.size(); i++) {
         ASSERT_EQ(arr[i], arr_read[i]);
@@ -72,7 +72,7 @@ TEST(SerializerTest, EncodeDecodeVectors) {
     std::vector<int> vec = {1, 2, 3, 4};
     glob.encode(vec);
     
-    std::vector<int> vec_read;
+    std::vector<int> vec_read = {-1};
     glob.decode(vec_read);
     for(int i = 0; i < vec.size(); i++) {
         ASSERT_EQ(vec[i], vec_read[i]);
@@ -86,7 +86,7 @@ TEST(SerializerTest, EncodeDecodeVectors) {
         {0.25f, 1.f, 1.f, 1.75f}
     };
     glob.encode(vecVec);
-    std::vector< std::vector< float > > vecVec_read;
+    std::vector< std::vector< float > > vecVec_read {{-1}};
     glob.encode(vecVec);
 
     glob.decode(vecVec_read);
@@ -111,7 +111,7 @@ TEST(SerializerTest, EncodeDecodeMaps) {
         map["!"] = 3;
         glob.encode(map);
         
-        decltype(map) map_read;
+        decltype(map) map_read = {{"h", -1}};
         glob.decode(map_read);
         ASSERT_EQ(map, map_read);
         ASSERT_EQ(3, map.at("!"));
@@ -129,7 +129,7 @@ TEST(SerializerTest, EncodeDecodeSets) {
         set.insert(7);
         glob.encode(set);
         
-        decltype(set) set_read;
+        decltype(set) set_read = {-1};
         glob.decode(set_read);
         ASSERT_EQ(set, set_read);
         ASSERT_TRUE(set.contains(5));
