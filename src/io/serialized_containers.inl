@@ -95,6 +95,7 @@ template<class Map, class Key, class Value>
 void decodeMap(Map& var, IGlobReader& reader) {
     size_t size;
     reader.decode(size);
+    var.clear();
     for(int i = 0; i < size; i++) {
         std::pair<Key, Value> row;
         reader.decode(row);
@@ -130,6 +131,7 @@ template<class Set, class Key>
 void decodeSet(Set& var, IGlobReader& reader) {
     size_t size;
     reader.decode(size);
+    var.clear();
     for(int i = 0; i < size; i++) {
         Key key;
         reader.decode(key);
