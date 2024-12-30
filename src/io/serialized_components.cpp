@@ -1,4 +1,5 @@
 #include "serialized_components.hpp"
+#include <cstring>
 namespace emp {
 void SerialConvert<Transform>::encode(const Transform& var, IGlobWriter& writer) {
     writer.encode(var.m_local_transform);
@@ -22,8 +23,20 @@ void SerialConvert<Transform>::decode(Transform& var, IGlobReader& reader) {
 }
 
 void SerialConvert<Constraint>::encode(const Constraint& var, IGlobWriter& writer) {
+    writer.encode(var.entity_list);
+    writer.encode(var.compliance);
+    writer.encode(var.damping);
+    writer.encode(var.enabled_collision_between_bodies);
+    writer.encode(*(int*)&var.type);
+    writer.copy(&var.data, sizeof(var.data));
 }
 void SerialConvert<Constraint>::decode(Constraint& var, IGlobReader& reader) {
+    reader.decode(var.entity_list);
+    reader.decode(var.compliance);
+    reader.decode(var.damping);
+    reader.decode(var.enabled_collision_between_bodies);
+    reader.decode(*(int*)&var.type);
+    memcpy(&var.data, reader.get(sizeof(var.data)), sizeof(var.data));
 }
 
 void SerialConvert<Material>::encode(const Material& var, IGlobWriter& writer) {
