@@ -40,8 +40,16 @@ void SerialConvert<Constraint>::decode(Constraint& var, IGlobReader& reader) {
 }
 
 void SerialConvert<Material>::encode(const Material& var, IGlobWriter& writer) {
+    writer.encode(var.static_friction);
+    writer.encode(var.dynamic_friction);
+    writer.encode(var.restitution);
+    writer.encode(var.air_friction);
 }
 void SerialConvert<Material>::decode(Material& var, IGlobReader& reader) {
+    reader.decode(var.static_friction);
+    reader.decode(var.dynamic_friction);
+    reader.decode(var.restitution);
+    reader.decode(var.air_friction);
 }
 
 void SerialConvert<Collider>::encode(const Collider& var, IGlobWriter& writer) {
