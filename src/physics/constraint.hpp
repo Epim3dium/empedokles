@@ -72,7 +72,7 @@ struct Constraint {
             vec2f pinch_point_model1;
             vec2f pinch_point_model2;
         } swivel_dynamic;
-    };
+    }data;
     struct Builder {
     private:
         std::pair<Entity, const Transform*> anchor = {-1, nullptr};

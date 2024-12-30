@@ -149,8 +149,8 @@ Constraint Builder::build() {
                 point_rel2 = global_point - entity_list.back().second->position;
                 point_rel2 = rotate(point_rel2, -entity_list.back().second->rotation);
             }
-            result.swivel_anchored.anchor_point_model = point_rel1;
-            result.swivel_anchored.pinch_point_model = point_rel2;
+            result.data.swivel_anchored.anchor_point_model = point_rel1;
+            result.data.swivel_anchored.pinch_point_model = point_rel2;
         break;
         case eConstraintType::SwivelPoint:
             assert(!usingAnchor && entity_list.size() == 2);
@@ -160,8 +160,8 @@ Constraint Builder::build() {
                 point_rel2 = global_point - entity_list.back().second->position;
                 point_rel2 = rotate(point_rel2, -entity_list.back().second->rotation);
             }
-            result.swivel_dynamic.pinch_point_model1 = point_rel1;
-            result.swivel_dynamic.pinch_point_model2 = point_rel2;
+            result.data.swivel_dynamic.pinch_point_model1 = point_rel1;
+            result.data.swivel_dynamic.pinch_point_model2 = point_rel2;
         break;
         default:
         break;
@@ -184,8 +184,8 @@ void Constraint::m_solvePointSwivel(float delta_time, Coordinator& ECS) {
     const vec2f& pos1 = transform1.position;
     const vec2f& pos2 = transform2.position;
 
-    const auto dynamic_pinch1 = rotate(swivel_dynamic.pinch_point_model1, transform1.rotation);
-    const auto dynamic_pinch2 = rotate(swivel_dynamic.pinch_point_model2, transform2.rotation);
+    const auto dynamic_pinch1 = rotate(data.swivel_dynamic.pinch_point_model1, transform1.rotation);
+    const auto dynamic_pinch2 = rotate(data.swivel_dynamic.pinch_point_model2, transform2.rotation);
     auto dynamic_point1 = (pos1 + dynamic_pinch1);
     auto dynamic_point2 = (pos2 + dynamic_pinch2);
     auto diff = dynamic_point1 - dynamic_point2;
@@ -221,15 +221,15 @@ void Constraint::m_solvePointAnchor(float delta_time, Coordinator& ECS) {
     assert(ECS.hasComponent<Transform>(dynamic_entity));
     assert(ECS.hasComponent<Rigidbody>(dynamic_entity));
 
-    auto target = swivel_anchored.anchor_point_model;
+    auto target = data.swivel_anchored.anchor_point_model;
     const auto& anchor_trans = *ECS.getComponent<Transform>(anchor_entity);
     auto& dynamic_trans = *ECS.getComponent<Transform>(dynamic_entity);
     auto& rigidbody = *ECS.getComponent<Rigidbody>(dynamic_entity);
 
     const vec2f& pos1 = anchor_trans.position;
     const vec2f& pos2 = dynamic_trans.position;
-    auto anchor_point = pos1 + rotate(swivel_anchored.anchor_point_model, anchor_trans.rotation);
-    auto dynamic_pinch = rotate(swivel_anchored.pinch_point_model, dynamic_trans.rotation);
+    auto anchor_point = pos1 + rotate(data.swivel_anchored.anchor_point_model, anchor_trans.rotation);
+    auto dynamic_pinch = rotate(data.swivel_anchored.pinch_point_model, dynamic_trans.rotation);
     auto dynamic_point = (pos2 + dynamic_pinch);
     auto diff = dynamic_point - anchor_point ;
     auto norm = normal(diff);
