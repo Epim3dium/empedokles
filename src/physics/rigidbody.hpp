@@ -1,5 +1,6 @@
 #ifndef EMP_RIGIDBODY_HPP
 #define EMP_RIGIDBODY_HPP
+#include "io/serializer.hpp"
 #include "math/math_defs.hpp"
 #include "scene/transform.hpp"
 namespace emp {
@@ -15,6 +16,18 @@ public:
     float real_inertia = 1.f;
     float real_mass = 1.f;
     float real_density = 1.f;
+
+    bool isStatic = false;
+    bool isRotationLocked = false;
+
+    bool isSleeping = false;
+    bool useAutomaticMass = true;
+
+    vec2f velocity = vec2f(0.f, 0.f);
+    vec2f force = vec2f(0.f, 0.f);
+    float angular_velocity = 0.f;
+    float torque = 0.f;
+
     inline vec2f previous_position() const {
         return prev_pos;
     }
@@ -27,16 +40,6 @@ public:
     inline float previous_angular_velocity() const {
         return isStatic ? 0.f : ang_velocity_pre_solve;
     }
-    bool isStatic = false;
-    bool isRotationLocked = false;
-
-    bool isSleeping = false;
-    bool useAutomaticMass = true;
-
-    vec2f velocity = vec2f(0.f, 0.f);
-    vec2f force = vec2f(0.f, 0.f);
-    float angular_velocity = 0.f;
-    float torque = 0.f;
 
     float inertia() const {
         return (isStatic || isRotationLocked) ? INFINITY : real_inertia;
@@ -49,6 +52,7 @@ public:
     Rigidbody() {}
     Rigidbody(bool is_static, bool is_rot_locked = false, bool use_automatic_mass = true, float density = 1.f);
     friend RigidbodySystem;
+    friend SerialConvert<Rigidbody>;
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {
 public:
