@@ -18,6 +18,10 @@ class Transform {
 
     Entity m_parent_entity;
     std::vector<Entity> m_children_entities;
+
+    vec2f m_getPosition(const TransformMatrix&) const;
+    vec2f m_getScale(const TransformMatrix&) const;
+    float m_getRotation(const TransformMatrix&) const;
 public:
     const Entity parent() const { return m_parent_entity; }
     const std::vector<Entity>& children() const { return m_children_entities; }
@@ -28,6 +32,11 @@ public:
     void setPositionNow(vec2f p);
     void setRotationNow(float r);
     void setScaleNow(vec2f s);
+
+    vec2f getGlobalPosition();
+    vec2f getGlobalScale();
+    float getGlobalRotation();
+
     void syncWithChange();
     inline const TransformMatrix& local() const {
         return m_local_transform;
