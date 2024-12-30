@@ -53,8 +53,22 @@ void SerialConvert<Material>::decode(Material& var, IGlobReader& reader) {
 }
 
 void SerialConvert<Collider>::encode(const Collider& var, IGlobWriter& writer) {
+    writer.encode(var.m_aabb);
+    writer.encode(var.m_model_outline);
+    writer.encode(var.m_model_shape);
+    writer.encode(var.m_transformed_outline);
+    writer.encode(var.m_transformed_shape);
+    writer.encode(var.collider_layer);
+    writer.encode(var.isNonMoving);
 }
 void SerialConvert<Collider>::decode(Collider& var, IGlobReader& reader) {
+    reader.decode(var.m_aabb);
+    reader.decode(var.m_model_outline);
+    reader.decode(var.m_model_shape);
+    reader.decode(var.m_transformed_outline);
+    reader.decode(var.m_transformed_shape);
+    reader.decode(var.collider_layer);
+    reader.decode(var.isNonMoving);
 }
 
 void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IGlobWriter& writer) {

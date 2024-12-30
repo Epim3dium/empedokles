@@ -4,6 +4,7 @@
 #include <vector>
 #include "core/layer.hpp"
 #include "core/system.hpp"
+#include "io/serializer.hpp"
 #include "math/math_defs.hpp"
 #include "math/shapes/AABB.hpp"
 #include "scene/transform.hpp"
@@ -62,6 +63,7 @@ public:
     }
     Collider(std::vector<vec2f> shape, bool correctCOM = false);
     friend ColliderSystem;
+    friend SerialConvert<Collider>;
 };
 
 // system for updating transfomred collider shapes
