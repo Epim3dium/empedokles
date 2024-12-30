@@ -106,9 +106,43 @@ void SerialConvert<Rigidbody>::decode(Rigidbody& var, IGlobReader& reader) {
     reader.decode(var.torque);
 }
 
+void SerialConvert<Texture>::encode(const Texture& var, IGlobWriter& writer) {
+    std::string id = var.getID();
+    writer.encode(id);
+}
+void SerialConvert<Texture>::decode(Texture& var, IGlobReader& reader) {
+    std::string id;
+    reader.decode(id);
+    var = Texture(id);
+}
+
 void SerialConvert<Sprite>::encode(const Sprite& var, IGlobWriter& writer) {
+    writer.encode(var.m_texture);
+    writer.encode(var.m_rect);
+    writer.encode(var.m_size);
+    writer.encode(var.vframes);
+    writer.encode(var.hframes);
+    writer.encode(var.frame);
+    writer.encode(var.centered);
+    writer.encode(var.flipX);
+    writer.encode(var.flipY);
+    writer.encode(var.color);
+    writer.encode(var.isOverridingColor);
+    writer.encode(var.color_override);
 }
 void SerialConvert<Sprite>::decode(Sprite& var, IGlobReader& reader) {
+    reader.decode(var.m_texture);
+    reader.decode(var.m_rect);
+    reader.decode(var.m_size);
+    reader.decode(var.vframes);
+    reader.decode(var.hframes);
+    reader.decode(var.frame);
+    reader.decode(var.centered);
+    reader.decode(var.flipX);
+    reader.decode(var.flipY);
+    reader.decode(var.color);
+    reader.decode(var.isOverridingColor);
+    reader.decode(var.color_override);
 }
 
 void SerialConvert<AnimatedSprite>::encode(const AnimatedSprite& var, IGlobWriter& writer) {

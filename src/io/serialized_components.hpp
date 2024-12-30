@@ -19,6 +19,11 @@ struct SerialConvert<Constraint> {
     void decode(Constraint& var, IGlobReader& reader);
 };
 template<>
+struct SerialConvert<Texture> {
+    void encode(const Texture& var, IGlobWriter& writer);
+    void decode(Texture& var, IGlobReader& reader);
+};
+template<>
 struct SerialConvert<Material> {
     void encode(const Material& var, IGlobWriter& writer);
     void decode(Material& var, IGlobReader& reader);
