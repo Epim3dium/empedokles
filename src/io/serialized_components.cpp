@@ -72,8 +72,38 @@ void SerialConvert<Collider>::decode(Collider& var, IGlobReader& reader) {
 }
 
 void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IGlobWriter& writer) {
+    writer.encode(var.prev_pos);
+    writer.encode(var.velocity_pre_solve);
+    writer.encode(var.prev_rot);
+    writer.encode(var.ang_velocity_pre_solve);
+    writer.encode(var.real_inertia);
+    writer.encode(var.real_mass);
+    writer.encode(var.real_density);
+    writer.encode(var.isStatic);
+    writer.encode(var.isRotationLocked);
+    writer.encode(var.isSleeping);
+    writer.encode(var.useAutomaticMass);
+    writer.encode(var.velocity);
+    writer.encode(var.force);
+    writer.encode(var.angular_velocity);
+    writer.encode(var.torque);
 }
 void SerialConvert<Rigidbody>::decode(Rigidbody& var, IGlobReader& reader) {
+    reader.decode(var.prev_pos);
+    reader.decode(var.velocity_pre_solve);
+    reader.decode(var.prev_rot);
+    reader.decode(var.ang_velocity_pre_solve);
+    reader.decode(var.real_inertia);
+    reader.decode(var.real_mass);
+    reader.decode(var.real_density);
+    reader.decode(var.isStatic);
+    reader.decode(var.isRotationLocked);
+    reader.decode(var.isSleeping);
+    reader.decode(var.useAutomaticMass);
+    reader.decode(var.velocity);
+    reader.decode(var.force);
+    reader.decode(var.angular_velocity);
+    reader.decode(var.torque);
 }
 
 void SerialConvert<Sprite>::encode(const Sprite& var, IGlobWriter& writer) {
