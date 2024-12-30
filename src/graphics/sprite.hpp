@@ -2,6 +2,7 @@
 #define EMP_SPRITE_HPP
 #include "graphics/texture.hpp"
 #include "graphics/vertex.hpp"
+#include "io/serializer.hpp"
 #include "math/shapes/AABB.hpp"
 namespace emp {
 struct Sprite {
@@ -14,9 +15,6 @@ public:
     int vframes = 1;
     // number of columns in texture
     int hframes = 1;
-    inline int frameCount() const {
-        return vframes * hframes;
-    }
 
     int frame = 0;
 
@@ -29,6 +27,10 @@ public:
 
     bool isOverridingColor = false;
     glm::vec4 color_override = {1, 1, 1, 1};
+
+    inline int frameCount() const {
+        return vframes * hframes;
+    }
 
     AABB rect() const;
     AABB shader_rect() const;
@@ -65,6 +67,7 @@ public:
     static void init(Device& device);
     static void bind(VkCommandBuffer commandBuffer);
     static void draw(VkCommandBuffer commandBuffer);
+    friend SerialConvert<Sprite>;
 };
 }; // namespace emp
 #endif
