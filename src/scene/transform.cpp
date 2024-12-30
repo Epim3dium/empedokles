@@ -31,6 +31,33 @@ void Transform::setScaleNow(vec2f s) {
     scale = s;
     syncWithChange();
 }
+vec2f Transform::m_getPosition(const TransformMatrix& mat) const {
+    return {mat[3][0], mat[3][1]};
+}
+vec2f Transform::m_getScale(const TransformMatrix& mat) const {
+    vec2f s;
+    s.x = glm::length(glm::vec2(mat[0][0], mat[0][1])); // Length of column 0
+    s.y = glm::length(glm::vec2(mat[1][0], mat[1][1])); // Length of column 1
+    return s;
+}
+float Transform::m_getRotation(const TransformMatrix& mat) const {
+    glm::mat4 normalizedmat = mat;
+    normalizedmat[0] = glm::vec4(glm::normalize(glm::vec2(normalizedmat[0][0], normalizedmat[0][1])), 0.0f, 0.0f);
+    normalizedmat[1] = glm::vec4(glm::normalize(glm::vec2(normalizedmat[1][0], normalizedmat[1][1])), 0.0f, 0.0f);
+
+    // Extract rotation in radians (from the angle of the first column)
+    float r = atan2(normalizedmat[0][1], normalizedmat[0][0]);
+    return r;
+}
+vec2f Transform::getGlobalPosition() {
+    return m_getPosition(m_global_transform);
+}
+vec2f Transform::getGlobalScale() {
+    return m_getScale(m_global_transform);
+}
+float Transform::getGlobalRotation() {
+    return m_getRotation(m_global_transform);
+}
 void TransformSystem::performDFS(std::function<void(Entity, Transform&)>&& action) {
     std::stack<Entity> to_process;
     to_process.push(Coordinator::world());
@@ -87,7 +114,9 @@ EMP_DEBUGCALL(
         if(parent_transform == nullptr) {
             EMP_LOG(WARNING) << "assigned a parent without transform, reassigning to world";
             transform.m_parent_entity = Coordinator::world();
-            parent_transform = ECS().getComponent<Transform>(Coordinator::world());
+            if(ECS().hasComponent<Transform>(Coordinator::world())) {
+                parent_transform = ECS().getComponent<Transform>(Coordinator::world());
+            }
         }
         parent_transform->m_children_entities.push_back(entity);
     }
