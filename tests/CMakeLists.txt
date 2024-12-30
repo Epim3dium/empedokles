@@ -8,6 +8,7 @@ add_executable(
     io/test_serializer.cpp
     math/test_geometry.cpp
     math/test_math.cpp
+    math/test_transform.cpp
 )
 # Include FetchContent module
 include(FetchContent)
