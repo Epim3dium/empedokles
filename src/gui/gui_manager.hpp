@@ -20,7 +20,7 @@ class GUIManager {
     std::set<std::string> m_names_used;
 
     Overlay m_FPS_overlay;
-    float FPS_renderer = 0, TPS_physics = 0, TPS_update = 0;
+    float renderer_time = 0, physics_time = 0, mainUpdate_time = 0;
 
     TreeView m_tree_view;
     Inspector m_inspector;
@@ -31,9 +31,10 @@ class GUIManager {
 
     void drawMainMenuBar();
 public:
-    float estimation_count = 10.f; void addRendererFPSSample(float fps);
-    void addPhysicsTPSSample(float tps);
-    void addUpdateTPSSample(float tps);
+    float estimation_count = 10.f; 
+    void addRendererTime(float time);
+    void addPhysicsTime(float time);
+    void addUpdateTime(float time);
 
     void alias(Entity entity, std::string name);
     void draw(Coordinator&, Camera&);

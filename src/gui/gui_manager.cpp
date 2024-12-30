@@ -3,22 +3,23 @@
 #include <mutex>
 #include <string>
 #include "gui/editor/inspector.hpp"
+#include "scene/scene_defs.hpp"
 namespace emp  {
-void GUIManager::addRendererFPSSample(float fps) {
+void GUIManager::addRendererTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
 
     auto frac = 1.f / estimation_count;
-    FPS_renderer = frac * fps + (1.f - frac) * FPS_renderer;
+    renderer_time = frac * time + (1.f - frac) * renderer_time;
 }
-void GUIManager::addPhysicsTPSSample(float tps) {
+void GUIManager::addPhysicsTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
     auto frac = 1.f / estimation_count;
-    TPS_physics = frac * tps + (1.f - frac) * TPS_physics;
+    physics_time = frac * time + (1.f - frac) * physics_time;
 }
-void GUIManager::addUpdateTPSSample(float tps) {
+void GUIManager::addUpdateTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
     auto frac = 1.f / estimation_count;
-    TPS_update = frac * tps + (1.f - frac) * TPS_update;
+    mainUpdate_time = frac * time + (1.f - frac) * mainUpdate_time;
 }
 void GUIManager::alias(Entity entity, std::string name) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
@@ -90,9 +91,21 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
     m_inspector.draw(m_tree_view.getSelected(), coordinator);
 
     m_FPS_overlay.draw([&](){
-        ImGui::Text("renderer FPS: %f", FPS_renderer);
-        ImGui::Text("physics  TPS: %f", TPS_physics);
-        ImGui::Text("onUpdate TPS: %f", TPS_update);
+        auto total_time = mainUpdate_time;
+        total_time += EMP_ENABLE_PHYSICS_THREAD * renderer_time;
+        total_time += EMP_ENABLE_PHYSICS_THREAD * physics_time;
+
+        if(EMP_ENABLE_RENDER_THREAD) {
+            ImGui::Text("renderer FPS: %.4g", 1.0 / renderer_time);
+        }else {
+            ImGui::Text("render time: %.4g%%", renderer_time / total_time * 100.f);
+        }
+        if(EMP_ENABLE_PHYSICS_THREAD) {
+            ImGui::Text("physics  TPS: %.4g", 1.0 / physics_time);
+        }else {
+            ImGui::Text("physics  time: %.4g%%", physics_time / total_time * 100.f);
+        }
+        ImGui::Text("mainLoop TPS: %.4g", 1.0 / mainUpdate_time);
     });
     m_visualizer.draw("visualizer", coordinator, naming_function, camera);
 }
