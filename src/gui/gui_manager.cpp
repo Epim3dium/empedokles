@@ -98,12 +98,12 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
         if(EMP_ENABLE_RENDER_THREAD) {
             ImGui::Text("renderer FPS: %.4g", 1.0 / renderer_time);
         }else {
-            ImGui::Text("render time: %.4g%%", renderer_time / total_time * 100.f);
+            ImGui::Text("render time: %.3g%%", floorf(renderer_time / total_time * 100.f));
         }
         if(EMP_ENABLE_PHYSICS_THREAD) {
             ImGui::Text("physics  TPS: %.4g", 1.0 / physics_time);
         }else {
-            ImGui::Text("physics  time: %.4g%%", physics_time / total_time * 100.f);
+            ImGui::Text("physics  time: %.3g%%", floorf(physics_time / total_time * 100.f));
         }
         ImGui::Text("mainLoop TPS: %.4g", 1.0 / mainUpdate_time);
     });
