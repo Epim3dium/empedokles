@@ -1,11 +1,11 @@
 #include "serialized_components.hpp"
 namespace emp {
 void SerialConvert<Transform>::encode(const Transform& var, IGlobWriter& writer) {
-    writer.encode(var.local());
+    writer.encode(var.m_local_transform);
     writer.encode(var.m_parents_global_transform);
-    writer.encode(var.global());
-    writer.encode(var.parent());
-    writer.encode(var.children());
+    writer.encode(var.m_global_transform);
+    writer.encode(var.m_parent_entity);
+    writer.encode(var.m_children_entities);
     writer.encode(var.position);
     writer.encode(var.rotation);
     writer.encode(var.scale);
