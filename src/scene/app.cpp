@@ -113,7 +113,7 @@ void App::run() {
 
         controller.update( window, *ECS.getComponent<Transform>(viewer_object));
 
-        gui_manager.addUpdateTPSSample(1.f / delta_time);
+        gui_manager.addUpdateTime(delta_time);
         onUpdate(delta_time, window, controller);
         {
             assert(ECS.hasComponent<Transform>(viewer_object));
@@ -144,6 +144,11 @@ void App::run() {
 #endif
         }
 #if not EMP_ENABLE_PHYSICS_THREAD
+
+        static Stopwatch physics_clock;
+        physics_clock.restart();
+        onFixedUpdate(delta_time, window, controller);
+        rigidbody_sys.updateMasses();
         physics_sys.update(
                 transform_sys,
                 collider_sys,
@@ -151,10 +156,13 @@ void App::run() {
                 constraint_sys,
                 delta_time
         );
+        gui_manager.addPhysicsTime(physics_clock.restart());
 #endif
 #if not EMP_ENABLE_RENDER_THREAD
-    renderFrame(camera,
-        delta_time);
+    static Stopwatch render_clock;
+    render_clock.restart();
+    renderFrame(camera, delta_time);
+    gui_manager.addRendererTime(render_clock.restart());
 #endif
 
         isAppRunning = isAppRunning && !window.shouldClose();
@@ -191,7 +199,7 @@ std::unique_ptr<std::thread> App::createRenderThread(
                 delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
-            gui_manager.addRendererFPSSample(1.f / delta_time);
+            gui_manager.addRendererTime(delta_time);
         }
         EMP_LOG(LogLevel::WARNING) << "rendering thread exit";
     }));
@@ -242,7 +250,7 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
                     constraint_sys,
                     delta_time
             );
-            gui_manager.addPhysicsTPSSample(1.f / delta_time);
+            gui_manager.addPhysicsTime(delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{physics thread}: " << 1.f / delta_time << " TPS";
             EMP_LOG_INTERVAL(DEBUG3, 5.f)
