@@ -36,6 +36,7 @@ class GUIManager {
     SpatialVisualizer m_visualizer;
 
     void drawMainMenuBar();
+    void drawFPSOverlay();
 public:
     void addRendererTime(float time);
     void addPhysicsTime(float time);
