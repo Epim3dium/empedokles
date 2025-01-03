@@ -2,24 +2,21 @@
 #include "imgui.h"
 #include <mutex>
 #include <string>
+#include "debug/log.hpp"
 #include "gui/editor/inspector.hpp"
 #include "scene/scene_defs.hpp"
 namespace emp  {
 void GUIManager::addRendererTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
-
-    auto frac = 1.f / estimation_count;
-    renderer_time = frac * time + (1.f - frac) * renderer_time;
+    renderer_time[renderer_time_idx++ % TIME_SAMPLE_COUNT] = time;
 }
 void GUIManager::addPhysicsTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
-    auto frac = 1.f / estimation_count;
-    physics_time = frac * time + (1.f - frac) * physics_time;
+    physics_time[physics_time_idx++ % TIME_SAMPLE_COUNT] = time;
 }
 void GUIManager::addUpdateTime(float time) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
-    auto frac = 1.f / estimation_count;
-    mainUpdate_time = frac * time + (1.f - frac) * mainUpdate_time;
+    mainUpdate_time[mainUpdate_time_idx++ % TIME_SAMPLE_COUNT] = time;
 }
 void GUIManager::alias(Entity entity, std::string name) {
     std::unique_lock<std::mutex> lock{m_access_mutex};
@@ -91,21 +88,36 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
     m_inspector.draw(m_tree_view.getSelected(), coordinator);
 
     m_FPS_overlay.draw([&](){
-        auto total_time = mainUpdate_time;
-        total_time += EMP_ENABLE_PHYSICS_THREAD * renderer_time;
-        total_time += EMP_ENABLE_PHYSICS_THREAD * physics_time;
+        auto denom = 1.f / TIME_SAMPLE_COUNT;
+        auto avg_render = std::reduce(renderer_time, renderer_time + TIME_SAMPLE_COUNT) * denom;
+        auto avg_physics = std::reduce(physics_time, physics_time + TIME_SAMPLE_COUNT) * denom;
+        auto avg_update = std::reduce(mainUpdate_time, mainUpdate_time + TIME_SAMPLE_COUNT) * denom;
 
         if(EMP_ENABLE_RENDER_THREAD) {
-            ImGui::Text("renderer FPS: %.4g", 1.0 / renderer_time);
+            ImGui::Text("renderer FPS: %.4g", 1.0 / avg_render);
         }else {
-            ImGui::Text("render time: %.3g%%", floorf(renderer_time / total_time * 100.f));
+            ImGui::Text("render time: %.3g%%", floorf(avg_render / avg_update * 100.f));
         }
         if(EMP_ENABLE_PHYSICS_THREAD) {
-            ImGui::Text("physics  TPS: %.4g", 1.0 / physics_time);
+            ImGui::Text("physics  TPS: %.4g", 1.0 / avg_physics);
         }else {
-            ImGui::Text("physics  time: %.3g%%", floorf(physics_time / total_time * 100.f));
+            ImGui::Text("physics  time: %.3g%%", floorf(avg_physics / avg_update * 100.f));
         }
-        ImGui::Text("mainLoop TPS: %.4g", 1.0 / mainUpdate_time);
+        ImGui::Text("mainLoop TPS: %.4g", 1.0 / avg_update);
+        float* FPS = mainUpdate_time;
+        int FPS_idx = mainUpdate_time_idx;
+        if(EMP_ENABLE_RENDER_THREAD) {
+            FPS = renderer_time;
+            FPS_idx = renderer_time_idx;
+        }
+        ImGui::PlotLines("##compute time",
+            mainUpdate_time,
+            TIME_SAMPLE_COUNT,
+            mainUpdate_time_idx,
+            nullptr,
+            0.0f,
+            0.05f,
+            ImVec2(0, 40.0f));
     });
     m_visualizer.draw("visualizer", coordinator, naming_function, camera);
 }

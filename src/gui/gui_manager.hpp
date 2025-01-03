@@ -20,7 +20,13 @@ class GUIManager {
     std::set<std::string> m_names_used;
 
     Overlay m_FPS_overlay;
-    float renderer_time = 0, physics_time = 0, mainUpdate_time = 0;
+    static constexpr int TIME_SAMPLE_COUNT = 120;
+    int renderer_time_idx = 0;
+    int physics_time_idx = 0;
+    int mainUpdate_time_idx = 0;
+    float renderer_time   [TIME_SAMPLE_COUNT] {0};
+    float physics_time    [TIME_SAMPLE_COUNT] {0};
+    float mainUpdate_time [TIME_SAMPLE_COUNT] {0};
 
     TreeView m_tree_view;
     Inspector m_inspector;
@@ -31,7 +37,6 @@ class GUIManager {
 
     void drawMainMenuBar();
 public:
-    float estimation_count = 10.f; 
     void addRendererTime(float time);
     void addPhysicsTime(float time);
     void addUpdateTime(float time);
