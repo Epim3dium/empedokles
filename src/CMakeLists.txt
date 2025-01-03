@@ -14,6 +14,7 @@ set(SOURCE_FILES
     scene/app.cpp
     scene/register_scene_types.cpp
     scene/transform.cpp
+    scene/prefab.cpp
 
 
     core/entity_manager.cpp
@@ -94,6 +95,7 @@ set(HEADER_FILES
     scene/hierarchy.hpp
     scene/scene_defs.hpp
     scene/transform.hpp
+    scene/prefab.hpp
 
     scene/behaviour.hpp
 
