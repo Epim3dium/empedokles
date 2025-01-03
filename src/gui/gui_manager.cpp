@@ -86,7 +86,10 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
         }
     }
     m_inspector.draw(m_tree_view.getSelected(), coordinator);
-
+    drawFPSOverlay();
+    m_visualizer.draw("visualizer", coordinator, naming_function, camera);
+}
+void GUIManager::drawFPSOverlay() {
     m_FPS_overlay.draw([&](){
         auto denom = 1.f / TIME_SAMPLE_COUNT;
         auto avg_render = std::reduce(renderer_time, renderer_time + TIME_SAMPLE_COUNT) * denom;
@@ -119,7 +122,6 @@ void GUIManager::draw(Coordinator& coordinator, Camera& camera) {
             0.05f,
             ImVec2(0, 40.0f));
     });
-    m_visualizer.draw("visualizer", coordinator, naming_function, camera);
 }
 GUIManager::GUIManager() {
     m_inspector.isOpen  = false;
