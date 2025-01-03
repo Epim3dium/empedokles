@@ -86,6 +86,27 @@ struct SerialConvert<std::string> {
     void encode(const std::string& var, IBlobWriter& writer);
     void decode(std::string& var, IBlobReader& reader);
 };
+template<typename T>
+struct SerialConvert<std::optional<T>> {
+    void encode(const std::optional<T>& var, IBlobWriter& writer) {
+        bool has_value = var.has_value();
+        writer.encode(has_value);
+        if (!has_value) {
+            return;
+        }
+        writer.encode(var.value());
+    }
+    void decode(std::optional<T>& var, IBlobReader& reader) {
+        bool has_value;
+        reader.decode(has_value);
+        if(!has_value) {
+            return;
+        }
+        T temp;
+        reader.decode(temp);
+        var = temp;
+    }
+};
 
 }
 #include "serialized_containers.inl"
