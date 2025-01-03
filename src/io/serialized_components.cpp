@@ -1,7 +1,7 @@
 #include "serialized_components.hpp"
 #include <cstring>
 namespace emp {
-void SerialConvert<Transform>::encode(const Transform& var, IGlobWriter& writer) {
+void SerialConvert<Transform>::encode(const Transform& var, IBlobWriter& writer) {
     writer.encode(var.m_local_transform);
     writer.encode(var.m_parents_global_transform);
     writer.encode(var.m_global_transform);
@@ -11,7 +11,7 @@ void SerialConvert<Transform>::encode(const Transform& var, IGlobWriter& writer)
     writer.encode(var.rotation);
     writer.encode(var.scale);
 }
-void SerialConvert<Transform>::decode(Transform& var, IGlobReader& reader) {
+void SerialConvert<Transform>::decode(Transform& var, IBlobReader& reader) {
     reader.decode(var.m_local_transform);
     reader.decode(var.m_parents_global_transform);
     reader.decode(var.m_global_transform);
@@ -22,7 +22,7 @@ void SerialConvert<Transform>::decode(Transform& var, IGlobReader& reader) {
     reader.decode(var.scale);
 }
 
-void SerialConvert<Constraint>::encode(const Constraint& var, IGlobWriter& writer) {
+void SerialConvert<Constraint>::encode(const Constraint& var, IBlobWriter& writer) {
     writer.encode(var.entity_list);
     writer.encode(var.compliance);
     writer.encode(var.damping);
@@ -30,7 +30,7 @@ void SerialConvert<Constraint>::encode(const Constraint& var, IGlobWriter& write
     writer.encode(*(int*)&var.type);
     writer.copy(&var.data, sizeof(var.data));
 }
-void SerialConvert<Constraint>::decode(Constraint& var, IGlobReader& reader) {
+void SerialConvert<Constraint>::decode(Constraint& var, IBlobReader& reader) {
     reader.decode(var.entity_list);
     reader.decode(var.compliance);
     reader.decode(var.damping);
@@ -39,20 +39,20 @@ void SerialConvert<Constraint>::decode(Constraint& var, IGlobReader& reader) {
     memcpy(&var.data, reader.get(sizeof(var.data)), sizeof(var.data));
 }
 
-void SerialConvert<Material>::encode(const Material& var, IGlobWriter& writer) {
+void SerialConvert<Material>::encode(const Material& var, IBlobWriter& writer) {
     writer.encode(var.static_friction);
     writer.encode(var.dynamic_friction);
     writer.encode(var.restitution);
     writer.encode(var.air_friction);
 }
-void SerialConvert<Material>::decode(Material& var, IGlobReader& reader) {
+void SerialConvert<Material>::decode(Material& var, IBlobReader& reader) {
     reader.decode(var.static_friction);
     reader.decode(var.dynamic_friction);
     reader.decode(var.restitution);
     reader.decode(var.air_friction);
 }
 
-void SerialConvert<Collider>::encode(const Collider& var, IGlobWriter& writer) {
+void SerialConvert<Collider>::encode(const Collider& var, IBlobWriter& writer) {
     writer.encode(var.m_aabb);
     writer.encode(var.m_model_outline);
     writer.encode(var.m_model_shape);
@@ -61,7 +61,7 @@ void SerialConvert<Collider>::encode(const Collider& var, IGlobWriter& writer) {
     writer.encode(var.collider_layer);
     writer.encode(var.isNonMoving);
 }
-void SerialConvert<Collider>::decode(Collider& var, IGlobReader& reader) {
+void SerialConvert<Collider>::decode(Collider& var, IBlobReader& reader) {
     reader.decode(var.m_aabb);
     reader.decode(var.m_model_outline);
     reader.decode(var.m_model_shape);
@@ -71,7 +71,7 @@ void SerialConvert<Collider>::decode(Collider& var, IGlobReader& reader) {
     reader.decode(var.isNonMoving);
 }
 
-void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IGlobWriter& writer) {
+void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IBlobWriter& writer) {
     writer.encode(var.prev_pos);
     writer.encode(var.velocity_pre_solve);
     writer.encode(var.prev_rot);
@@ -88,7 +88,7 @@ void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IGlobWriter& writer)
     writer.encode(var.angular_velocity);
     writer.encode(var.torque);
 }
-void SerialConvert<Rigidbody>::decode(Rigidbody& var, IGlobReader& reader) {
+void SerialConvert<Rigidbody>::decode(Rigidbody& var, IBlobReader& reader) {
     reader.decode(var.prev_pos);
     reader.decode(var.velocity_pre_solve);
     reader.decode(var.prev_rot);
@@ -106,17 +106,17 @@ void SerialConvert<Rigidbody>::decode(Rigidbody& var, IGlobReader& reader) {
     reader.decode(var.torque);
 }
 
-void SerialConvert<Texture>::encode(const Texture& var, IGlobWriter& writer) {
+void SerialConvert<Texture>::encode(const Texture& var, IBlobWriter& writer) {
     std::string id = var.getID();
     writer.encode(id);
 }
-void SerialConvert<Texture>::decode(Texture& var, IGlobReader& reader) {
+void SerialConvert<Texture>::decode(Texture& var, IBlobReader& reader) {
     std::string id;
     reader.decode(id);
     var = Texture(id);
 }
 
-void SerialConvert<Sprite>::encode(const Sprite& var, IGlobWriter& writer) {
+void SerialConvert<Sprite>::encode(const Sprite& var, IBlobWriter& writer) {
     writer.encode(var.m_texture);
     writer.encode(var.m_rect);
     writer.encode(var.m_size);
@@ -130,7 +130,7 @@ void SerialConvert<Sprite>::encode(const Sprite& var, IGlobWriter& writer) {
     writer.encode(var.isOverridingColor);
     writer.encode(var.color_override);
 }
-void SerialConvert<Sprite>::decode(Sprite& var, IGlobReader& reader) {
+void SerialConvert<Sprite>::decode(Sprite& var, IBlobReader& reader) {
     reader.decode(var.m_texture);
     reader.decode(var.m_rect);
     reader.decode(var.m_size);
@@ -145,8 +145,8 @@ void SerialConvert<Sprite>::decode(Sprite& var, IGlobReader& reader) {
     reader.decode(var.color_override);
 }
 
-void SerialConvert<AnimatedSprite>::encode(const AnimatedSprite& var, IGlobWriter& writer) {
+void SerialConvert<AnimatedSprite>::encode(const AnimatedSprite& var, IBlobWriter& writer) {
 }
-void SerialConvert<AnimatedSprite>::decode(AnimatedSprite& var, IGlobReader& reader) {
+void SerialConvert<AnimatedSprite>::decode(AnimatedSprite& var, IBlobReader& reader) {
 }
 };

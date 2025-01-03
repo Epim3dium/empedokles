@@ -5,7 +5,7 @@
 
 using namespace emp;
 TEST(SerializerTest, EncodeDecodeLiterals) {
-    Glob glob;
+    Blob glob;
     float var1 = 2137.f;
     int var2 = 420;
     float var3 = 69.f;
@@ -45,7 +45,7 @@ TEST(SerializerTest, EncodeDecodeLiterals) {
     ASSERT_EQ(var7, var7read);
 }
 TEST(SerializerTest, EncodeDecodeMath) {
-    Glob glob;
+    Blob glob;
     glm::vec<3, float> v1 = {1, 2, 3}, v3;
     glm::vec<2, int> v2 = {4, 5}, v4;
     glob.encode(v1);
@@ -57,7 +57,7 @@ TEST(SerializerTest, EncodeDecodeMath) {
     ASSERT_EQ(v2, v4);
 }
 TEST(SerializerTest, EncodeDecodeArrays) {
-    Glob glob;
+    Blob glob;
     std::array<int, 4> arr = {1, 2, 3, 4};
     glob.encode(arr);
 
@@ -68,7 +68,7 @@ TEST(SerializerTest, EncodeDecodeArrays) {
     }
 }
 TEST(SerializerTest, EncodeDecodeVectors) {
-    Glob glob;
+    Blob glob;
     std::vector<int> vec = {1, 2, 3, 4};
     glob.encode(vec);
     
@@ -95,7 +95,7 @@ TEST(SerializerTest, EncodeDecodeVectors) {
     }
 }
 TEST(SerializerTest, EncodeDecodeString) {
-    Glob glob;
+    Blob glob;
     std::string str = "Hello, world!";
     glob.encode(str);
     
@@ -105,7 +105,7 @@ TEST(SerializerTest, EncodeDecodeString) {
 }
 TEST(SerializerTest, EncodeDecodeMaps) {
     auto insertAndTest = [](auto map) {
-        Glob glob;
+        Blob glob;
         map["hello"] = 1;
         map["world"] = 2;
         map["!"] = 3;
@@ -122,7 +122,7 @@ TEST(SerializerTest, EncodeDecodeMaps) {
 }
 TEST(SerializerTest, EncodeDecodeSets) {
     auto insertAndTest = [](auto set) {
-        Glob glob;
+        Blob glob;
         set.insert(2);
         set.insert(3);
         set.insert(5);
@@ -146,14 +146,14 @@ struct TrivialStruct {
 };
 template<>
 struct SerialConvert<TrivialStruct> {
-    void encode(const TrivialStruct& var, IGlobWriter& writer) {
+    void encode(const TrivialStruct& var, IBlobWriter& writer) {
         writer.encode(var.field1);
         writer.encode(var.field2);
         writer.encode(var.field3);
         writer.encode(var.field4);
         writer.encode(var.field5);
     }
-    void decode(TrivialStruct& var, IGlobReader& reader) {
+    void decode(TrivialStruct& var, IBlobReader& reader) {
         reader.decode(var.field1);
         reader.decode(var.field2);
         reader.decode(var.field3);
@@ -162,7 +162,7 @@ struct SerialConvert<TrivialStruct> {
     }
 };
 TEST(SerializerTest, EncodeDecodeTrivial) {
-    Glob glob;
+    Blob glob;
     TrivialStruct data;
     data.field1 = 3.141f;
     data.field2 = 2137;
