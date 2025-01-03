@@ -5,12 +5,12 @@
 #include <cstring>
 #include "math/shapes/AABB.hpp"
 namespace emp {
-void Glob::copy(const void* source, size_t size) {
+void Blob::copy(const void* source, size_t size) {
     auto start = data.size();
     data.resize(data.size() + size);
     memcpy(&data[start], source, size);
 }
-void* Glob::get(size_t size) {
+void* Blob::get(size_t size) {
     assert(read_next < data.size() && "trying to read out of serializer data range");
     void* result = &data[read_next];
     read_next += size;
@@ -24,28 +24,28 @@ void* Glob::get(size_t size) {
 //     var = *(type*)reader.get(sizeof(type));\
 // }
 
-void SerialConvert<Glob::Header>::encode(const Glob::Header& var, IGlobWriter& writer) {
-    writer.copy(&var, sizeof(Glob::Header));
+void SerialConvert<Blob::Header>::encode(const Blob::Header& var, IBlobWriter& writer) {
+    writer.copy(&var, sizeof(Blob::Header));
 }
-void SerialConvert<Glob::Header>::decode(Glob::Header& var, IGlobReader& reader) {
-    typedef Glob::Header Hdr;
+void SerialConvert<Blob::Header>::decode(Blob::Header& var, IBlobReader& reader) {
+    typedef Blob::Header Hdr;
     var = *(Hdr*)reader.get(sizeof(Hdr));
 }
-void SerialConvert<AABB>::encode(const AABB& var, IGlobWriter& writer) {
+void SerialConvert<AABB>::encode(const AABB& var, IBlobWriter& writer) {
     writer.encode(var.min);
     writer.encode(var.max);
 }
-void SerialConvert<AABB>::decode(AABB& var, IGlobReader& reader) {
+void SerialConvert<AABB>::decode(AABB& var, IBlobReader& reader) {
     reader.decode(var.min);
     reader.decode(var.max);
 }
-void SerialConvert<std::string>::encode(const std::string& var, IGlobWriter& writer) {
+void SerialConvert<std::string>::encode(const std::string& var, IBlobWriter& writer) {
     writer.encode(var.size());
     for(int i = 0; i < var.size(); i++) {
         writer.encode(var[i]);
     }
 }
-void SerialConvert<std::string>::decode(std::string& var, IGlobReader& reader) {
+void SerialConvert<std::string>::decode(std::string& var, IBlobReader& reader) {
     size_t size;
     reader.decode(size); 
     var.resize(size);

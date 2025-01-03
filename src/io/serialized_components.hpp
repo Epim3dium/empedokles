@@ -10,43 +10,43 @@
 namespace emp {
 template<>
 struct SerialConvert<Transform> {
-    void encode(const Transform& var, IGlobWriter& writer);
-    void decode(Transform& var, IGlobReader& reader);
+    void encode(const Transform& var, IBlobWriter& writer);
+    void decode(Transform& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Constraint> {
-    void encode(const Constraint& var, IGlobWriter& writer);
-    void decode(Constraint& var, IGlobReader& reader);
+    void encode(const Constraint& var, IBlobWriter& writer);
+    void decode(Constraint& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Texture> {
-    void encode(const Texture& var, IGlobWriter& writer);
-    void decode(Texture& var, IGlobReader& reader);
+    void encode(const Texture& var, IBlobWriter& writer);
+    void decode(Texture& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Material> {
-    void encode(const Material& var, IGlobWriter& writer);
-    void decode(Material& var, IGlobReader& reader);
+    void encode(const Material& var, IBlobWriter& writer);
+    void decode(Material& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Collider> {
-    void encode(const Collider& var, IGlobWriter& writer);
-    void decode(Collider& var, IGlobReader& reader);
+    void encode(const Collider& var, IBlobWriter& writer);
+    void decode(Collider& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Rigidbody> {
-    void encode(const Rigidbody& var, IGlobWriter& writer);
-    void decode(Rigidbody& var, IGlobReader& reader);
+    void encode(const Rigidbody& var, IBlobWriter& writer);
+    void decode(Rigidbody& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<Sprite> {
-    void encode(const Sprite& var, IGlobWriter& writer);
-    void decode(Sprite& var, IGlobReader& reader);
+    void encode(const Sprite& var, IBlobWriter& writer);
+    void decode(Sprite& var, IBlobReader& reader);
 };
 template<>
 struct SerialConvert<AnimatedSprite> {
-    void encode(const AnimatedSprite& var, IGlobWriter& writer);
-    void decode(AnimatedSprite& var, IGlobReader& reader);
+    void encode(const AnimatedSprite& var, IBlobWriter& writer);
+    void decode(AnimatedSprite& var, IBlobReader& reader);
 };
 // template<>
 // struct SerialConvert<Model> {
