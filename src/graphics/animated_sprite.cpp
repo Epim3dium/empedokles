@@ -18,8 +18,8 @@ MovingSprite MovingSprite::singleFrame(Sprite sprite) {
 }
 AnimatedSprite::AnimatedSprite(const Builder& builder)
     : m_state_machine(builder.FSM_builder),
-      m_moving_sprites(builder.moving_sprites) {
-}
+      m_moving_sprites(builder.moving_sprites),
+      m_anim_state(builder.entry_state) {}
 void AnimatedSprite::m_processSpriteChange(std::string new_sprite_id) {
     auto& moving_sprite = m_moving_sprites.at(new_sprite_id);
     auto& sprite = moving_sprite.sprite;
@@ -57,7 +57,8 @@ void AnimatedSprite::m_checkFrameSwitching(float delta_time) {
 }
 void AnimatedSprite::updateState(Entity entity, float delta_time) {
     auto sprite_id_before = current_sprite_frame();
-    m_state_machine.eval(entity, m_current_frame_just_ended);
+    bool justEnded = m_current_frame_just_ended;
+    m_anim_state = m_state_machine.eval(m_anim_state, entity, justEnded);
     auto sprite_id_after = current_sprite_frame();
     if (sprite_id_before != sprite_id_after) {
         m_processSpriteChange(sprite_id_after);
@@ -65,7 +66,10 @@ void AnimatedSprite::updateState(Entity entity, float delta_time) {
     m_checkFrameSwitching(delta_time);
 }
 typedef AnimatedSprite::Builder Builder;
-Builder::Builder(std::string entry_point, const MovingSprite& default_sprite) : FSM_builder(entry_point) {
+Builder::Builder(std::string entry_point, const MovingSprite& default_sprite) {
+    entry_state = entry_point;
+
+    FSM_builder.addNode(entry_state);
     moving_sprites[entry_point] = default_sprite;
 }
 void Builder::addNode(std::string name, const MovingSprite& sprite) {

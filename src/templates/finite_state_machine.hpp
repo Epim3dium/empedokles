@@ -29,17 +29,11 @@ class FiniteStateMachine {
     };
 
     std::unordered_map<Identifier_t, Node > m_nodes;
-    Identifier_t m_current_node;
 public:
     class Builder {
     protected:
         std::unordered_map<Identifier_t, Node > nodes;
-        Identifier_t entry_point;
     public:
-        Builder(Identifier_t entry_point_node) {
-            addNode(entry_point_node);
-            entry_point = entry_point_node;
-        }
         void addNode(Identifier_t name) {
             assert(!nodes.contains(name) && "cannot have more than 1 node of the same name in state machine");
             nodes[name] = Node(name);
@@ -55,33 +49,30 @@ public:
         friend FiniteStateMachine;
     };
 
-    const Identifier_t state() const {
-        assert(m_nodes.contains(m_current_node) && "empty FSM impossible");
-        return m_nodes.at(m_current_node).name;
-    }
-
-    Identifier_t eval(TriggerFuncInput_t... input) {
-        Identifier_t prev_current;
+    Identifier_t eval(Identifier_t current_state, TriggerFuncInput_t... input) const {
+        Identifier_t prev_node;
 
         constexpr int max_iter_count = 100;
-        int iter_count = 0;
-        for(; iter_count < max_iter_count && m_current_node != prev_current; iter_count++) {
-            prev_current = m_current_node;
-            assert(m_nodes.contains(m_current_node) && "empty FSM impossible");
-            auto& node = m_nodes.at(m_current_node);
+        for(int iter = 0; iter < max_iter_count; iter++) {
+            prev_node = current_state;
+            assert(m_nodes.contains(current_state) && "empty FSM impossible");
+            auto& node = m_nodes.at(current_state);
             for(const auto& edge : node.outgoing_edges) {
-                assert(edge.from == m_current_node && "this must be true");
+                assert(edge.from == current_state && "this must be true");
                 if(edge.trigger(input...) == true) {
-                    m_current_node = edge.to;
+                    current_state = edge.to;
                     break;
                 }
             }
+            //if node didnt change
+            if(current_state == prev_node) {
+                break;
+            }
         }
-        return m_current_node;
+        return current_state;
     }
     FiniteStateMachine() = delete;
-    FiniteStateMachine(const Builder& builder) : m_nodes(builder.nodes), m_current_node(builder.entry_point) {
-    }
+    FiniteStateMachine(const Builder& builder) : m_nodes(builder.nodes) { }
 };
 };
 #endif //EMP_FINITE_STATE_MACHINE
