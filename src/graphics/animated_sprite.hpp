@@ -29,6 +29,8 @@ class AnimatedSprite {
     int m_current_anim_frame_idx = 0;
     float m_current_frame_lasted_sec = 0.f;
     bool m_current_frame_just_ended = false;
+
+    std::string m_anim_state;
     
     void m_processSpriteChange(std::string new_sprite_id);
     void m_checkFrameSwitching(float delta_time);
@@ -44,7 +46,7 @@ public:
     glm::vec4 color_override = {1, 1, 1, 1};
 
     inline std::string current_sprite_frame() const {
-        return m_state_machine.state();
+        return m_anim_state;
     }
     inline Sprite& sprite() {
         auto& moving_sprite = m_moving_sprites.at(current_sprite_frame());
@@ -57,12 +59,13 @@ public:
     void updateState(Entity entity, float delta_time);
 
     class Builder;
-    AnimatedSprite() : m_state_machine({"undefined"}) {}
+    AnimatedSprite() : m_state_machine({{}}) {}
     AnimatedSprite(const Builder& builder);
 };
 
 class AnimatedSprite::Builder {
     StateMachine_t::Builder FSM_builder;
+    std::string entry_state;
     std::unordered_map<std::string, MovingSprite> moving_sprites;
 public:
     Builder(std::string entry_point, const MovingSprite& default_sprite);
