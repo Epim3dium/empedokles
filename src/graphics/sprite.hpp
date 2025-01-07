@@ -2,7 +2,7 @@
 #define EMP_SPRITE_HPP
 #include "graphics/texture.hpp"
 #include "graphics/vertex.hpp"
-#include "io/serializer.hpp"
+#include "io/serial_convert.hpp"
 #include "math/shapes/AABB.hpp"
 namespace emp {
 struct Sprite {

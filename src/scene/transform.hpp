@@ -4,7 +4,7 @@
 #include "core/coordinator.hpp"
 #include "core/system.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
-#include "io/serializer.hpp"
+#include "io/serial_convert.hpp"
 #include "math/math_defs.hpp"
 
 namespace emp {

@@ -1,6 +1,6 @@
 #ifndef EMP_RIGIDBODY_HPP
 #define EMP_RIGIDBODY_HPP
-#include "io/serializer.hpp"
+#include "io/serial_convert.hpp"
 #include "math/math_defs.hpp"
 #include "scene/transform.hpp"
 namespace emp {

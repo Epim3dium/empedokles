@@ -156,6 +156,7 @@ set(HEADER_FILES
     io/window.hpp
     io/serializer.hpp
     io/serialized_components.hpp
+    io/serial_convert.hpp
 
     external/tinyobjloader/tiny_obj_loader.h
     external/stbimage/stb_image.h
