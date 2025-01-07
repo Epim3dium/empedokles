@@ -4,6 +4,7 @@
 #include "physics/collider.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
+#include "scene/prefab.hpp"
 #include <vector>
 using namespace emp;
 
@@ -61,7 +62,7 @@ class Demo : public App {
         Entity last_created_crate = 0;
 
 
-        void setupAnimationForProtagonist();
+        void setupAnimationForProtagonist(Entity prot);
         void onRender(Device&, const FrameInfo& frame) override final;
         void onSetup(Window& window, Device& device) override final;
         void onUpdate(const float delta_time, Window& window, KeyboardController& controller) override final;
@@ -146,7 +147,7 @@ void Demo::onSetup(Window& window, Device& device) {
         auto mat = Material(); 
         ECS.addComponent(protagonist, mat);
 
-        setupAnimationForProtagonist();
+        setupAnimationForProtagonist(protagonist);
         auto child = ECS.createEntity();
         gui_manager.alias(child, "child");
         ECS.addComponent(child, Transform(protagonist, vec2f(0, 0)));
@@ -158,23 +159,26 @@ void Demo::onSetup(Window& window, Device& device) {
             {vec2f(0.f, -getHeight() / 2), 0.f},
             {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
     };
-    for (auto o : ops) {
-        auto platform = ECS.createEntity();
-        gui_manager.alias(platform, "platform");
-        ECS.addComponent(
-                platform, Transform(o.first, o.second, {getWidth() / cube_side_len, 1.f})
-        );
-        auto col = Collider(cube_model_shape);
-        col.collider_layer = GROUND;
-        ECS.addComponent(platform, col);
-        ECS.addComponent(platform, Rigidbody{true});
-        ECS.addComponent(platform, Material());
+    auto platform = ECS.createEntity();
+    gui_manager.alias(platform, "platform");
+    ECS.addComponent(
+            platform, Transform(ops->first, ops->second, {getWidth() / cube_side_len, 1.f})
+    );
+    auto col = Collider(cube_model_shape);
+    col.collider_layer = GROUND;
+    ECS.addComponent(platform, col);
+    ECS.addComponent(platform, Rigidbody{true});
+    ECS.addComponent(platform, Material());
+    Prefab prefab(ECS, platform);
+    for (int i = 1; i < 4; i++) {
+        auto platform = prefab.clone(ECS);
+        auto trans = ECS.getComponent<Transform>(platform);
+        if(trans == nullptr) {
+            EMP_LOG(WARNING) << "incorrect prefab behaviour";
+            continue;
+        }
+        *trans = Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len, 1.f});
     }
-    // for (auto& marker : markers) {
-    //     marker = coordinator.createEntity();
-    //     coordinator.addComponent(marker, Transform(vec2f(INFINITY, INFINITY), 0.f, {0.1f, 0.1f}));
-    //     coordinator.addComponent(marker, DebugShape(device, unit_cube, glm::vec4(0.8, 0.8, 1, 1)));
-    // }
 
     ECS.getSystem<PhysicsSystem>()->gravity = 1000.f;
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
@@ -182,7 +186,7 @@ void Demo::onSetup(Window& window, Device& device) {
     
 }
 
-void Demo::setupAnimationForProtagonist() {
+void Demo::setupAnimationForProtagonist(Entity entity) {
     auto def_size = vec2f(300.f, 300.f);
     auto offset = vec2f(10.f, -def_size.y / 3.5f);
     MovingSprite idle_moving;
@@ -256,7 +260,7 @@ void Demo::setupAnimationForProtagonist() {
     }
     auto anim_sprite = AnimatedSprite(build);
     anim_sprite.position_offset = offset;
-    ECS.addComponent(protagonist, anim_sprite);
+    ECS.addComponent(entity, anim_sprite);
 }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
