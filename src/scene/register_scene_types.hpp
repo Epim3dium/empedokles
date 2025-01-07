@@ -18,7 +18,6 @@ namespace emp {
 
     typedef TypePack<
         Transform,
-        Behaviour,
         Constraint,
         Material,
         Collider,
