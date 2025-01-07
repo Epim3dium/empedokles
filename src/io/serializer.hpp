@@ -3,34 +3,14 @@
 #include <unistd.h>
 #include <cstddef>
 #include <cstdint>
+#include <set>
+#include <type_traits>
 #include <vector>
+#include "serial_convert.hpp"
+#include "core/coordinator.hpp"
+#include "core/entity.hpp"
 #include "math/shapes/AABB.hpp"
 namespace emp {
-typedef uint8_t byte;
-class IBlobWriter {
-    uint32_t m_version = 0;
-public:
-    uint32_t version() const { return m_version; }
-
-    virtual void copy(const void* source, size_t size) = 0;
-
-    template<class T>
-    void encode(const T& var);
-    virtual ~IBlobWriter() {}
-    IBlobWriter(uint32_t version) : m_version(version) {}
-};
-class IBlobReader {
-    uint32_t m_version = 0;
-public:
-    uint32_t version() const { return m_version; }
-
-    virtual void* get(size_t size) = 0;
-
-    template<class T>
-    void decode(T& var);
-    virtual ~IBlobReader() {}
-    IBlobReader(uint32_t version) : m_version(version) {}
-};
 class Blob : public IBlobWriter, public IBlobReader {
     size_t read_next = 0;
     std::vector<byte> data;
@@ -51,16 +31,7 @@ public:
         decode(header);
     }
 };
-template<class T>
-struct SerialConvert {
-    static_assert(std::is_trivially_copyable_v<T> == true && std::is_fundamental<T>::value == true);
-    void encode(const T& var, IBlobWriter& writer) {
-        writer.copy(&var, sizeof(T));
-    }
-    void decode(T& var, IBlobReader& reader) {
-        var = *(T*)reader.get(sizeof(T));
-    }
-};
+
 template<class T>
 void IBlobWriter::encode(const T& var) {
     SerialConvert<T>().encode(var, *this);
@@ -104,10 +75,14 @@ struct SerialConvert<std::optional<T>> {
         }
         T temp;
         reader.decode(temp);
-        var = temp;
+        var = std::move(temp);
     }
+};
+struct EntityRange {
+    std::set<Entity> entities;
+    Coordinator& ECS;
 };
 
 }
-#include "serialized_containers.inl"
+#include "serialized_containers.hpp"
 #endif
