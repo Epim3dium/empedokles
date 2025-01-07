@@ -24,7 +24,6 @@ void registerSceneSystems(Device& device, Coordinator& ECS) {
     ECS.registerSystem<AllEntitiesSystem>();
 
     ECS.registerSystem<TransformSystem>();
-    ECS.registerSystem<BehaviourSystem>();
 
     ECS.registerSystem<RigidbodySystem>();
     ECS.registerSystem<ColliderSystem>();
