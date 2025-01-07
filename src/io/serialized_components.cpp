@@ -1,4 +1,5 @@
 #include "serialized_components.hpp"
+#include "serializer.hpp"
 #include <cstring>
 namespace emp {
 void SerialConvert<Transform>::encode(const Transform& var, IBlobWriter& writer) {
@@ -148,5 +149,9 @@ void SerialConvert<Sprite>::decode(Sprite& var, IBlobReader& reader) {
 void SerialConvert<AnimatedSprite>::encode(const AnimatedSprite& var, IBlobWriter& writer) {
 }
 void SerialConvert<AnimatedSprite>::decode(AnimatedSprite& var, IBlobReader& reader) {
+}
+void SerialConvert<Model>::encode(const Model& var, IBlobWriter& writer) {
+}
+void SerialConvert<Model>::decode(Model& var, IBlobReader& reader) {
 }
 };

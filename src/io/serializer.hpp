@@ -4,12 +4,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <set>
+#include "serialized_containers.hpp"
+#include "serialized_components.hpp"
+
 #include <type_traits>
 #include <vector>
 #include "serial_convert.hpp"
 #include "core/coordinator.hpp"
 #include "core/entity.hpp"
 #include "math/shapes/AABB.hpp"
+#include "scene/register_scene_types.hpp"
 namespace emp {
 class Blob : public IBlobWriter, public IBlobReader {
     size_t read_next = 0;
@@ -32,14 +36,6 @@ public:
     }
 };
 
-template<class T>
-void IBlobWriter::encode(const T& var) {
-    SerialConvert<T>().encode(var, *this);
-}
-template<class T>
-void IBlobReader::decode(T& var) {
-    SerialConvert<T>().decode(var, *this);
-}
 
 template<>
 struct SerialConvert<Blob::Header> {
@@ -82,7 +78,65 @@ struct EntityRange {
     std::set<Entity> entities;
     Coordinator& ECS;
 };
+template<>
+struct SerialConvert<EntityRange> {
+    template<class T>
+    void encodeComponent(Coordinator& ECS, Entity owner, IBlobWriter& writer) {
+        bool ownership = false;
+        if(ECS.hasComponent<T>(owner)) {
+            ownership = true;
+        }
+        writer.encode(ownership);
+        if(!ownership) {
+            return;
+        }
+
+        T& component = *ECS.getComponent<T>(owner);
+        writer.encode(component);
+    }
+    template<class T>
+    void decodeComponent(Coordinator& ECS, Entity owner, IBlobReader& reader) {
+        bool ownership = false;
+        reader.decode(ownership);
+        if(!ownership) {
+            return;
+        }
+
+        T component;
+        reader.decode(component);
+        ECS.addComponent(owner, component);
+    }
+    template <class... CompTs>
+    void encodeAll(Coordinator& ECS,
+        Entity owner,
+        IBlobWriter& writer,
+        TypePack<CompTs...>) 
+    {
+        (encodeComponent<CompTs>(ECS, owner, writer), ...);
+    }
+    template <class... CompTs>
+    void decodeAll(Coordinator& ECS,
+        Entity owner,
+        IBlobReader& reader,
+        TypePack<CompTs...>) 
+    {
+        (decodeComponent<CompTs>(ECS, owner, reader), ...);
+    }
+
+    void encode(const EntityRange& var, IBlobWriter& writer) {
+        writer.encode(var.entities);
+        for(auto e : var.entities) {
+            encodeAll(var.ECS, e, writer, AllComponentTypes());
+        }
+    }
+    void decode(EntityRange& var, IBlobReader& reader) {
+        var.entities.clear();
+        reader.decode(var.entities);
+        for(auto e : var.entities) {
+            decodeAll(var.ECS, e, reader, AllComponentTypes());
+        }
+    }
+};
 
 }
-#include "serialized_containers.hpp"
 #endif

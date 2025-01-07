@@ -1,12 +1,14 @@
 #ifndef EMP_SERIALIZED_COMPONENTS_HPP
 #define EMP_SERIALIZED_COMPONENTS_HPP
 #include "graphics/animated_sprite.hpp"
+#include "graphics/model.hpp"
 #include "graphics/sprite.hpp"
 #include "physics/collider.hpp"
 #include "physics/constraint.hpp"
 #include "physics/material.hpp"
 #include "scene/transform.hpp"
-#include "io/serializer.hpp"
+#include "io/serial_convert.hpp"
+#include "serialized_containers.hpp"
 namespace emp {
 template<>
 struct SerialConvert<Transform> {
@@ -47,6 +49,11 @@ template<>
 struct SerialConvert<AnimatedSprite> {
     void encode(const AnimatedSprite& var, IBlobWriter& writer);
     void decode(AnimatedSprite& var, IBlobReader& reader);
+};
+template<>
+struct SerialConvert<Model> {
+    void encode(const Model& var, IBlobWriter& writer);
+    void decode(Model& var, IBlobReader& reader);
 };
 // template<>
 // struct SerialConvert<Model> {

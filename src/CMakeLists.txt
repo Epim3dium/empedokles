@@ -155,6 +155,7 @@ set(HEADER_FILES
     io/keyboard_controller.hpp
     io/window.hpp
     io/serializer.hpp
+    io/serialized_containers.hpp
     io/serialized_components.hpp
     io/serial_convert.hpp
 
