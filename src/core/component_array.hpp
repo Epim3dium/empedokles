@@ -53,6 +53,8 @@ public:
     }
 
     bool hasData(Entity entity) const {
+        if(entity >= m_entity_to_index_map.size())
+            return false;
         return m_entity_to_index_map[entity] != INVALID_INDEX;
     }
     T& GetData(Entity entity) {
