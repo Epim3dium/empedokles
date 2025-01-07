@@ -39,6 +39,14 @@ struct SerialConvert {
         var = *(T*)reader.get(sizeof(T));
     }
 };
+template<class T>
+void IBlobWriter::encode(const T& var) {
+    SerialConvert<T>().encode(var, *this);
+}
+template<class T>
+void IBlobReader::decode(T& var) {
+    SerialConvert<T>().decode(var, *this);
+}
 
 }
 
