@@ -27,10 +27,11 @@ Log::Log() {
 
 std::ostringstream& Log::Get(LogLevel level) {
     m_level = level;
-    os << NowTime() << " | ";
+    os << NowTime();
     if(s_main_thread != std::this_thread::get_id()) {
-        os << "thread: " << std::this_thread::get_id() << " | ";
+        os << ", thread: " << std::this_thread::get_id();
     }
+    os << ", ";
     return os;
 }
 
