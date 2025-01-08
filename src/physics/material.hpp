@@ -7,8 +7,6 @@ struct Material {
     float dynamic_friction = 0.3;
     float restitution = 0.1;
     float air_friction = 5.0f;
-    Material() {
-    }
 };
 }; // namespace emp
 #endif
