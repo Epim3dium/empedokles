@@ -1,7 +1,9 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <gtest/gtest.h>
+#include "core/coordinator.hpp"
 #include "io/serializer.hpp"
 #include "math/math_defs.hpp"
+#include "scene/register_scene_types.hpp"
 
 using namespace emp;
 TEST(SerializerTest, EncodeDecodeLiterals) {
@@ -177,4 +179,45 @@ TEST(SerializerTest, EncodeDecodeTrivial) {
     ASSERT_EQ('x',    data_read.field3);
     ASSERT_EQ(6.283,  data_read.field4);
     ASSERT_EQ(0xff,   data_read.field5);
+}
+TEST(SerializerTest, EncodeDecodeEntitiesSimpleFields) {
+    Blob glob;
+    vec2f transform_pos;
+    float static_friction;
+    bool isStatic = true;
+    std::vector<vec2f> shape = {{1, 1}, {2, 2}, {3, 3}};
+    {
+        Coordinator ECS;
+        registerSceneTypes(ECS);
+        std::vector<Entity> es;
+        es.push_back(ECS.createEntity());
+        ECS.addComponent(es.back(), Transform(transform_pos));
+        ECS.addComponent(es.back(), Material{static_friction, 0.f, 0.f, 0.f});
+        es.push_back(ECS.createEntity());
+        ECS.addComponent(es.back(), Rigidbody(isStatic));
+        ECS.addComponent(es.back(), Collider(shape));
+        glob.encode(EntityRange{ECS, es});
+    }
+    {
+        Coordinator ECS;
+        registerSceneTypes(ECS);
+        std::vector<Entity> es;
+        auto range = EntityRange{ECS, es};
+        glob.decode(range);
+
+        ASSERT_EQ(2, es.size());
+        auto first = es.front();
+        auto second = es.back();
+        ASSERT_TRUE(ECS.isEntityAlive(first));
+        ASSERT_TRUE(ECS.hasComponent<Transform>(first));
+        ASSERT_TRUE(ECS.hasComponent<Material>(first));
+        ASSERT_TRUE(ECS.isEntityAlive(second));
+        ASSERT_TRUE(ECS.hasComponent<Rigidbody>(second));
+        ASSERT_TRUE(ECS.hasComponent<Collider>(second));
+
+        ASSERT_EQ(transform_pos, ECS.getComponent<Transform>(first)->position);
+        ASSERT_EQ(static_friction, ECS.getComponent<Material>(first)->static_friction);
+        ASSERT_EQ(isStatic, ECS.getComponent<Rigidbody>(second)->isStatic);
+        ASSERT_EQ(shape, ECS.getComponent<Collider>(second)->model_outline());
+    }
 }
