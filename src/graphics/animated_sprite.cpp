@@ -1,5 +1,6 @@
 #include "animated_sprite.hpp"
 namespace emp {
+std::vector<std::unique_ptr<AnimatedSprite::StateMachine_t>> AnimatedSprite::s_state_machines;
 MovingSprite MovingSprite::allFrames(Sprite sprite, float whole_time, bool isLooping) {
     MovingSprite moving;
     moving.isLooping = isLooping;
@@ -17,9 +18,12 @@ MovingSprite MovingSprite::singleFrame(Sprite sprite) {
     return result;
 }
 AnimatedSprite::AnimatedSprite(const Builder& builder)
-    : m_state_machine(builder.FSM_builder),
-      m_moving_sprites(builder.moving_sprites),
-      m_anim_state(builder.entry_state) {}
+    : m_moving_sprites(builder.moving_sprites),
+      m_anim_state(builder.entry_state) 
+{
+    m_machine_handle = s_state_machines.size();
+    s_state_machines.emplace_back(std::make_unique<StateMachine_t>(builder.FSM_builder));
+}
 void AnimatedSprite::m_processSpriteChange(std::string new_sprite_id) {
     auto& moving_sprite = m_moving_sprites.at(new_sprite_id);
     auto& sprite = moving_sprite.sprite;
@@ -58,7 +62,10 @@ void AnimatedSprite::m_checkFrameSwitching(float delta_time) {
 void AnimatedSprite::updateState(Entity entity, float delta_time) {
     auto sprite_id_before = current_sprite_frame();
     bool justEnded = m_current_frame_just_ended;
-    m_anim_state = m_state_machine.eval(m_anim_state, entity, justEnded);
+    auto& state_machine = *s_state_machines[m_machine_handle];
+
+    m_anim_state = state_machine.eval(m_anim_state, entity, justEnded);
+
     auto sprite_id_after = current_sprite_frame();
     if (sprite_id_before != sprite_id_after) {
         m_processSpriteChange(sprite_id_after);
