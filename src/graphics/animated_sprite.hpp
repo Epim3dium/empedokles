@@ -23,8 +23,10 @@ struct MovingSprite {
 class AnimatedSprite {
     //bool here is the info whether animation just ended
     typedef FiniteStateMachine<std::string, Entity, bool> StateMachine_t;
+    static std::vector<std::unique_ptr<StateMachine_t>> s_state_machines;
 
-    StateMachine_t m_state_machine;
+    uint32_t m_machine_handle;
+
     std::unordered_map<std::string, MovingSprite> m_moving_sprites;
     int m_current_anim_frame_idx = 0;
     float m_current_frame_lasted_sec = 0.f;
@@ -59,7 +61,7 @@ public:
     void updateState(Entity entity, float delta_time);
 
     class Builder;
-    AnimatedSprite() : m_state_machine({{}}) {}
+    AnimatedSprite() {}
     AnimatedSprite(const Builder& builder);
 };
 
