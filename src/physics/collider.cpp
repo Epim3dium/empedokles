@@ -1,6 +1,8 @@
 #include "collider.hpp"
+#include <random>
 #include "core/coordinator.hpp"
 #include "debug/debug.hpp"
+#include "debug/log.hpp"
 #include "math/geometry_func.hpp"
 namespace emp {
 
@@ -51,8 +53,10 @@ void ColliderSystem::processCollisionNotifications() {
     for(auto& ended : ended_events) {
         FitIntoOne dehasher;
         dehasher.hash = ended;
-        auto isAsleeping = getComponent<Collider>(dehasher.a).isNonMoving;
-        auto isBsleeping = getComponent<Collider>(dehasher.b).isNonMoving;
+        auto isAsleeping = ECS().isEntityAlive(dehasher.a) &&
+            getComponent<Collider>(dehasher.a).isNonMoving;
+        auto isBsleeping = ECS().isEntityAlive(dehasher.b) &&
+            getComponent<Collider>(dehasher.b).isNonMoving;
         if(isAsleeping && isBsleeping) {
             this_frame_collisions.insert(dehasher.hash);
             continue;
@@ -183,5 +187,9 @@ Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
     auto triangles = triangulateAsVector(m_model_outline);
     m_model_shape = mergeToConvex(triangles);
     m_transformed_shape = m_model_shape;
+}
+void ColliderSystem::onEntityRemoved(Entity entity) {
+    m_exit_callbacks.erase(entity);
+    m_enter_callbacks.erase(entity);
 }
 }; // namespace emp

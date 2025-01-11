@@ -107,6 +107,7 @@ public:
     void disableCollision(Layer layer1, Layer layer2);
     void eableCollision(Layer layer1, Layer layer2);
     bool canCollide(Layer layer1, Layer layer2) const;
+    void onEntityRemoved(Entity entity) override final;
     ColliderSystem();
 };
 }; // namespace emp

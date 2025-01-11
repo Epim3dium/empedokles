@@ -22,9 +22,9 @@ bool Coordinator::isEntityAlive(Entity entity) const {
 
 void Coordinator::destroyEntity(Entity entity) {
     EMP_DEBUGCALL(EMP_LOG(DEBUG2) << "entity destroyed: " << entity;)
-    m_entity_manager.destroyEntity(entity);
-    m_component_manager.EntityDestroyed(entity);
     m_system_manager.EntityDestroyed(entity);
+    m_component_manager.EntityDestroyed(entity);
+    m_entity_manager.destroyEntity(entity);
 }
 };
 

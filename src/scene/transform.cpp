@@ -123,6 +123,8 @@ EMP_DEBUGCALL(
     void TransformSystem::onEntityRemoved(Entity entity) {
         auto& transform = getComponent<Transform>(entity);
         const auto parent = transform.parent();
+        if(!ECS().isEntityAlive(parent))
+            return;
         auto parent_transform = ECS().getComponent<Transform>(parent);
         if(parent_transform == nullptr) {
             EMP_LOG(WARNING) << "parent without transfrom, but had when assigning";
