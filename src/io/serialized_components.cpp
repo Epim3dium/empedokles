@@ -1,4 +1,5 @@
 #include "serialized_components.hpp"
+#include "io/serial_convert.hpp"
 #include "serializer.hpp"
 #include <cstring>
 namespace emp {
@@ -145,10 +146,51 @@ void SerialConvert<Sprite>::decode(Sprite& var, IBlobReader& reader) {
     reader.decode(var.isOverridingColor);
     reader.decode(var.color_override);
 }
+template<>
+struct SerialConvert<MovingSprite::FrameDuration> {
+    void encode(const MovingSprite::FrameDuration& var, IBlobWriter& writer) {
+        writer.encode(var.frame);
+        writer.encode(var.duration);
+    }
+    void decode(MovingSprite::FrameDuration& var, IBlobReader& reader) {
+        reader.decode(var.frame);
+        reader.decode(var.duration);
+    }
+};
+void SerialConvert<MovingSprite>::encode(const MovingSprite& var, IBlobWriter& writer) {
+    writer.encode(var.sprite);
+    writer.encode(var.isLooping);
+    writer.encode(var.frames);
+}
+void SerialConvert<MovingSprite>::decode(MovingSprite& var, IBlobReader& reader) {
+    reader.decode(var.sprite);
+    reader.decode(var.isLooping);
+    reader.decode(var.frames);
+}
 
 void SerialConvert<AnimatedSprite>::encode(const AnimatedSprite& var, IBlobWriter& writer) {
+    writer.encode(var.m_machine_handle);
+    writer.encode(var.m_moving_sprites);
+    writer.encode(var.m_anim_state);
+    writer.encode(var.animation_speed);
+    writer.encode(var.position_offset);
+    writer.encode(var.flipX);
+    writer.encode(var.flipY);
+    writer.encode(var.color);
+    writer.encode(var.isOverridingColor);
+    writer.encode(var.color_override);
 }
 void SerialConvert<AnimatedSprite>::decode(AnimatedSprite& var, IBlobReader& reader) {
+    reader.decode(var.m_machine_handle);
+    reader.decode(var.m_moving_sprites);
+    reader.decode(var.m_anim_state);
+    reader.decode(var.animation_speed);
+    reader.decode(var.position_offset);
+    reader.decode(var.flipX);
+    reader.decode(var.flipY);
+    reader.decode(var.color);
+    reader.decode(var.isOverridingColor);
+    reader.decode(var.color_override);
 }
 void SerialConvert<Model>::encode(const Model& var, IBlobWriter& writer) {
 }
