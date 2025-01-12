@@ -1,20 +1,23 @@
 # 🎯 TODO:
 
 - collision
-    - more constraints+
     - collision optimization
         - tighter locked critical section
 - graphics
+    - debug shapes improved
     - instanced rendering
     - 2d lighting
 - core
-    - serialization / deserialization
+    - serialization 
+        - conversion between 'entity spaces' (ref to e1 in ECS1 should stay in ECS2)
     - message bus
 - networking?
 
 ---
 
 # 📌 DOING:
+- collision
+    - more constraints+
 
 ---
 
@@ -26,6 +29,8 @@
 
 # ✅ DONE:
 
+- core
+    - serialization / deserialization (Basic)
 - collision
     - added more constraints
 - graphics
