@@ -188,18 +188,27 @@ TEST(SerializerTest, EncodeDecodeEntitiesSimpleFields) {
     std::vector<vec2f> shape = {{1, 1}, {2, 2}, {3, 3}};
     {
         Coordinator ECS;
+        auto count = rand() % 100;
+        for(int i = 0; i < count; i++) {
+            ECS.createEntity();
+        }
         registerSceneTypes(ECS);
         std::vector<Entity> es;
         es.push_back(ECS.createEntity());
         ECS.addComponent(es.back(), Transform(transform_pos));
         ECS.addComponent(es.back(), Material{static_friction, 0.f, 0.f, 0.f});
         es.push_back(ECS.createEntity());
+        ECS.addComponent(es.back(), Transform(es.front(), vec2f(0, 0)));
         ECS.addComponent(es.back(), Rigidbody(isStatic));
         ECS.addComponent(es.back(), Collider(shape));
         glob.encode(EntityRange{ECS, es});
     }
     {
         Coordinator ECS;
+        auto count = rand() % 100;
+        for(int i = 0; i < count; i++) {
+            ECS.createEntity();
+        }
         registerSceneTypes(ECS);
         std::vector<Entity> es;
         auto range = EntityRange{ECS, es};
@@ -219,5 +228,6 @@ TEST(SerializerTest, EncodeDecodeEntitiesSimpleFields) {
         ASSERT_EQ(static_friction, ECS.getComponent<Material>(first)->static_friction);
         ASSERT_EQ(isStatic, ECS.getComponent<Rigidbody>(second)->isStatic);
         ASSERT_EQ(shape, ECS.getComponent<Collider>(second)->model_outline());
+        // ASSERT_EQ(first, ECS.getComponent<Transform>(second)->parent());
     }
 }
