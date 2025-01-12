@@ -15,6 +15,8 @@ enum eConstraintType : int {
     Undefined = 0,
     SwivelPoint, // 2bodies
     SwivelPointAnchored, // 2bodies
+    FixedLock,
+    FixedLockAnchored,
 };
 struct PositionalCorrectionInfo {
     Entity entity1;
@@ -72,6 +74,10 @@ struct Constraint {
             vec2f pinch_point_model1;
             vec2f pinch_point_model2;
         } swivel_dynamic;
+        struct {
+            float rel_rotation;
+            vec2f rel_offset;
+        } fixed_lock;
     }data;
     struct Builder {
     private:
@@ -81,6 +87,8 @@ struct Constraint {
         float damping = 1.f;
         eConstraintType type = eConstraintType::Undefined;
         vec2f global_point = {NAN, NAN};
+        vec2f relative_offset = {NAN, NAN};
+        float relative_rotation = NAN;
         vec2f point_rel1 = {NAN, NAN};
         vec2f point_rel2 = {NAN, NAN};
 
@@ -94,8 +102,11 @@ struct Constraint {
 
         Builder& enableCollision(bool enable = true);
 
-        Builder& setConnectionGlobalPoint(vec2f point);
-        Builder& setConnectionRelativePoint(vec2f point_rel1, vec2f point_rel2);
+        Builder& setGlobalHinge(vec2f point);
+        Builder& setRelativeHinge(vec2f point_rel1, vec2f point_rel2);
+
+        //if using anchor, relative to anchor otherwise relative to first ConstraintedEntity
+        Builder& setFixed(vec2f relative_offset = vec2f(NAN, NAN), float rel_rotation = NAN);
 
         Constraint build();
     };
@@ -103,8 +114,10 @@ struct Constraint {
     void solve(float delta_time, Coordinator& ECS);
 
 private:
-    void m_solvePointAnchor(float delta_time, Coordinator& ECS);
+    void m_solvePointSwivelAnchor(float delta_time, Coordinator& ECS);
     void m_solvePointSwivel(float delta_time, Coordinator& ECS);
+    void m_solvePointFixedAnchor(float delta_time, Coordinator& ECS);
+    void m_solvePointFixed(float delta_time, Coordinator& ECS);
 };
 struct ConstraintSystem : public System<Constraint> {
     typedef const std::vector<Entity>* EntityListRef_t;
