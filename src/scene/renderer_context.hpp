@@ -13,7 +13,7 @@ struct RendererContext {
     std::unique_ptr<SimpleRenderSystem> sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> debugShape_rend_sys;
     std::unique_ptr<SimpleRenderSystem> debugShapeOutline_rend_sys;
-    std::unique_ptr<ComputeDemo> compute_demo;
+    // std::unique_ptr<ComputeDemo> compute_demo;
 
     std::vector<std::unique_ptr<Buffer>> ubo_buffers;
     std::vector<std::unique_ptr<Buffer>> ubo_compute_buffers;
@@ -88,7 +88,7 @@ struct RendererContext {
             global_set_layout->getDescriptorSetLayout(),
             "../assets/shaders/sprite.vert.spv",
             "../assets/shaders/sprite.frag.spv");
-        compute_demo = std::make_unique<ComputeDemo>(device);
+        // compute_demo = std::make_unique<ComputeDemo>(device);
     }
     std::vector<VkDescriptorSet> setupGlobalUBODescriptorSets(
             DescriptorSetLayout& globalSetLayout,

@@ -281,7 +281,7 @@ void App::renderFrame(
                 *context.frame_pools[frame_index]
             };
 
-            renderer_context.compute_demo->performCompute(frame_info);
+            // renderer_context.compute_demo->performCompute(frame_info);
             compute.endCompute();
         }
         FrameInfo frame_info{
@@ -316,7 +316,7 @@ void App::renderFrame(
 
                 sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
                 animated_sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
-                renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
+                // renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
                 onRender(device, frame_info);
                 gui_manager.draw(ECS, camera);
