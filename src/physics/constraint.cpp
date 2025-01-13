@@ -6,6 +6,7 @@
 #include <glm/ext/quaternion_common.hpp>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
+#include "math/math_defs.hpp"
 #include "math/math_func.hpp"
 #include "physics/rigidbody.hpp"
 #include "physics_system.hpp"
@@ -179,7 +180,6 @@ Constraint Builder::build() {
             result.data.swivel_dynamic.pinch_point_model1 = point_rel1;
             result.data.swivel_dynamic.pinch_point_model2 = point_rel2;
         break;
-        case eConstraintType::FixedLock:
         case eConstraintType::FixedLockAnchored:
             assert(entity_list.size() == 2);
             if(glm::isnan(relative_offset.x)) {
@@ -193,9 +193,29 @@ Constraint Builder::build() {
                 relative_rotation = rot2 - rot1;
             }
 
-            result.data.fixed_lock.rel_offset = relative_offset;
-            result.data.fixed_lock.rel_rotation = relative_rotation;
+            result.data.fixed_anchored.rel_offset = relative_offset;
+            result.data.fixed_anchored.rel_rotation = relative_rotation;
         break;
+        case eConstraintType::FixedLock: {
+            float base_angle;
+            float rel1, rel2;
+            if(glm::isnan(relative_offset.x)) {
+                auto pos1 = entity_list.front().second->position; 
+                auto pos2 = entity_list.back().second->position; 
+                relative_offset = rotateVec(pos2 - pos1, -entity_list.front().second->rotation);
+                base_angle = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
+            }
+            if(glm::isnan(relative_rotation)) {
+                auto rot1 = entity_list.front().second->rotation;
+                auto rot2 = entity_list.back().second->rotation; 
+                rel1 = rot1 - base_angle;
+                rel2 = rot2 - base_angle;
+                EMP_LOG_DEBUG << rel1 << "\t" << rel2;
+            }
+            result.data.fixed_dynamic.distance = length(relative_offset);
+            result.data.fixed_dynamic.rel_rotation1 = rel1;
+            result.data.fixed_dynamic.rel_rotation2 = rel2;
+        } break;
         default:
         break;
     }
@@ -262,48 +282,27 @@ void Constraint::m_solvePointFixedAnchor(float delta_time, Coordinator& ECS) {
     vec2f pos_correction = {0, 0}; 
     float rot_correction = 0.f;
     {
-        auto pos_diff = pos2 - (pos1 + rotateVec(data.fixed_lock.rel_offset, anchor_trans.rotation));
+        auto pos_diff = pos2 - (pos1 + rotateVec(data.fixed_anchored.rel_offset, anchor_trans.rotation));
         auto norm = normal(pos_diff);
         auto c = length(pos_diff);
+        const auto tilde_compliance = compliance / (delta_time * delta_time);
+
+        auto delta_lagrange = -c / (1 + tilde_compliance);
+        auto p = delta_lagrange * norm;
+
         if(!nearlyEqual(c, 0.f)) {
-            auto pos_corr_info = 
-                PositionalCorrectionInfo(
-                        norm,
-                        dynamic_entity,
-                        vec2f(0),
-                        &rigidbody,
-                        anchor_entity,
-                        vec2f(0),
-                        nullptr
-                );
-            auto correction = calcPositionalCorrection(
-                pos_corr_info, c, norm, delta_time, compliance);
-            pos_correction = correction.pos1_correction;
+            pos_correction = p;
         }
     }
     {
-        vec2f arm = {1.f, 0};
-        auto rot_diff =
-            arm -
-            rotateVec(arm,
-                anchor_trans.rotation + data.fixed_lock.rel_rotation -
-                    dynamic_trans.rotation);
-        auto norm = normal(rot_diff);
-        auto c = length(rot_diff) * 1000.f;
+        auto c = anchor_trans.rotation + data.fixed_anchored.rel_rotation -
+                    dynamic_trans.rotation;
+
+        const auto tilde_compliance = compliance / (delta_time * delta_time);
+
+        auto p = c / (1 + tilde_compliance);
         if(!nearlyEqual(c, 0.f)) {
-            auto pos_corr_info = 
-                PositionalCorrectionInfo(
-                        norm,
-                        dynamic_entity,
-                        arm,
-                        &rigidbody,
-                        anchor_entity,
-                        vec2f(0),
-                        nullptr
-                );
-            auto correction = calcPositionalCorrection(
-                pos_corr_info, c, norm, delta_time, compliance);
-            rot_correction = correction.rot1_correction;
+            rot_correction = p;
         }
     }
 
@@ -314,6 +313,72 @@ void Constraint::m_solvePointFixedAnchor(float delta_time, Coordinator& ECS) {
     }
 }
 void Constraint::m_solvePointFixed(float delta_time, Coordinator& ECS) {
+    Entity entity1 = entity_list[0];
+    Entity entity2 = entity_list[1];
+    assert(ECS.hasComponent<Transform>(entity1));
+    assert(ECS.hasComponent<Rigidbody>(entity1));
+    assert(ECS.hasComponent<Transform>(entity2));
+    assert(ECS.hasComponent<Rigidbody>(entity2));
+    auto& trans1 = *ECS.getComponent<Transform>(entity1);
+    auto& trans2 = *ECS.getComponent<Transform>(entity2);
+    auto& rigidbody1 = *ECS.getComponent<Rigidbody>(entity1);
+    auto& rigidbody2 = *ECS.getComponent<Rigidbody>(entity2);
+    const vec2f& pos1 = trans1.position;
+    const vec2f& pos2 = trans2.position;
+
+    vec2f pos_corr1={0, 0}, pos_corr2={0,0};
+    float rot_corr1=0, rot_corr2=0;
+
+    auto base = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
+    {
+        auto pos_diff = pos2 - pos1;
+        auto pos_norm = normal(pos_diff);
+        auto c = data.fixed_dynamic.distance - length(pos_diff);
+        if(!nearlyEqual(c, 0.f)) {
+            auto pos_corr_info = 
+                PositionalCorrectionInfo(
+                    pos_norm,
+                    entity1,
+                    vec2f(0),
+                    &rigidbody1,
+                    entity2,
+                    vec2f(0),
+                    &rigidbody2
+                );
+            auto correction = calcPositionalCorrection(
+                pos_corr_info, c, pos_norm, delta_time, compliance);
+            pos_corr1 = correction.pos1_correction;
+            pos_corr2 = correction.pos2_correction;
+        }
+    }
+    {
+        auto rot1_target = base + data.fixed_dynamic.rel_rotation1;
+        auto rot2_target = base + data.fixed_dynamic.rel_rotation2;
+        auto rot_diff1 = rot1_target - trans1.rotation;
+        auto rot_diff2 = rot2_target - trans2.rotation;
+        // auto rot_diff2 = data.fixed_dynamic.rel_rotation2 - (trans2.rotation - base);
+        const auto tilde_compliance = compliance * (delta_time * delta_time);
+        const auto inertia_sum = rigidbody1.inertia() + rigidbody2.inertia();
+        const auto inertia1_w = rigidbody1.inertia() / inertia_sum;
+        const auto inertia2_w = rigidbody2.inertia() / inertia_sum;
+        if(!nearlyEqual(rot_diff1, 0.f)) {
+            auto p = rot_diff1 / (2 + tilde_compliance);
+            rot_corr1 = p;
+        }
+        if(!nearlyEqual(rot_diff2, 0.f)) {
+            auto p = rot_diff2 / (2 + tilde_compliance);
+            rot_corr2 = p;
+        }
+    }
+
+    trans1.position += pos_corr1;
+    if(!rigidbody1.isRotationLocked){
+        trans1.rotation += rot_corr1;
+    }
+    trans2.position += pos_corr2;
+    if(!rigidbody2.isRotationLocked){
+        trans2.rotation += rot_corr2;
+    }
 }
 void Constraint::m_solvePointSwivelAnchor(float delta_time, Coordinator& ECS) {
     Entity anchor_entity = entity_list[0];
