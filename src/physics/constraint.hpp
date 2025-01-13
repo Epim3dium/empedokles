@@ -77,7 +77,12 @@ struct Constraint {
         struct {
             float rel_rotation;
             vec2f rel_offset;
-        } fixed_lock;
+        } fixed_anchored;
+        struct {
+            float distance;
+            float rel_rotation1;
+            float rel_rotation2;
+        } fixed_dynamic;
     }data;
     struct Builder {
     private:
