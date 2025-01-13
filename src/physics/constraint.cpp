@@ -329,56 +329,43 @@ void Constraint::m_solvePointFixed(float delta_time, Coordinator& ECS) {
     vec2f pos_corr1={0, 0}, pos_corr2={0,0};
     float rot_corr1=0, rot_corr2=0;
 
-    auto base = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
     {
-        auto pos_diff = pos2 - pos1;
-        auto pos_norm = normal(pos_diff);
-        auto c = data.fixed_dynamic.distance - length(pos_diff);
-        if(!nearlyEqual(c, 0.f)) {
-            auto pos_corr_info = 
-                PositionalCorrectionInfo(
-                    pos_norm,
-                    entity1,
-                    vec2f(0),
-                    &rigidbody1,
-                    entity2,
-                    vec2f(0),
-                    &rigidbody2
-                );
-            auto correction = calcPositionalCorrection(
-                pos_corr_info, c, pos_norm, delta_time, compliance);
-            pos_corr1 = correction.pos1_correction;
-            pos_corr2 = correction.pos2_correction;
-        }
-    }
-    {
-        auto rot1_target = base + data.fixed_dynamic.rel_rotation1;
-        auto rot2_target = base + data.fixed_dynamic.rel_rotation2;
-        auto rot_diff1 = rot1_target - trans1.rotation;
-        auto rot_diff2 = rot2_target - trans2.rotation;
-        // auto rot_diff2 = data.fixed_dynamic.rel_rotation2 - (trans2.rotation - base);
+        auto target = data.fixed_dynamic.rel_rotation2 - data.fixed_dynamic.rel_rotation1;
+        auto c = trans2.rotation - trans1.rotation - target;
         const auto tilde_compliance = compliance * (delta_time * delta_time);
         const auto inertia_sum = rigidbody1.inertia() + rigidbody2.inertia();
-        const auto inertia1_w = rigidbody1.inertia() / inertia_sum;
-        const auto inertia2_w = rigidbody2.inertia() / inertia_sum;
-        if(!nearlyEqual(rot_diff1, 0.f)) {
-            auto p = rot_diff1 / (2 + tilde_compliance);
-            rot_corr1 = p;
+        if(!nearlyEqual(c, 0.f)) {
+            auto p = c / (1 + tilde_compliance);
+            rot_corr1 = p * rigidbody2.inertia() / inertia_sum;
+            rot_corr2 = -p* rigidbody1.inertia() / inertia_sum;;
         }
-        if(!nearlyEqual(rot_diff2, 0.f)) {
-            auto p = rot_diff2 / (2 + tilde_compliance);
-            rot_corr2 = p;
+    }
+    if(!rigidbody1.isRotationLocked){
+        trans1.rotation += rot_corr1;
+    }
+    if(!rigidbody2.isRotationLocked){
+        trans2.rotation += rot_corr2;
+    }
+    {
+        const auto len = data.fixed_dynamic.distance;
+        auto pos_target1 = trans2.position - rotateVec(
+            vec2f(len, 0), trans2.rotation - data.fixed_dynamic.rel_rotation2);
+
+        auto pos1_diff = pos_target1 - trans1.position;
+        auto c = length(pos1_diff);
+        auto norm = normal(pos1_diff);
+
+        const auto tilde_compliance = compliance * (delta_time * delta_time);
+        const auto mass_sum = rigidbody1.mass() + rigidbody2.mass();
+        if(!nearlyEqual(c, 0.f)) {
+            auto p = c / (1.f + tilde_compliance);
+            pos_corr1 = norm * p * rigidbody2.mass() / mass_sum;
+            pos_corr2 = -norm * p * rigidbody1.mass() / mass_sum;
         }
     }
 
     trans1.position += pos_corr1;
-    if(!rigidbody1.isRotationLocked){
-        trans1.rotation += rot_corr1;
-    }
     trans2.position += pos_corr2;
-    if(!rigidbody2.isRotationLocked){
-        trans2.rotation += rot_corr2;
-    }
 }
 void Constraint::m_solvePointSwivelAnchor(float delta_time, Coordinator& ECS) {
     Entity anchor_entity = entity_list[0];
