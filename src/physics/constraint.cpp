@@ -115,13 +115,13 @@ Builder& Builder::setFixed(vec2f rel_distance, float rel_rotation ) {
     relative_rotation = rel_rotation;
     return *this;
 }
-Builder& Builder::setGlobalHinge(vec2f point) {
+Builder& Builder::setHinge(vec2f point) {
     assert(this->type == eConstraintType::Undefined && "trying to change constraint type");
     type = eConstraintType::SwivelPoint;
     global_point = point;
     return *this;
 }
-Builder& Builder::setRelativeHinge(vec2f rel1, vec2f rel2) {
+Builder& Builder::setHingeRelative(vec2f rel1, vec2f rel2) {
     assert(this->type == eConstraintType::Undefined && "trying to change constraint type");
     type = eConstraintType::SwivelPoint;
     point_rel1 = rel1;
@@ -202,15 +202,16 @@ Constraint Builder::build() {
             if(glm::isnan(relative_offset.x)) {
                 auto pos1 = entity_list.front().second->position; 
                 auto pos2 = entity_list.back().second->position; 
-                relative_offset = rotateVec(pos2 - pos1, -entity_list.front().second->rotation);
-                base_angle = atan2(pos2.y - pos1.y, pos2.x - pos1.x);
+                relative_offset = pos2 - pos1;
+            }else {
+                relative_offset = rotateVec(relative_offset, entity_list.front().second->rotation);
             }
+            base_angle = atan2(relative_offset.y, relative_offset.x);
             if(glm::isnan(relative_rotation)) {
                 auto rot1 = entity_list.front().second->rotation;
                 auto rot2 = entity_list.back().second->rotation; 
                 rel1 = rot1 - base_angle;
                 rel2 = rot2 - base_angle;
-                EMP_LOG_DEBUG << rel1 << "\t" << rel2;
             }
             result.data.fixed_dynamic.distance = length(relative_offset);
             result.data.fixed_dynamic.rel_rotation1 = rel1;

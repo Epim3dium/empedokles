@@ -107,8 +107,8 @@ struct Constraint {
 
         Builder& enableCollision(bool enable = true);
 
-        Builder& setGlobalHinge(vec2f point);
-        Builder& setRelativeHinge(vec2f point_rel1, vec2f point_rel2);
+        Builder& setHinge(vec2f point);
+        Builder& setHingeRelative(vec2f point_rel1, vec2f point_rel2);
 
         //if using anchor, relative to anchor otherwise relative to first ConstraintedEntity
         Builder& setFixed(vec2f relative_offset = vec2f(NAN, NAN), float rel_rotation = NAN);
