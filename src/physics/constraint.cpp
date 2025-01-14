@@ -334,10 +334,14 @@ void Constraint::m_solvePointFixed(float delta_time, Coordinator& ECS) {
         const auto len = data.fixed_dynamic.distance;
         auto pos_target1 = trans2.position - rotateVec(
             vec2f(len, 0), trans2.rotation - data.fixed_dynamic.rel_rotation2);
+        auto pos_target2 = trans1.position + rotateVec(
+            vec2f(len, 0), trans1.rotation - data.fixed_dynamic.rel_rotation1);
 
         auto pos1_diff = pos_target1 - trans1.position;
-        auto c = length(pos1_diff);
-        auto norm = normal(pos1_diff);
+        auto pos2_diff = pos_target2 - trans2.position;
+        auto diff = (pos1_diff - pos2_diff) * 0.5f;
+        auto c = length(diff);
+        auto norm = normal(diff);
 
         auto correction = calcPositionalCorrection(
             PositionalCorrectionInfo(
@@ -404,20 +408,20 @@ void Constraint::m_solvePointSwivelAnchor(float delta_time, Coordinator& ECS) {
         return;
 
     auto correction = calcPositionalCorrection(
-            PositionalCorrectionInfo(
-                    norm,
-                    dynamic_entity,
-                    dynamic_pinch,
-                    &rigidbody,
-
-                    anchor_entity,
-                    vec2f(0),
-                    nullptr
-            ),
-            c,
+        PositionalCorrectionInfo(
             norm,
-            delta_time,
-            compliance
+            dynamic_entity,
+            dynamic_pinch,
+            &rigidbody,
+
+            anchor_entity,
+            vec2f(0),
+            nullptr
+        ),
+        c,
+        norm,
+        delta_time,
+        compliance
     );
     dynamic_trans.position += correction.pos1_correction;
     dynamic_trans.rotation += correction.rot1_correction;
