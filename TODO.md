@@ -1,6 +1,12 @@
 # 🎯 TODO:
 
+- sound
+    - basic sound asset system
+    - simple 'play sample'
+    - spatial audio emitters
 - collision
+    - more constraints+
+        - piston
     - collision optimization
         - tighter locked critical section
 - graphics
@@ -16,8 +22,6 @@
 ---
 
 # 📌 DOING:
-- collision
-    - more constraints+
 
 ---
 
@@ -33,6 +37,10 @@
     - serialization / deserialization (Basic)
 - collision
     - added more constraints
+        - anchored swivel
+        - unanchored swivel
+        - anchored fixed 
+        - unanchored fixed 
 - graphics
     - imgui inspector for basic components
     - basic animation system
