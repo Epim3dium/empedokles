@@ -5,6 +5,7 @@
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include "scene/prefab.hpp"
+#include <cstdio>
 #include <vector>
 using namespace emp;
 
@@ -159,25 +160,17 @@ void Demo::onSetup(Window& window, Device& device) {
             {vec2f(0.f, -getHeight() / 2), 0.f},
             {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
     };
-    auto platform = ECS.createEntity();
-    gui_manager.alias(platform, "platform");
-    ECS.addComponent(
-            platform, Transform(ops->first, ops->second, {getWidth() / cube_side_len, 1.f})
-    );
-    auto col = Collider(cube_model_shape);
-    col.collider_layer = GROUND;
-    ECS.addComponent(platform, col);
-    ECS.addComponent(platform, Rigidbody{true});
-    ECS.addComponent(platform, Material());
-    Prefab prefab(ECS, platform);
-    for (int i = 1; i < 4; i++) {
-        auto platform = prefab.clone(ECS);
-        auto trans = ECS.getComponent<Transform>(platform);
-        if(trans == nullptr) {
-            EMP_LOG(WARNING) << "incorrect prefab behaviour";
-            continue;
-        }
-        *trans = Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len, 1.f});
+    for (int i = 0; i < 4; i++) {
+        auto platform = ECS.createEntity();
+        gui_manager.alias(platform, "platform");
+        ECS.addComponent(
+                platform, Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len, 1.f})
+        );
+        auto col = Collider(cube_model_shape);
+        col.collider_layer = GROUND;
+        ECS.addComponent(platform, col);
+        ECS.addComponent(platform, Rigidbody{true});
+        ECS.addComponent(platform, Material());
     }
 
     ECS.getSystem<PhysicsSystem>()->gravity = 1000.f;
@@ -339,7 +332,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             auto mouse_obj_constr = Constraint::Builder()
                 .setCompliance(0.1e-7f)
                 .enableCollision()
-                .setConnectionGlobalPoint(mouse_pos)
+                .setHinge(mouse_pos)
                 .addAnchorEntity(mouse_entity, *mouse_transform)
                 .addConstrainedEntity(target, *target_transform)
                 .build();
@@ -357,7 +350,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             auto chain = Constraint::Builder()
                 .setCompliance(0.1e-6f)
                 .enableCollision()
-                .setConnectionGlobalPoint(mouse_pos)
+                .setFixed()
                 .addConstrainedEntity(entities.front(), *ECS.getComponent<Transform>(entities.front()))
                 .addConstrainedEntity(entities.back(), *ECS.getComponent<Transform>(entities.back()))
                 .build();
