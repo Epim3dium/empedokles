@@ -95,7 +95,7 @@ void Console::clearLog() {
     m_items.clear();
 }
 
-void Console::addLog(const char* fmt, ...) IM_FMTARGS(2) {
+void Console::addLog(const char* fmt, ...)  {
     // FIXME-OPT
     char buf[1024];
     va_list args;
