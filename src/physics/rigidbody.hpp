@@ -20,7 +20,7 @@ public:
     bool isStatic = false;
     bool isRotationLocked = false;
 
-    bool isSleeping = false;
+    float time_resting = 0.f;
     bool useAutomaticMass = true;
 
     vec2f velocity = vec2f(0.f, 0.f);
@@ -56,8 +56,9 @@ public:
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {
 public:
-    void integrate(float delT);
-    void deriveVelocities(float delT);
+    //if resting_time in rigidbody is bigger than threshold it is considered not moving
+    void integrate(float delT, float restingTimeThreshold = INFINITY);
+    void deriveVelocities(float delT, float restingTimeThreshold = INFINITY);
     void updateMasses();
 };
 }; // namespace emp

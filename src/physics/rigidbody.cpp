@@ -34,10 +34,10 @@ void RigidbodySystem::updateMasses() {
         }
     }
 }
-void RigidbodySystem::integrate(float delT) {
+void RigidbodySystem::integrate(float delT, float resting_time_threshold) {
     for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
-        if(rigidbody.isSleeping || rigidbody.isStatic)
+        if(rigidbody.time_resting > resting_time_threshold || rigidbody.isStatic)
             continue;
         auto& transform = getComponent<Transform>(entity);
         rigidbody.prev_pos = transform.position;
@@ -49,10 +49,10 @@ void RigidbodySystem::integrate(float delT) {
         transform.rotation += rigidbody.angular_velocity * delT;
     }
 }
-void RigidbodySystem::deriveVelocities(float delT) {
+void RigidbodySystem::deriveVelocities(float delT, float resting_time_threshold) {
     for (auto entity : entities) {
         auto& rigidbody = getComponent<Rigidbody>(entity);
-        if(rigidbody.isSleeping || rigidbody.isStatic)
+        if(rigidbody.time_resting > resting_time_threshold || rigidbody.isStatic)
             continue;
         auto& transform = getComponent<Transform>(entity);
         rigidbody.velocity_pre_solve = rigidbody.velocity;

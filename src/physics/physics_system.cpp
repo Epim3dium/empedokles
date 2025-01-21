@@ -13,13 +13,6 @@ float PhysicsSystem::m_calcRestitution(
         vec2f gravity,
         float delT
 ) {
-    // TODO: The XPBD paper has this, but it seems to be prevent bounces in
-    // cases where bodies should clearly be bouncing. Maybe change the threshold
-    // to be even lower? Or is this even needed at all?
-    /*
-    // If normal velocity is small enough, use restitution of 0 to avoid
-    jittering
-    */
     if (abs(normal_speed) <= gravity.length() * delT) {
         coef = 0.0;
     }
@@ -340,10 +333,10 @@ void PhysicsSystem::m_solveVelocities(
 }
 void PhysicsSystem::m_applyGravity() {
     for (const auto e : entities) {
-        if(m_isDormant(e)) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(m_isDormant(rb)) {
             continue;
         }
-        auto& rb = getComponent<Rigidbody>(e);
         if (!rb.isStatic) {
             rb.force += gravity * rb.mass();
         }
@@ -351,10 +344,10 @@ void PhysicsSystem::m_applyGravity() {
 }
 void PhysicsSystem::m_applyAirDrag() {
     for (const auto e : entities) {
-        if(m_isDormant(e)) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(m_isDormant(rb)) {
             continue;
         }
-        auto& rb = getComponent<Rigidbody>(e);
         auto& material = getComponent<Material>(e);
         auto magnitude = dot(rb.velocity, rb.velocity);
         if(magnitude == 0.f) {
@@ -366,24 +359,25 @@ void PhysicsSystem::m_applyAirDrag() {
         }
     }
 }
-void PhysicsSystem::m_processSleep(float delta_time, ConstraintSystem& constr_sys) {
-    auto all_groups = constr_sys.getConstrainedGroups();
-    for(const auto& group : all_groups) {
-        auto prev = group->back();
-        for(auto entity : *group) {
-            m_collision_islands.merge(entity, prev);
-        }
-    }
+void PhysicsSystem::m_processSleepingGroups(float delta_time) {
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         if(rb.isStatic)
             continue;
         auto head = m_collision_islands.group(e);
+        auto& head_rb = getComponent<Rigidbody>(head);
         if(length(rb.velocity) > SLOW_VEL) {
-            m_have_been_slow_for[head] = 0.f;
+            head_rb.time_resting = 0.f;
         }
-        if(m_have_been_slow_for[head] == 0.f) {
-            m_have_been_slow_for[e] = 0.f;
+    }
+    for(const auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(rb.isStatic)
+            continue;
+        auto head = m_collision_islands.group(e);
+        auto& head_rb = getComponent<Rigidbody>(head);
+        if(head_rb.time_resting == 0.f) {
+            rb.time_resting = 0.f;
             m_collision_islands.isolate(e);
         }
     }
@@ -391,26 +385,31 @@ void PhysicsSystem::m_processSleep(float delta_time, ConstraintSystem& constr_sy
         auto& rb = getComponent<Rigidbody>(e);
         if(rb.isStatic)
             continue;
-        if(m_collision_islands.isHead(e)) {
-            m_have_been_slow_for[e] += delta_time;
+        rb.time_resting += delta_time;
+    }
+}
+void PhysicsSystem::m_mergeConstrainedSleepingGroups(ConstraintSystem& constr_sys) {
+    auto all_groups = constr_sys.getConstrainedGroups();
+    for(const auto& group : all_groups) {
+        auto prev = group->back();
+        for(auto entity : *group) {
+            m_collision_islands.merge(entity, prev);
         }
     }
+}
+void PhysicsSystem::m_processSleep(float delta_time, ConstraintSystem& constr_sys) {
+    m_mergeConstrainedSleepingGroups(constr_sys);
+    m_processSleepingGroups(delta_time);
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         auto& col = getComponent<Collider>(e);
         if(rb.isStatic)
             continue;
-        if(m_isDormant(e)) {
-            rb.isSleeping = true;
-            col.isNonMoving = true;
-        }else {
-            rb.isSleeping = false;
-            col.isNonMoving = false;
-        }
+        col.isNonMoving = m_isDormant(rb);
     }
 }
-bool PhysicsSystem::m_isDormant(Entity e) {
-    return m_have_been_slow_for[m_collision_islands.group(e)] > DORMANT_TIME && useDeactivation;
+bool PhysicsSystem::m_isDormant(const Rigidbody& rb) const {
+    return useDeactivation && rb.time_resting > DORMANT_TIME_THRESHOLD;
 }
 void PhysicsSystem::m_step(
         TransformSystem& trans_sys,
@@ -422,7 +421,7 @@ void PhysicsSystem::m_step(
     m_applyGravity();
     m_applyAirDrag();
     m_processSleep(delta_time, const_sys);
-    rb_sys.integrate(delta_time);
+    rb_sys.integrate(delta_time, DORMANT_TIME_THRESHOLD);
     trans_sys.update();
     col_sys.update();
     const_sys.update(delta_time);
@@ -430,7 +429,7 @@ void PhysicsSystem::m_step(
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);
     
     trans_sys.update();
-    rb_sys.deriveVelocities(delta_time);
+    rb_sys.deriveVelocities(delta_time, DORMANT_TIME_THRESHOLD);
     m_solveVelocities(penetrations, delta_time);
     m_broadcastCollisionMessages(penetrations);
 }
@@ -458,8 +457,9 @@ void PhysicsSystem::update(
     m_separateNonColliding();
 }
 void PhysicsSystem::m_separateNonColliding() {
-    for(int e = 0; e < MAX_ENTITIES; e++) {
-        if(!m_have_collided.test(e) && !m_isDormant(e)) {
+    for(auto e : entities) {
+        auto& rb = getComponent<Rigidbody>(e);
+        if(!m_have_collided.test(e) && !m_isDormant(rb)) {
             m_collision_islands.isolate(e);
         }
     }

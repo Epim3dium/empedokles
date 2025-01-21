@@ -89,7 +89,7 @@ class Inspector {
     template<> 
     void inspect<Rigidbody>(Entity e, Rigidbody& rigidbody) {
         ImGui::Checkbox("isStatic", &rigidbody.isStatic);
-        ImGui::Checkbox("isSleeping", &rigidbody.isSleeping);
+        ImGui::Text("time rested: %.2f", rigidbody.time_resting);
         ImGui::Checkbox("lock rotation", &rigidbody.isRotationLocked);
         ImGui::Checkbox("use auto mass", &rigidbody.useAutomaticMass);
         ImGui::Indent();
