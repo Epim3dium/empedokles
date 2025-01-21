@@ -29,7 +29,7 @@ struct Collider {
 private:
     void m_updateNewTransform(const Transform& trans);
     AABB m_calcAABB() const;
-    AABB m_aabb;
+    AABB m_aabb = {{0, 0}, {0, 0}};
 
     // potentially concave
     std::vector<vec2f> m_model_outline;
