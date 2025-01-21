@@ -36,11 +36,9 @@ AABB AABB::Expandable() {
     static const vec2f extreme = {0xffffff, 0xffffff};
     return AABB::CreateMinMax(extreme, -extreme);
 }
-AABB AABB::CreateCenterSize(vec2f center, vec2f size) {
-    AABB a;
-    a.setCenter(center);
-    a.setSize(size);
-    return a;
+AABB AABB::CreateCenterSize(vec2f c, vec2f s) {
+    auto half = s / 2.f;
+    return {{c.x - half.x, c.y - half.y}, {c.x + half.x, c.y + half.y}};
 }
 AABB AABB::CreateMinSize(vec2f min, vec2f size) {
     AABB a;
