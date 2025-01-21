@@ -83,7 +83,7 @@ void SerialConvert<Rigidbody>::encode(const Rigidbody& var, IBlobWriter& writer)
     writer.encode(var.real_density);
     writer.encode(var.isStatic);
     writer.encode(var.isRotationLocked);
-    writer.encode(var.isSleeping);
+    writer.encode(var.time_resting);
     writer.encode(var.useAutomaticMass);
     writer.encode(var.velocity);
     writer.encode(var.force);
@@ -100,7 +100,7 @@ void SerialConvert<Rigidbody>::decode(Rigidbody& var, IBlobReader& reader) {
     reader.decode(var.real_density);
     reader.decode(var.isStatic);
     reader.decode(var.isRotationLocked);
-    reader.decode(var.isSleeping);
+    reader.decode(var.time_resting);
     reader.decode(var.useAutomaticMass);
     reader.decode(var.velocity);
     reader.decode(var.force);

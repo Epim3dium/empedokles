@@ -64,7 +64,11 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     );
     void m_applyGravity();
     void m_applyAirDrag();
+
     void m_processSleep(float delta_time, ConstraintSystem& constr_sys);
+    void m_processSleepingGroups(float delta_time);
+    void m_mergeConstrainedSleepingGroups(ConstraintSystem& constr_sys);
+
     void m_separateNonColliding();
     void m_step(
             TransformSystem& trans_sys,
@@ -79,9 +83,8 @@ public:
     std::bitset<MAX_ENTITIES> m_have_collided;
     bool useDeactivation = true;
     static constexpr float SLOW_VEL = 15.f;
-    static constexpr float DORMANT_TIME = 3.f;
-    float m_have_been_slow_for[MAX_ENTITIES] {0.f};
-    bool m_isDormant(Entity e);
+    static constexpr float DORMANT_TIME_THRESHOLD = 3.f;
+    bool m_isDormant(const Rigidbody& rb) const;
 
 
     vec2f gravity = {0.f, 1.f};
