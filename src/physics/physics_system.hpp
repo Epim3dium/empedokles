@@ -84,7 +84,7 @@ public:
     bool m_isDormant(Entity e);
 
 
-    float gravity = 1.f;
+    vec2f gravity = {0.f, 1.f};
     size_t substep_count = 8U;
     void update(
             TransformSystem& trans_sys,

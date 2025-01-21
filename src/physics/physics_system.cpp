@@ -296,7 +296,7 @@ void PhysicsSystem::m_solveVelocities(
                 restitution,
                 normal_speed,
                 pre_solve_normal_speed,
-                {0.f, gravity},
+                gravity,
                 delT
         );
         if (abs(restitution_speed) > 0.f) {
@@ -345,7 +345,7 @@ void PhysicsSystem::m_applyGravity() {
         }
         auto& rb = getComponent<Rigidbody>(e);
         if (!rb.isStatic) {
-            rb.force += vec2f(0, gravity) * rb.mass();
+            rb.force += gravity * rb.mass();
         }
     }
 }
