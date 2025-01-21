@@ -370,7 +370,7 @@ void Constraint::m_solvePointFixed(float delta_time, Coordinator& ECS) {
         const auto tilde_compliance = compliance * (delta_time * delta_time);
         const auto inertia_sum = rigidbody1.inertia() + rigidbody2.inertia();
         if(!nearlyEqual(c, 0.f)) {
-            auto p = c / (1 + tilde_compliance);
+            auto p = c / (2 + tilde_compliance);
             rot_corr1 += p * (rigidbody2.isRotationLocked ? 1.f : rigidbody2.inertia() / inertia_sum);
             rot_corr2 += -p* (rigidbody1.isRotationLocked ? 1.f : rigidbody1.inertia() / inertia_sum);
         }
