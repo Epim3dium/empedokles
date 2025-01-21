@@ -56,7 +56,7 @@ private:
 class Output2Term : public LogOutput {
 public:
     void Output(std::string msg, LogLevel level) override {
-        std::cout << "[" << Log::ToString(level, true) <<"] "<< msg;
+        std::cerr << "[" << Log::ToString(level, true) <<"] "<< msg;
     }
 };
 
