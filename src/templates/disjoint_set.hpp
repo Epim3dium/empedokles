@@ -33,6 +33,8 @@ struct DisjointSet {
     void merge(int element1, int element2) {
         int group1 = group(element1);
         int group2 = group(element2);
+        if(group1 == group2)
+            return;
 
         int bigger_group  = (rank[group1] > rank[group2] ? group1 : group2);
         int smaller_group = (bigger_group == group1 ? group2 : group1);
