@@ -118,6 +118,7 @@ set(HEADER_FILES
     templates/finite_state_machine.hpp
     templates/relative_vector.hpp
     templates/relative_string.hpp
+    templates/quad_tree.hpp
 
     debug/log.hpp
     debug/debug.hpp
