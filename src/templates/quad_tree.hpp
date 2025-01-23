@@ -249,9 +249,11 @@ private:
             }
     }
     void clear(Node* node) {
+        if(node == nullptr)
+            return;
         node->values.clear();
         for(auto& child : node->children) {
-            child.reset();
+            clear(child.get());
         }
     }
 

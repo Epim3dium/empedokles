@@ -12,12 +12,8 @@
 #include "math/shapes/AABB.hpp"
 #include "templates/free_list.hpp"
 namespace emp {
-struct CollidingPair {
-    Entity e1;
-    Entity e2;
-    size_t shape_index1;
-    size_t shape_index2;
-};
+typedef std::pair<Entity, size_t> CollidingPoly;
+typedef std::pair<CollidingPoly, CollidingPoly> CollidingPair;
 class SweepBroadPhase {
 public:
     std::vector<CollidingPair> findPotentialPairs(
