@@ -54,10 +54,7 @@ public:
 
     std::vector<std::pair<T, T>> findAllIntersections() const
     {
-        auto intersections = std::vector<std::pair<T, T>>();
-        std::array<Node*, max_depth> stack;
-        findAllIntersections(m_root.get(), intersections, stack);
-        return intersections;
+        return findAllIntersections(m_root.get());
     }
 
     AABB getAABB() const 
@@ -275,9 +272,9 @@ private:
         }
     }
 
-    void findAllIntersections(Node* node,
+    void searchIntersecionsInNode(Node* node, int depth,
         std::vector<std::pair<T, T>>& intersections,
-        std::array<Node*, max_depth>& parents_to_check, int depth = 0) const 
+        std::array<Node*, max_depth>& parent_stack) const
     {
         if(!node)
             return;
@@ -288,7 +285,7 @@ private:
             }
         }
         for(int deep = 0; deep < depth; deep++) {
-            auto parent = parents_to_check[deep];
+            auto parent = parent_stack[deep];
             assert(parent != nullptr);
             for (size_t i = 0; i < node->values.size(); ++i) {
                 for (size_t j = 0; j < parent->values.size(); ++j) {
@@ -297,23 +294,27 @@ private:
                 }
             }
         }
-        if (isLeaf(node)) {
-            return;
-        }
-        parents_to_check[depth] = node;
-        for (const auto& child : node->children)
-            findAllIntersections(child.get(), intersections, parents_to_check, depth + 1);
     }
+    std::vector<std::pair<T, T>> findAllIntersections(Node* root) const 
+    {
+        std::vector<std::pair<T, T>> intersections;
 
-    void findIntersectionsInDescendants(Node* node, const T& value, std::vector<std::pair<T, T>>& intersections) const {
-        for (const auto& other : node->values) {
-            if (isOverlappingAABBAABB(m_getAABB(value), m_getAABB(other)) )
-                intersections.emplace_back(value, other);
+        std::stack<std::pair<Node*, int>> to_process;
+        std::array<Node*, max_depth> parent_stack;
+        to_process.push({root, 0});
+        while(!to_process.empty()) {
+            auto node_info = to_process.top();
+            to_process.pop();
+            if(node_info.first == nullptr)
+                continue;;
+            searchIntersecionsInNode(node_info.first, node_info.second, intersections, parent_stack);
+            if(isLeaf(node_info.first))
+                continue;
+            parent_stack[node_info.second] = node_info.first;
+            for (const auto& child : node_info.first->children)
+                 to_process.push({child.get(), node_info.second + 1});
         }
-        if (!isLeaf(node)) {
-            for (const auto& child : node->children)
-                findIntersectionsInDescendants(child.get(), value, intersections);
-        }
+        return intersections;
     }
 };
 
