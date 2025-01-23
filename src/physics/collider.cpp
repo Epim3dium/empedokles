@@ -150,10 +150,15 @@ void Collider::m_updateNewTransform(const Transform& transform) {
             m_transformed_shape[i][ii] =
                     transformPoint(transform.global(), poly[ii]);
         }
-        auto center = std::reduce(m_transformed_shape[i].begin(), m_transformed_shape[i].end()) / static_cast<float>(poly.size());
-        std::sort(m_transformed_shape[i].begin(), m_transformed_shape[i].end(), [&](vec2f a, vec2f b) {
-            return atan2(a.y - center.y, a.x - center.x) > atan2(b.y - center.y, b.x - center.x);
-        });
+        auto center = std::reduce(m_transformed_shape[i].begin(),
+                          m_transformed_shape[i].end()) /
+                      static_cast<float>(poly.size());
+        std::sort(m_transformed_shape[i].begin(),
+            m_transformed_shape[i].end(),
+            [&](vec2f a, vec2f b) {
+                return atan2(a.y - center.y, a.x - center.x) >
+                       atan2(b.y - center.y, b.x - center.x);
+            });
     }
     for (int i = 0; i < m_model_outline.size(); i++) {
         m_transformed_outline[i] =
@@ -187,6 +192,7 @@ Collider::Collider(std::vector<vec2f> shape, bool correctCOM) {
     auto triangles = triangulateAsVector(m_model_outline);
     m_model_shape = mergeToConvex(triangles);
     m_transformed_shape = m_model_shape;
+    m_aabb = m_calcAABB();
 }
 void ColliderSystem::onEntityRemoved(Entity entity) {
     m_exit_callbacks.erase(entity);
