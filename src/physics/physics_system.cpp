@@ -1,8 +1,11 @@
 #include "physics_system.hpp"
 #include <glm/vector_relational.hpp>
+#include <memory>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
+#include "math/geometry_func.hpp"
 #include "math/math_func.hpp"
+#include "physics/collider.hpp"
 #include "physics/constraint.hpp"
 #include "physics/rigidbody.hpp"
 namespace emp {
@@ -56,10 +59,6 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     auto& col2 = getComponent<Collider>(e2);
     auto& mat2 = getComponent<Material>(e2);
 
-    // if(!Collider::canCollide(col1.collider_layer, col2.collider_layer)) {
-    //     return {false};
-    // }
-
     vec2f& pos1 = trans1.position;
     vec2f& pos2 = trans2.position;
     float& rot1 = trans1.rotation;
@@ -69,8 +68,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     const float inertia1 = rb1.inertia();
     const float inertia2 = rb2.inertia();
 
-    if (rb1.isStatic && rb2.isStatic)
-        return result;
+    //should not pass broad phase
+    assert(!(rb1.isStatic && rb2.isStatic));
     result.isStatic1 = rb1.isStatic;
     result.isStatic2 = rb2.isStatic;
 
@@ -193,10 +192,62 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     trans2.syncWithChange();
     return result;
 }
-std::vector<CollidingPair> PhysicsSystem::m_broadPhase() {
-    return SweepBroadPhase().findPotentialPairs(
-            entities.begin(), entities.end(), ECS()
-    );
+void PhysicsSystem::m_filterPotentialCollisions(std::vector<CollidingPair>& pairs, const ColliderSystem& col_sys) {
+    for(int i = 0; i < pairs.size(); i++) {
+        const auto& pair = pairs[i];
+        auto e1 = pair.first.first;
+        auto e2 = pair.second.first;
+        auto s1i = pair.first.second;
+        auto s2i = pair.second.second;
+        const auto& col1 = getComponent<Collider>(e1);
+        const auto& col2 = getComponent<Collider>(e2);
+        const auto& rb1 = getComponent<Rigidbody>(e1);
+        const auto& rb2 = getComponent<Rigidbody>(e2);
+        bool isPermitted = true;
+        if(e1 == e2)
+            isPermitted = false;
+        if(col1.isNonMoving && col2.isNonMoving)
+            isPermitted = false;
+        if(rb1.isStatic && rb2.isStatic)
+            isPermitted = false;
+        if(!col_sys.canCollide(col1.collider_layer, col2.collider_layer))
+            isPermitted = false;
+
+        if(!isPermitted) {
+            pairs.erase(pairs.begin() + i);
+            i--;
+            continue;
+        }
+    }
+}
+void PhysicsSystem::m_updateQuadTree() {
+    AABB current_minimal = AABB::Expandable();
+    for(auto e : entities) {
+        const auto& col = getComponent<Collider>(e);
+        auto aabb = col.aabb();
+        current_minimal.expandToContain(aabb.min);
+        current_minimal.expandToContain(aabb.max);
+    }
+    if(m_quad_tree == nullptr || !AABBcontainsAABB(m_quad_tree->getAABB(), current_minimal)) {
+        m_quad_tree.reset();
+        current_minimal.setSize(current_minimal.size() * 2.f);
+        m_aabb_extracter.coordinator = &ECS();
+        m_quad_tree = std::unique_ptr<QuadTree_t>(new QuadTree_t(current_minimal, m_aabb_extracter));
+    }
+    m_quad_tree->clear();
+    for(auto e : entities) {
+        const auto& col = getComponent<Collider>(e);
+        for(size_t i = 0; i < col.transformed_shape().size(); i++) {
+            m_quad_tree->add({e, i});
+        }
+    }
+    m_quad_tree->updateLeafes();
+}
+std::vector<CollidingPair> PhysicsSystem::m_broadPhase(const ColliderSystem& col_sys) {
+    m_aabb_extracter.cached_aabbs.clear();
+    auto all_pairs = m_quad_tree->findAllIntersections();
+    m_filterPotentialCollisions(all_pairs, col_sys);
+    return all_pairs;
 }
 std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
         ColliderSystem& col_sys,
@@ -204,7 +255,11 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
         float delT
 ) {
     std::vector<PenetrationConstraint> result;
-    for (const auto [e1, e2, s1i, s2i] : pairs) {
+    for (const auto pair : pairs) {
+        auto e1 = pair.first.first;
+        auto e2 = pair.second.first;
+        auto s1i = pair.first.second;
+        auto s2i = pair.second.second;
         auto res = m_handleCollision(e1, s1i, e2, s2i, delT);
         if (!res.detected) {
             continue;
@@ -425,7 +480,7 @@ void PhysicsSystem::m_step(
     trans_sys.update();
     col_sys.update();
     const_sys.update(delta_time);
-    auto potential_pairs = m_broadPhase();
+    auto potential_pairs = m_broadPhase(col_sys);
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);
     
     trans_sys.update();
@@ -441,6 +496,7 @@ void PhysicsSystem::update(
         float delT
 ) {
     m_have_collided.reset();
+    m_updateQuadTree();
     for (int i = 0; i < substep_count; i++) {
         m_step(trans_sys,
                col_sys,
@@ -463,8 +519,6 @@ void PhysicsSystem::m_separateNonColliding() {
             m_collision_islands.isolate(e);
         }
     }
-}
-void PhysicsSystem::onEntityAdded(Entity entity) {
 }
 }; // namespace emp
 

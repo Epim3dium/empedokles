@@ -1,3 +1,4 @@
+#include "debug/log.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "gui/gui_manager.hpp"
 #include "io/keyboard_controller.hpp"
@@ -9,6 +10,11 @@
 #include <vector>
 using namespace emp;
 
+struct AABBFromAABB {
+    AABB operator()(AABB v) const {
+        return v;
+    }
+};
 class MouseSelectionSystem : public System<Transform, Collider, Rigidbody> {
 public:
     std::vector<Entity> query(vec2f point) {
@@ -45,7 +51,7 @@ class Demo : public App {
         Entity isProtagonistGrounded;
         float isProtagonistGroundedSec;
         static constexpr float cayote_time = 0.25f;
-        static constexpr float cube_side_len = 75.f;
+        static constexpr float cube_side_len = 35.f;
         std::vector<vec2f> unit_cube = {
                 vec2f(-1.f/2.f, -1.f/2.f),
                 vec2f(-1.f/2.f, 1.f/2.f),
@@ -69,8 +75,8 @@ class Demo : public App {
         void onUpdate(const float delta_time, Window& window, KeyboardController& controller) override final;
         void onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller)override final;
 
-        Demo()
-            : App(1440, 810, {{"../assets/models/colored_cube.obj", "cube"}},
+        Demo(int w = 1440, int h = 810)
+            : App(w, h, {{"../assets/models/colored_cube.obj", "cube"}},
                 {
                     {"../assets/textures/dummy.png", "dummy"},
                     {"../assets/textures/crate.jpg", "crate"},
@@ -79,9 +85,11 @@ class Demo : public App {
                     {"../assets/textures/knight/_Fall.png", "jump-down"},
                     {"../assets/textures/knight/_Idle.png", "idle"},
                     {"../assets/textures/knight/_JumpFallInbetween.png", "jumpfall"}
-                }) {}
+                })
+                {}
 };
 void Demo::onSetup(Window& window, Device& device) {
+    Log::enableLoggingToCerr();
     gui_manager.alias(ECS.world(), "world_entity");
     ECS.registerSystem<MouseSelectionSystem>();
     ECS.getSystem<ColliderSystem>()->disableCollision(FRIENDLY, FRIENDLY);
@@ -173,7 +181,7 @@ void Demo::onSetup(Window& window, Device& device) {
         ECS.addComponent(platform, Material());
     }
 
-    ECS.getSystem<PhysicsSystem>()->gravity = 1000.f;
+    ECS.getSystem<PhysicsSystem>()->gravity = {0, 1000.f};
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
     this->setPhysicsTickrate(60.f);
     
@@ -298,7 +306,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     }
 
     static vec2f last_pos;
-    if (controller.get(eKeyMappings::Ability1).pressed) {
+    if (controller.get(eKeyMappings::Ability1).held) {
         last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
         Rigidbody rb;
@@ -348,7 +356,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             assert(ECS.getComponent<Collider>(entities.front()) && ECS.getComponent<Collider>(entities.back()));
             assert(ECS.getComponent<Rigidbody>(entities.front()) && ECS.getComponent<Rigidbody>(entities.back()));
             auto chain = Constraint::Builder()
-                .setCompliance(0.1e-6f)
+                .setCompliance(0.1e-7f)
                 .enableCollision()
                 .setFixed()
                 .addConstrainedEntity(entities.front(), *ECS.getComponent<Transform>(entities.front()))

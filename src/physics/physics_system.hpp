@@ -1,6 +1,9 @@
 #ifndef EMP_PHYSICS_SYSTEM_HPP
 #define EMP_PHYSICS_SYSTEM_HPP
+#include "core/coordinator.hpp"
+#include "core/entity.hpp"
 #include "debug/debug.hpp"
+#include "graphics/utils.hpp"
 #include "math/geometry_func.hpp"
 #include "math/math_func.hpp"
 #include "physics/broad_phase.hpp"
@@ -9,11 +12,29 @@
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
 #include "templates/disjoint_set.hpp"
+#include "templates/quad_tree.hpp"
 
 #include <memory>
+#include <unordered_map>
 namespace emp {
 struct Constraint;
 class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
+    struct AABBextracter {
+        const Coordinator* coordinator;
+        std::unordered_map<uint32_t, AABB> cached_aabbs;
+        uint32_t hash(const std::pair<Entity, size_t>& v) const {
+            return v.first * MAX_ENTITIES + v.second;
+        }
+        AABB operator()(std::pair<Entity, size_t> v) {
+            auto hash = this->hash(v);
+            if(cached_aabbs.contains(hash))
+                return cached_aabbs.at(hash);
+            const auto& poly = coordinator->getComponent<Collider>(v.first)->transformed_shape()[v.second];
+            auto aabb = AABB::CreateFromVerticies(poly);
+            cached_aabbs[hash] = aabb;
+            return aabb;
+        }
+    };
     struct PenetrationConstraint {
         bool detected = false;
         CollisionInfo info;
@@ -49,7 +70,10 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             float compliance = 0.f
     );
 
-    std::vector<CollidingPair> m_broadPhase();
+    std::vector<CollidingPair> m_broadPhase(const ColliderSystem& collider_system);
+    void m_filterPotentialCollisions(std::vector<CollidingPair>&, const ColliderSystem& col_sys);
+    void m_updateQuadTree();
+
     std::vector<PenetrationConstraint> m_narrowPhase(
             ColliderSystem& col_sys,
             const std::vector<CollidingPair>& pairs,
@@ -78,17 +102,21 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             float deltaTime
     );
 
-public:
+    typedef QuadTree<std::pair<Entity, size_t>, AABBextracter&> QuadTree_t;
+    std::unique_ptr<QuadTree_t> m_quad_tree;
+    AABBextracter m_aabb_extracter;
+
     DisjointSet<MAX_ENTITIES> m_collision_islands;
     std::bitset<MAX_ENTITIES> m_have_collided;
+public:
     bool useDeactivation = true;
     static constexpr float SLOW_VEL = 15.f;
     static constexpr float DORMANT_TIME_THRESHOLD = 3.f;
-    bool m_isDormant(const Rigidbody& rb) const;
-
-
     vec2f gravity = {0.f, 1.f};
     size_t substep_count = 8U;
+
+    bool m_isDormant(const Rigidbody& rb) const;
+
     void update(
             TransformSystem& trans_sys,
             ColliderSystem& col_sys,
@@ -96,7 +124,6 @@ public:
             ConstraintSystem& const_sys,
             float delT
     );
-    void onEntityAdded(Entity entity) override;
     friend Constraint;
 };
 }; // namespace emp
