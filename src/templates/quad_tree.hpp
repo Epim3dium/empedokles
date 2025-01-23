@@ -19,9 +19,7 @@ public:
     QuadTree(const AABB& box, const GetAABB& getAABB = GetAABB(),
         const Equal& equal = Equal()) :
         m_box(box), m_root(std::make_unique<Node>(box)), m_getAABB(getAABB), m_equal(equal)
-    {
-        std::cerr << "minmax: " << m_box.left()<<", "<<m_box.bottom()<<"\t"<<m_box.right()<<", "<<m_box.top() << "\n";
-    }
+    { }
 
     void add(const T& value)
     {
@@ -57,7 +55,8 @@ public:
     std::vector<std::pair<T, T>> findAllIntersections() const
     {
         auto intersections = std::vector<std::pair<T, T>>();
-        findAllIntersections(m_root.get(), intersections);
+        std::array<Node*, max_depth> stack;
+        findAllIntersections(m_root.get(), intersections, stack);
         return intersections;
     }
 
@@ -74,7 +73,7 @@ public:
     }
     
 private:
-    static constexpr auto threshold = std::size_t(4);
+    static constexpr auto threshold = std::size_t(16);
     static constexpr auto max_depth = std::size_t(8);
 
     struct Node
@@ -276,22 +275,34 @@ private:
         }
     }
 
-    void findAllIntersections(Node* node, std::vector<std::pair<T, T>>& intersections) const {
-        for (auto i = std::size_t(0); i < node->values.size(); ++i) {
-            for (auto j = std::size_t(0); j < i; ++j) {
+    void findAllIntersections(Node* node,
+        std::vector<std::pair<T, T>>& intersections,
+        std::array<Node*, max_depth>& parents_to_check, int depth = 0) const 
+    {
+        if(!node)
+            return;
+        for (size_t i = 0; i < node->values.size(); ++i) {
+            for (size_t j = 0; j < i; ++j) {
                 if (isOverlappingAABBAABB(m_getAABB(node->values[i]), m_getAABB(node->values[j])))
                     intersections.emplace_back(node->values[i], node->values[j]);
+            }
+        }
+        for(int deep = 0; deep < depth; deep++) {
+            auto parent = parents_to_check[deep];
+            assert(parent != nullptr);
+            for (size_t i = 0; i < node->values.size(); ++i) {
+                for (size_t j = 0; j < parent->values.size(); ++j) {
+                    if (isOverlappingAABBAABB(m_getAABB(node->values[i]), m_getAABB(parent->values[j])))
+                        intersections.emplace_back(node->values[i], parent->values[j]);
+                }
             }
         }
         if (isLeaf(node)) {
             return;
         }
-        for (const auto& child : node->children) {
-            for (const auto& value : node->values)
-                findIntersectionsInDescendants(child.get(), value, intersections);
-        }
+        parents_to_check[depth] = node;
         for (const auto& child : node->children)
-            findAllIntersections(child.get(), intersections);
+            findAllIntersections(child.get(), intersections, parents_to_check, depth + 1);
     }
 
     void findIntersectionsInDescendants(Node* node, const T& value, std::vector<std::pair<T, T>>& intersections) const {

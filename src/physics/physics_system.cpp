@@ -229,6 +229,7 @@ void PhysicsSystem::m_updateQuadTree() {
         current_minimal.expandToContain(aabb.max);
     }
     if(m_quad_tree == nullptr || !AABBcontainsAABB(m_quad_tree->getAABB(), current_minimal)) {
+        EMP_LOG(DEBUG2) << "quad tree rebuilt";
         m_quad_tree.reset();
         current_minimal.setSize(current_minimal.size() * 2.f);
         m_aabb_extracter.coordinator = &ECS();
