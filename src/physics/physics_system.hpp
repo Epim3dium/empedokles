@@ -71,6 +71,8 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     );
 
     std::vector<CollidingPair> m_broadPhase(const ColliderSystem& collider_system);
+
+    bool m_isCollisionAllowed(const CollidingPair&, const ColliderSystem& col_sys) const;
     void m_filterPotentialCollisions(std::vector<CollidingPair>&, const ColliderSystem& col_sys);
     void m_updateQuadTree();
 

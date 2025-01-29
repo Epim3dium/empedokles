@@ -192,28 +192,30 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     trans2.syncWithChange();
     return result;
 }
-void PhysicsSystem::m_filterPotentialCollisions(std::vector<CollidingPair>& pairs, const ColliderSystem& col_sys) {
+bool PhysicsSystem::m_isCollisionAllowed(
+    const CollidingPair& pair, const ColliderSystem& col_sys) const {
+    auto e1 = pair.first.first;
+    auto e2 = pair.second.first;
+    auto s1i = pair.first.second;
+    auto s2i = pair.second.second;
+    const auto& col1 = getComponent<Collider>(e1);
+    const auto& col2 = getComponent<Collider>(e2);
+    const auto& rb1 = getComponent<Rigidbody>(e1);
+    const auto& rb2 = getComponent<Rigidbody>(e2);
+    if(e1 == e2)
+        return false;
+    if(col1.isNonMoving && col2.isNonMoving)
+        return false;
+    if(rb1.isStatic && rb2.isStatic)
+        return false;
+    if(!col_sys.canCollide(col1.collider_layer, col2.collider_layer))
+        return false;
+    return true;
+}
+void PhysicsSystem::m_filterPotentialCollisions(
+    std::vector<CollidingPair>& pairs, const ColliderSystem& col_sys) {
     for(int i = 0; i < pairs.size(); i++) {
-        const auto& pair = pairs[i];
-        auto e1 = pair.first.first;
-        auto e2 = pair.second.first;
-        auto s1i = pair.first.second;
-        auto s2i = pair.second.second;
-        const auto& col1 = getComponent<Collider>(e1);
-        const auto& col2 = getComponent<Collider>(e2);
-        const auto& rb1 = getComponent<Rigidbody>(e1);
-        const auto& rb2 = getComponent<Rigidbody>(e2);
-        bool isPermitted = true;
-        if(e1 == e2)
-            isPermitted = false;
-        if(col1.isNonMoving && col2.isNonMoving)
-            isPermitted = false;
-        if(rb1.isStatic && rb2.isStatic)
-            isPermitted = false;
-        if(!col_sys.canCollide(col1.collider_layer, col2.collider_layer))
-            isPermitted = false;
-
-        if(!isPermitted) {
+        if(!m_isCollisionAllowed(pairs[i], col_sys)) {
             pairs.erase(pairs.begin() + i);
             i--;
             continue;
