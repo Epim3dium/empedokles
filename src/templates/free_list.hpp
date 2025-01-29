@@ -28,7 +28,8 @@ public:
     const T& operator[](int n) const;
 
 private:
-    union FreeElement {
+    //TODO reveert
+    struct FreeElement {
         T element{};
         int next;
     };
