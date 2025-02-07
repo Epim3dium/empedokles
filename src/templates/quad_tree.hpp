@@ -1,5 +1,6 @@
 #ifndef EMP_QUAD_TREE_HPP
 #define EMP_QUAD_TREE_HPP
+#include <cstdint>
 #include <functional>
 #include <map>
 #include "debug/log.hpp"
@@ -79,9 +80,15 @@ private:
     struct Node
     {
         int first_child = -1;
-        std::vector<T> values;
+        int first_elem = -1;
+        int count = 0;
+    };
+    struct Element {
+        T value;
+        int next;
     };
 
+    FreeList<Element> m_elements;
     AABB m_box;
     static constexpr int m_root = 0U;
     FreeList<Node> m_nodes;
@@ -89,6 +96,28 @@ private:
     GetAABB m_getAABB;
     Equal m_equal;
 
+    void insertElem(int node_idx, int elem_idx) {
+        int prev = m_nodes[node_idx].first_elem;
+        m_nodes[node_idx].first_elem = elem_idx;
+        m_elements[elem_idx].next = prev;
+        m_nodes[node_idx].count++;
+    }
+    void removeElem(int node_idx, int elem_idx) {
+        int prev = -1;
+        int cur_idx = m_nodes[node_idx].first_elem;
+        if(cur_idx == elem_idx) {
+            m_nodes[node_idx].first_elem = m_elements[cur_idx].next;
+            return;
+        }
+        while(cur_idx != -1 && m_elements[cur_idx].next != elem_idx) {
+            cur_idx = m_elements[cur_idx].next;
+        }
+        if(cur_idx == -1)
+            return;
+        m_elements[cur_idx].next = m_elements[elem_idx].next;
+        m_elements[elem_idx].next = -1;
+        m_nodes[node_idx].count--;
+    }
     bool isLeaf(int node) const
     {
         return (m_nodes[node].first_child == -1);
@@ -114,6 +143,10 @@ private:
         }
     }
 
+    // 0b1 is br
+    // 0b01 is bl
+    // 0b001 is tr
+    // 0b0001 is tl
     int getQuadrant(const AABB& nodeAABB, const AABB& valueAABB) const
     {
         auto center = nodeAABB.center();
@@ -136,7 +169,9 @@ private:
                 return -1;
         }
         else
+        {
             return -1;
+        }
     }
 
     int add(const int node_idx, size_t depth, const AABB& box, const T& value)
@@ -145,8 +180,8 @@ private:
         assert(AABBcontainsAABB(box, m_getAABB(value)));
         if (isLeaf(node_idx))
         {
-            if (depth >= max_depth || m_nodes[node_idx].values.size() < threshold) {
-                m_nodes[node_idx].values.push_back(value);
+            if (depth >= max_depth || m_nodes[node_idx].count < threshold) {
+                insertElem(node_idx, m_elements.insert({value, -1}));
                 return node_idx;
             } else {
                 split(node_idx, box);
@@ -154,14 +189,13 @@ private:
             }
         } 
         auto quadrant = getQuadrant(box, m_getAABB(value));
-        if (quadrant != -1) {
+        if(quadrant == -1) {
+            insertElem(node_idx, m_elements.insert({value, -1}));
+            return node_idx;
+        }else {
             int child_idx = m_nodes[node_idx].first_child + quadrant;
             return add(child_idx, depth + 1, computeAABB(box, quadrant), value);
-        } else {
-            m_nodes[node_idx].values.push_back(value);
-            return node_idx;
         }
-        exit(1);
     }
 
     void split(int node_idx, const AABB& box)
@@ -171,22 +205,29 @@ private:
         int quad = 0;
         int first_child = 0xffffff;
         for(int i = 0; i < 4; i++) {
-            auto new_child = m_nodes.insert({-1});
+            auto new_child = m_nodes.insert({-1, -1});
             first_child = std::min(new_child, first_child);
         }
         m_nodes[node_idx].first_child = first_child;
-        auto newValues = std::vector<T>(); 
-        for (const auto& value : m_nodes[node_idx].values)
+
+        int elem_idx = m_nodes[node_idx].first_elem;
+        m_nodes[node_idx].first_elem = -1;
+        m_nodes[node_idx].count = 0;
+
+        while(elem_idx != -1)
         {
+            int cur_idx = elem_idx;
+            elem_idx = m_elements[cur_idx].next;
+
+            const auto& value = m_elements[cur_idx].value;
             auto quadrant = getQuadrant(box, m_getAABB(value));
-            if (quadrant != -1) {
+            if(quadrant != -1) {
                 int child_idx = quadrant + m_nodes[node_idx].first_child;
-                m_nodes[child_idx].values.push_back(value);
-            } else {
-                newValues.push_back(value);
+                insertElem(child_idx, cur_idx);
+            }else {
+                insertElem(node_idx, cur_idx);
             }
         }
-        m_nodes[node_idx].values = std::move(newValues);
     }
 
     bool remove(int node_idx, const AABB& box, const T& value)
@@ -201,46 +242,55 @@ private:
         else
         {
             auto quadrant = getQuadrant(box, m_getAABB(value));
-            if (quadrant != -1)
-            {
+            if(quadrant != -1) {
                 int child_idx = m_nodes[node_idx].first_child + quadrant;
                 return remove(child_idx, computeAABB(box, quadrant), value);
-            }
-            else
+            }else {
                 removeValue(node_idx, value);
+                return node_idx;
+            }
             return false;
         }
     }
 
     void removeValue(int node_idx, const T& value)
     {
-        auto it = std::find_if(std::begin(m_nodes[node_idx].values), std::end(m_nodes[node_idx].values),
-            [this, &value](const auto& rhs){ return m_equal(value, rhs); });
-        assert(it != std::end(m_nodes[node_idx].values) && "Trying to remove a value that is not present in the node");
-        *it = std::move(m_nodes[node_idx].values.back());
-        m_nodes[node_idx].values.pop_back();
+        int elem_idx = m_nodes[node_idx].first_elem;
+        while(elem_idx != -1 && m_elements[elem_idx].value != value) {
+            elem_idx = m_elements[elem_idx].next;
+        }
+        if(elem_idx == -1) {
+            return;
+        }
+        removeElem(node_idx, elem_idx);
+        m_elements.erase(elem_idx);
     }
 
     bool tryMerge(int node_idx)
     {
         assert(node_idx != -1);
         assert(!isLeaf(node_idx) && "Only interior nodes can be merged");
-        auto nbValues = m_nodes[node_idx].values.size();
-        for (int i = 0; i < 4; i++)
-        {
+        auto vals_count = m_nodes[node_idx].count;
+        for (int i = 0; i < 4; i++) {
             int child_idx = m_nodes[node_idx].first_child + i;
             if (!isLeaf(child_idx))
                 return false;
-            nbValues += m_nodes[child_idx].values.size();
+            vals_count += m_nodes[child_idx].count;
         }
-        if (nbValues <= threshold)
+        if (vals_count <= threshold)
         {
-            m_nodes[node_idx].values.reserve(nbValues);
             for (int i = 0; i < 4; i++)
             {
                 int child_idx = m_nodes[node_idx].first_child + i;
-                for (const auto& value : m_nodes[child_idx].values) {
-                    m_nodes[node_idx].values.push_back(value);
+
+                int elem_idx = m_nodes[child_idx].first_elem;
+                m_nodes[child_idx].first_elem = -1;
+                m_nodes[child_idx].count = 0;
+
+                while(elem_idx != -1) {
+                    int cur_idx = elem_idx;
+                    elem_idx = m_elements[elem_idx].next;
+                    insertElem(node_idx, cur_idx);
                 }
             }
             for (int i = 0; i < 4; i++)
@@ -270,7 +320,18 @@ private:
     void clear(int node_idx) {
         if(node_idx == -1)
             return;
-        m_nodes[node_idx].values.clear();
+        int elem_idx = m_nodes[node_idx].first_elem;
+        std::vector<int> elems;
+        while(elem_idx != -1) {
+            elems.push_back(elem_idx);
+            elem_idx = m_elements[elem_idx].next;
+        }
+        for(auto e : elems) {
+            m_elements.erase(e);
+        }
+        m_nodes[node_idx].first_elem = -1;
+        m_nodes[node_idx].count = 0;
+
         if(isLeaf(node_idx))
             return;
         for (int i = 0; i < 4; i++)
@@ -286,9 +347,12 @@ private:
         if(!isOverlappingAABBAABB(queryAABB, box)) {
             return;
         }
-        for (const auto& value : m_nodes[node_idx].values) {
+        int elem_idx = m_nodes[node_idx].first_elem;
+        while(elem_idx != -1) {
+            const auto& value = m_elements[elem_idx].value;
             if (isOverlappingAABBAABB(queryAABB, m_getAABB(value)))
                 values.push_back(value);
+            elem_idx = m_elements[elem_idx].next;
         }
         if (!isLeaf(node_idx)) {
             for (int i = 0; i < 4; i++) {
@@ -300,52 +364,67 @@ private:
         }
     }
 
-    void searchIntersecionsInNode(int node_idx, int depth,
+    void searchIntersecionsInNode(int node_idx, int node_depth,
         std::vector<std::pair<T, T>>& intersections,
         std::array<int, max_depth>& parent_stack) const
     {
         if(node_idx == -1)
             return;
-        auto& values = m_nodes[node_idx].values;
-        for (size_t i = 0; i < values.size(); ++i) {
-            for (size_t j = 0; j < i; ++j) {
-                if (isOverlappingAABBAABB(m_getAABB(values[i]), m_getAABB(values[j])))
-                    intersections.emplace_back(values[i], values[j]);
+        int elem1_idx = m_nodes[node_idx].first_elem;
+        while(elem1_idx != -1) {
+            int elem2_idx = m_nodes[node_idx].first_elem;
+            const auto& value1 = m_elements[elem1_idx].value;
+            while(elem2_idx != -1 && elem2_idx != elem1_idx) {
+                const auto& value2 = m_elements[elem2_idx].value;
+                if (isOverlappingAABBAABB(m_getAABB(value1), m_getAABB(value2)))
+                    intersections.emplace_back(value1, value2);
+
+                elem2_idx = m_elements[elem2_idx].next;
             }
+            elem1_idx = m_elements[elem1_idx].next;
         }
-        for(int deep = 0; deep < depth; deep++) {
-            auto parent_idx = parent_stack[deep];
+        for(int cur_depth = 0; cur_depth < node_depth; cur_depth++) {
+            auto parent_idx = parent_stack[cur_depth];
             assert(parent_idx != -1);
-            auto& parent_values = m_nodes[parent_idx].values;
-            for (size_t i = 0; i < values.size(); ++i) {
-                for (size_t j = 0; j < parent_values.size(); ++j) {
-                    if (isOverlappingAABBAABB(m_getAABB(values[i]), m_getAABB(parent_values[j])))
-                        intersections.emplace_back(values[i], parent_values[j]);
+            int elem1_idx = m_nodes[parent_idx].first_elem;
+            while(elem1_idx != -1) {
+                const auto& value1 = m_elements[elem1_idx].value;
+                int elem2_idx = m_nodes[node_idx].first_elem;
+                while(elem2_idx != -1) {
+                    const auto& value2 = m_elements[elem2_idx].value;
+                    if (isOverlappingAABBAABB(m_getAABB(value1), m_getAABB(value2)))
+                        intersections.emplace_back(value1, value2);
+                    elem2_idx = m_elements[elem2_idx].next;
                 }
+                elem1_idx = m_elements[elem1_idx].next;
             }
         }
     }
     std::vector<std::pair<T, T>> findAllIntersections(int root_idx) const 
     {
+        struct NodeInfo {
+            int index;
+            int depth;
+        };
         std::vector<std::pair<T, T>> intersections;
 
-        std::stack<std::pair<int, int>> to_process;
+        std::stack<NodeInfo> to_process;
         std::array<int, max_depth> parent_stack;
         to_process.push({root_idx, 0});
         while(!to_process.empty()) {
-            auto node_info = to_process.top();
+            auto node = to_process.top();
             to_process.pop();
-            if(node_info.first == -1)
+            if(node.index == -1)
                 continue;;
-            searchIntersecionsInNode(node_info.first, node_info.second, intersections, parent_stack);
-            if(isLeaf(node_info.first))
+            searchIntersecionsInNode(node.index, node.depth, intersections, parent_stack);
+            if(isLeaf(node.index))
                 continue;
-            parent_stack[node_info.second] = node_info.first;
-            if(isLeaf(node_info.first))
+            parent_stack[node.depth] = node.index;
+            if(isLeaf(node.index))
                 continue;
-            int first_child_idx = m_nodes[node_info.first].first_child;
+            int first_child_idx = m_nodes[node.index].first_child;
             for (int i = 0; i < 4; i ++) {
-                 to_process.push({first_child_idx + i, node_info.second + 1});
+                 to_process.push({first_child_idx + i, node.depth + 1});
             }
         }
         return intersections;
