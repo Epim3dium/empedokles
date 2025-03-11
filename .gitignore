@@ -6,3 +6,4 @@ out
 .vscode
 imgui.ini
 *.spv
+*.nix
