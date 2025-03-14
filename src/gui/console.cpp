@@ -111,7 +111,7 @@ bool InputText(const char* label, std::string& str, ImGuiInputTextFlags flags = 
     char buffer[1024];
 
     // Copy the std::string content into the buffer
-    std::strncpy(buffer, str.c_str(), sizeof(buffer));
+    strncpy(buffer, str.c_str(), sizeof(buffer));
     buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
 
     // Call ImGui's InputText with the buffer

@@ -1,5 +1,6 @@
 #ifndef EMP_CONSOLE_HPP
 #define EMP_CONSOLE_HPP
+#include <functional>
 #include <map>
 #include "imgui.h"
 #include "core/coordinator.hpp"

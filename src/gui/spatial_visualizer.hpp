@@ -2,6 +2,7 @@
 #define EMP_SPATIAL_VISUALIZER_HPP
 
 #include <functional>
+#include <string>
 #include "core/entity.hpp"
 namespace emp {
 class Coordinator;

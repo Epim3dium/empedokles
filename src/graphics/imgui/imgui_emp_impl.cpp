@@ -140,7 +140,7 @@ void ImGuiSetupStyle(bool bStyleDark, float alpha) {
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
 
     if (bStyleDark) {
-        for (int i = 0; i <= ImGuiCol_COUNT; i++) {
+        for (int i = 0; i < ImGuiCol_COUNT; i++) {
             ImVec4& col = style.Colors[i];
             float H, S, V;
             ImGui::ColorConvertRGBtoHSV(col.x, col.y, col.z, H, S, V);
@@ -154,7 +154,7 @@ void ImGuiSetupStyle(bool bStyleDark, float alpha) {
             }
         }
     } else {
-        for (int i = 0; i <= ImGuiCol_COUNT; i++) {
+        for (int i = 0; i < ImGuiCol_COUNT; i++) {
             ImVec4& col = style.Colors[i];
             if (col.w < 1.00f) {
                 col.x *= alpha;

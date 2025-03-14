@@ -14,7 +14,6 @@ set(SOURCE_FILES
     scene/app.cpp
     scene/register_scene_types.cpp
     scene/transform.cpp
-    scene/prefab.cpp
 
 
     core/entity_manager.cpp
@@ -56,8 +55,6 @@ set(SOURCE_FILES
 
     io/keyboard_controller.cpp
     io/window.cpp
-    io/serializer.cpp
-    io/serialized_components.cpp
 )
 set(HEADER_FILES
     memory/parallel_iterator.hpp
@@ -95,7 +92,6 @@ set(HEADER_FILES
     scene/hierarchy.hpp
     scene/scene_defs.hpp
     scene/transform.hpp
-    scene/prefab.hpp
 
     scene/behaviour.hpp
 
@@ -155,10 +151,6 @@ set(HEADER_FILES
 
     io/keyboard_controller.hpp
     io/window.hpp
-    io/serializer.hpp
-    io/serialized_containers.hpp
-    io/serialized_components.hpp
-    io/serial_convert.hpp
 
     external/tinyobjloader/tiny_obj_loader.h
     external/stbimage/stb_image.h

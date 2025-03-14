@@ -5,7 +5,6 @@
 #include "physics/collider.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
-#include "scene/prefab.hpp"
 #include <cstdio>
 #include <vector>
 using namespace emp;

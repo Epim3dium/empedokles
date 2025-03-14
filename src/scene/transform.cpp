@@ -1,4 +1,5 @@
 #include "transform.hpp"
+#include <stack>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
 #include "debug/debug.hpp"

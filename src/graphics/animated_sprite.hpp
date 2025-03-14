@@ -4,7 +4,6 @@
 #include "core/entity.hpp"
 #include "debug/log.hpp"
 #include "graphics/sprite.hpp"
-#include "io/serial_convert.hpp"
 #include "templates/finite_state_machine.hpp"
 namespace emp {
 struct MovingSprite {
@@ -64,7 +63,6 @@ public:
     class Builder;
     AnimatedSprite() {}
     AnimatedSprite(const Builder& builder);
-    friend SerialConvert<AnimatedSprite>;
 };
 
 class AnimatedSprite::Builder {
