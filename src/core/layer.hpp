@@ -1,6 +1,7 @@
 #ifndef EMP_LAYER_HPP
 #define EMP_LAYER_HPP
 #include <bitset>
+#include <cstdint>
 namespace emp {
 
 const unsigned int MAX_LAYERS = 32;

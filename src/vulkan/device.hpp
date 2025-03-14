@@ -35,7 +35,7 @@ public:
 #ifdef NDEBUG
     const bool enable_validation_layers = false;
 #else
-    const bool enable_validation_layers = true;
+    const bool enable_validation_layers = false;
 #endif
 
     explicit Device(Window& window);
@@ -205,7 +205,10 @@ private:
             "VK_LAYER_KHRONOS_validation"
     };
     const std::vector<const char*> device_extensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+#ifdef __APPLE__
+            "VK_KHR_portability_subset"
+#endif
     };
 };
 

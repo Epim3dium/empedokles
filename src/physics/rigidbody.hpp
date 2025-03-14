@@ -1,6 +1,5 @@
 #ifndef EMP_RIGIDBODY_HPP
 #define EMP_RIGIDBODY_HPP
-#include "io/serial_convert.hpp"
 #include "math/math_defs.hpp"
 #include "scene/transform.hpp"
 namespace emp {
@@ -52,7 +51,6 @@ public:
     Rigidbody() {}
     Rigidbody(bool is_static, bool is_rot_locked = false, bool use_automatic_mass = true, float density = 1.f);
     friend RigidbodySystem;
-    friend SerialConvert<Rigidbody>;
 };
 class RigidbodySystem : public System<Transform, Rigidbody> {
 public:

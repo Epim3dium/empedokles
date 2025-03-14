@@ -129,7 +129,7 @@ std::vector<TextureAsset::Pixel> TextureAsset::getPixelsFromGPU() {
     static_assert(sizeof(Pixel) == pixel_size);
 
     std::vector<Pixel> pixels(imageSize);
-    std::memcpy(pixels.data(), stagingBuffer.getMappedMemory(), imageSize * sizeof(Pixel));
+    memcpy(pixels.data(), stagingBuffer.getMappedMemory(), imageSize * sizeof(Pixel));
 
     {
         auto command_buffer = m_device.beginSingleTimeCommands();

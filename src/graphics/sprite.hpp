@@ -2,7 +2,6 @@
 #define EMP_SPRITE_HPP
 #include "graphics/texture.hpp"
 #include "graphics/vertex.hpp"
-#include "io/serial_convert.hpp"
 #include "math/shapes/AABB.hpp"
 namespace emp {
 struct Sprite {
@@ -67,7 +66,6 @@ public:
     static void init(Device& device);
     static void bind(VkCommandBuffer commandBuffer);
     static void draw(VkCommandBuffer commandBuffer);
-    friend SerialConvert<Sprite>;
 };
 }; // namespace emp
 #endif

@@ -4,15 +4,9 @@
 #include "math/math_func.hpp"
 namespace emp {
 struct Triangle {
-    union {
-        vec2f arr[3];
-        struct {
-            vec2f a;
-            vec2f b;
-            vec2f c;
-
-        };
-    };
+    vec2f a;
+    vec2f b;
+    vec2f c;
     float calcMass(float thickness, float density) const {
         auto area = calcArea();
         return area * thickness * density;

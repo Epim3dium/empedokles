@@ -1,6 +1,7 @@
 #ifndef EMP_CONVEX_POLYGON_HPP
 #define EMP_CONVEX_POLYGON_HPP
 #include "math/math_defs.hpp"
+#include <algorithm>
 #include <vector>
 #include "AABB.hpp"
 namespace emp {

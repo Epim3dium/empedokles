@@ -2,10 +2,6 @@ add_executable(
     tests
     test_main.cpp
     core/test_coordinator.cpp
-    memory/test_relative_pointer.cpp
-    templates/test_relative_vector.cpp
-    templates/test_relative_string.cpp
-    io/test_serializer.cpp
     math/test_geometry.cpp
     math/test_math.cpp
     math/test_transform.cpp

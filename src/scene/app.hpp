@@ -13,6 +13,7 @@
 #include "vulkan/descriptors.hpp"
 #include "vulkan/device.hpp"
 
+#include <condition_variable>
 #include <iostream>
 #include <thread>
 #include "io/keyboard_controller.hpp"
