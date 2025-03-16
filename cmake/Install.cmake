@@ -131,15 +131,10 @@ endif()
 # Find all vertex and fragment sources within shaders directory
 # taken from VBlancos vulkan tutorial
 # https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
-find_program(GLSL_VALIDATOR glslangValidator HINTS
+find_program(GLSL_VALIDATOR glslangValidator REQUIRED HINTS
   ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}
-  /usr/bin
-  /usr/local/bin
-  ${VULKAN_SDK_PATH}/Bin
-  ${VULKAN_SDK_PATH}/Bin32
-  $ENV{VULKAN_SDK}/Bin/
-  $ENV{VULKAN_SDK}/Bin32/
 )
+message(STATUS "GLSL validator found: ${GLSL_VALIDATOR}")
 
 # get all .vert and .frag files in shaders directory
 file(GLOB_RECURSE GLSL_SOURCE_FILES
@@ -149,16 +144,18 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
 )
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
-  get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(SPIRV "${PROJECT_SOURCE_DIR}/assets/shaders/${FILE_NAME}.spv")
-  add_custom_command(
-    OUTPUT ${SPIRV}
-    COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
-    DEPENDS ${GLSL})
-  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+    get_filename_component(FILE_NAME ${GLSL} NAME)
+    set(SPIRV "${PROJECT_SOURCE_DIR}/assets/shaders/${FILE_NAME}.spv")
+    add_custom_command(
+        OUTPUT ${SPIRV}
+        COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+        DEPENDS ${GLSL})
+    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+    # message(STATUS "compiled: ${SPIRV}")
+    # message("${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}")
 endforeach(GLSL)
 
 add_custom_target(
     Shaders
-    DEPENDS ${SPIRV_BINARY_FILES}
+    ALL DEPENDS ${SPIRV_BINARY_FILES}
 )
