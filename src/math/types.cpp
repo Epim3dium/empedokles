@@ -1,5 +1,7 @@
 #include "types.hpp"
+#include "debug/log.hpp"
 #include "math/geometry_func.hpp"
+#include "math/math_func.hpp"
 
 #include <math.h>
 #include <array>
@@ -12,19 +14,15 @@ AABB AABB::CreateFromCircle(const Circle& c) {
             c.pos - vec2f(c.radius, c.radius), c.pos + vec2f(c.radius, c.radius)
     );
 }
-AABB AABB::CreateFromVerticies(const std::vector<vec2f>& verticies) {
-    vec2f min = {INFINITY, INFINITY};
-    vec2f max = {-INFINITY, -INFINITY};
-    for (auto& v : verticies) {
-        min.x = std::min(min.x, v.x);
-        min.y = std::min(min.y, v.y);
-        max.x = std::max(max.x, v.x);
-        max.y = std::max(max.y, v.y);
-    }
-    return AABB::CreateMinMax(min, max);
-}
 AABB AABB::CreateFromPolygon(const ConvexPolygon& p) {
     return AABB::CreateFromVerticies(p.getVertecies());
+}
+AABB AABB::TransformedAABB(const TransformMatrix& transform, const AABB& model) {
+    std::array<vec2f, 4U> verts = {model.bl(), model.tl(), model.tr(), model.br()};
+    for(auto& v : verts) {
+        v = transformPoint(transform, v);
+    }
+    return AABB::CreateFromVerticies(verts);
 }
 AABB AABB::CreateMinMax(vec2f min, vec2f max) {
     AABB a;
