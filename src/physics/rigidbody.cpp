@@ -24,11 +24,11 @@ void RigidbodySystem::updateMasses() {
         const auto collider = ECS().getComponent<Collider>(entity);
         if (rigidobdy.useAutomaticMass && collider != nullptr) {
 
-            auto model =  collider->transformed_outline();
-            vec2f avg = std::reduce(model.begin(), model.end()) / static_cast<float>(model.size());
-            for(auto& p : model) { p -= avg; }
+            // auto model =  collider->transformed_outline();
+            // vec2f avg = std::reduce(model.begin(), model.end()) / static_cast<float>(model.size());
+            // for(auto& p : model) { p -= avg; }
 
-            auto MIA = calculateMassInertiaArea(model);
+            auto MIA = calculateMassInertiaArea(collider->model_outline());
             rigidobdy.real_mass = MIA.area * rigidobdy.real_density;
             rigidobdy.real_inertia = MIA.MMOI * rigidobdy.real_density;
         }

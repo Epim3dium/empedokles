@@ -24,7 +24,8 @@ namespace emp {
             auto collider = ECS.getComponent<Collider>(entity);
             auto entity_name= namingFunc(entity);
             if(collider) {
-                window = collider->aabb();
+                window = collider->extent();
+                window = AABB::TransformedAABB(transform.global(), window);
             }else {
                 ImVec2 textSize = ImGui::CalcTextSize(entity_name.c_str());
                 const ImGuiStyle& style = ImGui::GetStyle();

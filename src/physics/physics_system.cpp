@@ -83,8 +83,8 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     result.dfriction = dfriction;
     result.restitution = restitution;
 
-    const auto& intersectingShape1 = col1.transformed_shape()[convexIdx1];
-    const auto& intersectingShape2 = col2.transformed_shape()[convexIdx2];
+    auto intersectingShape1 = col1.transformed_shape(trans1)[convexIdx1];
+    auto intersectingShape2 = col2.transformed_shape(trans2)[convexIdx2];
     auto intersection =
             intersectPolygonPolygon(intersectingShape1, intersectingShape2);
     result.detected = intersection.detected;
@@ -226,7 +226,11 @@ void PhysicsSystem::m_updateQuadTree() {
     AABB current_minimal = AABB::Expandable();
     for(auto e : entities) {
         const auto& col = getComponent<Collider>(e);
-        auto aabb = col.aabb();
+        const auto& trans = getComponent<Transform>(e);
+
+        auto aabb = col.extent();
+        aabb = AABB::TransformedAABB(trans.global(), aabb);
+
         current_minimal.expandToContain(aabb.min);
         current_minimal.expandToContain(aabb.max);
     }
@@ -240,7 +244,7 @@ void PhysicsSystem::m_updateQuadTree() {
     m_quad_tree->clear();
     for(auto e : entities) {
         const auto& col = getComponent<Collider>(e);
-        for(size_t i = 0; i < col.transformed_shape().size(); i++) {
+        for(size_t i = 0; i < col.model_shape().size(); i++) {
             m_quad_tree->add({e, i});
         }
     }
@@ -269,12 +273,6 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
         }
         col_sys.notifyOfCollision(e1, e2, res.info);
 
-        if(!res.isStatic1) {
-            col_sys.updateInstant(e1);
-        }
-        if(!res.isStatic2) {
-            col_sys.updateInstant(e2);
-        }
         if(!res.isStatic1 && !res.isStatic2) {
             m_have_collided.set(e1);
             m_have_collided.set(e2);
@@ -389,18 +387,18 @@ void PhysicsSystem::m_solveVelocities(
         }
     }
 }
-void PhysicsSystem::m_applyGravity() {
+void PhysicsSystem::m_applyGravity(float delta_time) {
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         if(m_isDormant(rb)) {
             continue;
         }
         if (!rb.isStatic) {
-            rb.force += gravity * rb.mass();
+            rb.force += gravity * rb.mass() * delta_time;
         }
     }
 }
-void PhysicsSystem::m_applyAirDrag() {
+void PhysicsSystem::m_applyAirDrag(float delta_time) {
     for (const auto e : entities) {
         auto& rb = getComponent<Rigidbody>(e);
         if(m_isDormant(rb)) {
@@ -413,7 +411,7 @@ void PhysicsSystem::m_applyAirDrag() {
         }
         auto direction = -normal(rb.velocity);
         if (!rb.isStatic) {
-            rb.force += direction * magnitude * material.air_friction;
+            rb.force += direction * magnitude * material.air_friction * delta_time;
         }
     }
 }
@@ -476,12 +474,11 @@ void PhysicsSystem::m_step(
         ConstraintSystem& const_sys,
         float delta_time
 ) {
-    m_applyGravity();
-    m_applyAirDrag();
+    m_applyGravity(delta_time);
+    m_applyAirDrag(delta_time);
     m_processSleep(delta_time, const_sys);
     rb_sys.integrate(delta_time, DORMANT_TIME_THRESHOLD);
     trans_sys.update();
-    col_sys.update();
     const_sys.update(delta_time);
     auto potential_pairs = m_broadPhase(col_sys);
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);

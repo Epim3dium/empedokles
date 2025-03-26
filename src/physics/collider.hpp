@@ -26,17 +26,10 @@ struct Collider {
     typedef std::vector<vec2f> ConvexVertexCloud;
     typedef std::function<void(const CollisionInfo&)>  CallbackFunc;
 private:
-    void m_updateNewTransform(const Transform& trans);
-    AABB m_calcAABB() const;
-    AABB m_aabb = {{0, 0}, {0, 0}};
-
     // potentially concave
+    AABB m_extent;
     std::vector<vec2f> m_model_outline;
     std::vector<ConvexVertexCloud> m_model_shape;
-
-    std::vector<vec2f> m_transformed_outline;
-    std::vector<ConvexVertexCloud> m_transformed_shape;
-
 public:
     Layer collider_layer = 0;
     bool isNonMoving = true;
@@ -48,18 +41,14 @@ public:
         return m_model_shape;
     }
 
-    inline const std::vector<vec2f>& transformed_outline() const {
-        return m_transformed_outline;
-    }
-    inline const std::vector<ConvexVertexCloud>& transformed_shape() const {
-        return m_transformed_shape;
-    }
+    std::vector<vec2f> transformed_outline(const Transform& transform) const;
+    std::vector<ConvexVertexCloud> transformed_shape(const Transform& transform) const;
+    ConvexVertexCloud transformed_convex(const Transform& transform, size_t index) const;
 
-    inline AABB aabb() const {
-        return m_aabb;
+    inline AABB extent() const {
+        return m_extent;
     }
-    Collider() {
-    }
+    Collider() { }
     Collider(std::vector<vec2f> shape, bool correctCOM = false);
     friend ColliderSystem;
 };
@@ -98,9 +87,6 @@ public:
 
     void processCollisionNotifications();
     void notifyOfCollision(Entity a, Entity b, CollisionInfo col_info);
-
-    void update();
-    void updateInstant(const Entity e);
 
     void disableCollision(Layer layer1, Layer layer2);
     void eableCollision(Layer layer1, Layer layer2);
