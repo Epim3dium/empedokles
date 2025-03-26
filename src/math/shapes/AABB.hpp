@@ -1,8 +1,12 @@
 #ifndef EMP_AABB_HPP
 #define EMP_AABB_HPP
 
+#include "debug/log.hpp"
 #include "math/math_defs.hpp"
+#include "templates/common_concepts.hpp"
 
+#include <concepts>
+#include <limits>
 #include <cmath>
 #include <math.h>
 #include <numeric>
@@ -48,21 +52,29 @@ struct AABB {
     vec2f size() const {
         return max - min;
     }
-    void setCenter(vec2f c) {
+    AABB& setCenter(vec2f c) {
         auto t = size();
         min = c - t / 2.f;
         max = c + t / 2.f;
+        return *this;
     }
-    void expandToContain(vec2f point) {
+    AABB& move(vec2f offset) {
+        min += offset;
+        max += offset;
+        return *this;
+    }
+    AABB& expandToContain(vec2f point) {
         min.x = std::fmin(min.x, point.x);
         min.y = std::fmin(min.y, point.y);
         max.x = std::fmax(max.x, point.x);
         max.y = std::fmax(max.y, point.y);
+        return *this;
     }
-    void setSize(vec2f s) {
+    AABB& setSize(vec2f s) {
         auto t = center();
         min = t - s / 2.f;
         max = t + s / 2.f;
+        return *this;
     }
     AABB combine(AABB val) {
         val.min.x = std::min(min.x, val.min.x);
@@ -78,8 +90,20 @@ struct AABB {
     static AABB CreateMinSize(vec2f min, vec2f size);
     static AABB CreateFromCircle(const Circle& c);
     static AABB CreateFromPolygon(const ConvexPolygon& p);
-    static AABB CreateFromVerticies(const std::vector<vec2f>& verticies);
+    template<IterableContainerOfVec2f Container>
+    static AABB CreateFromVerticies(const Container& verticies);
+
+    static AABB TransformedAABB(const TransformMatrix& transform, const AABB& model);
 };
+
+template<IterableContainerOfVec2f Container>
+AABB AABB::CreateFromVerticies(const Container& verticies) {
+    AABB result = AABB::Expandable();
+    for (auto& v : verticies) {
+        result.expandToContain(v);
+    }
+    return result;
+}
 
 }
 #endif
