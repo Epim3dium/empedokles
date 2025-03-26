@@ -21,7 +21,7 @@ public:
         for(auto e : entities) {
             auto& shape = getComponent<Collider>(e);
             auto& transform = getComponent<Transform>(e);
-            auto transformed_outline = shape.transformed_outline();
+            auto transformed_outline = shape.transformed_outline(transform);
             
             auto overlap = isOverlappingPointPoly(point, transformed_outline);
             if(overlap) {
@@ -50,7 +50,7 @@ class Demo : public App {
         Entity isProtagonistGrounded;
         float isProtagonistGroundedSec;
         static constexpr float cayote_time = 0.25f;
-        static constexpr float cube_side_len = 35.f;
+        static constexpr float cube_side_len = 70.f;
         std::vector<vec2f> unit_cube = {
                 vec2f(-1.f/2.f, -1.f/2.f),
                 vec2f(-1.f/2.f, 1.f/2.f),

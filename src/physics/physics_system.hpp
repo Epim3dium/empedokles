@@ -26,10 +26,15 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             return v.first * MAX_ENTITIES + v.second;
         }
         AABB operator()(std::pair<Entity, size_t> v) {
+            auto collider = coordinator->getComponent<Collider>(v.first);
+            auto transform = coordinator->getComponent<Transform>(v.first);
+            assert(collider != nullptr);
+            assert(transform != nullptr);
+
             auto hash = this->hash(v);
             if(cached_aabbs.contains(hash))
                 return cached_aabbs.at(hash);
-            const auto& poly = coordinator->getComponent<Collider>(v.first)->transformed_shape()[v.second];
+            const auto& poly = collider->transformed_convex(*transform, v.second);
             auto aabb = AABB::CreateFromVerticies(poly);
             cached_aabbs[hash] = aabb;
             return aabb;
@@ -88,8 +93,8 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     void m_broadcastCollisionMessages(
             const std::vector<PenetrationConstraint>& constraints
     );
-    void m_applyGravity();
-    void m_applyAirDrag();
+    void m_applyGravity(float delta_time);
+    void m_applyAirDrag(float delta_time);
 
     void m_processSleep(float delta_time, ConstraintSystem& constr_sys);
     void m_processSleepingGroups(float delta_time);
