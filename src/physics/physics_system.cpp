@@ -394,7 +394,7 @@ void PhysicsSystem::m_applyGravity(float delta_time) {
             continue;
         }
         if (!rb.isStatic) {
-            rb.force += gravity * rb.mass() * delta_time;
+            rb.force += gravity * rb.mass();
         }
     }
 }
@@ -474,8 +474,6 @@ void PhysicsSystem::m_step(
         ConstraintSystem& const_sys,
         float delta_time
 ) {
-    m_applyGravity(delta_time);
-    m_applyAirDrag(delta_time);
     m_processSleep(delta_time, const_sys);
     rb_sys.integrate(delta_time, DORMANT_TIME_THRESHOLD);
     trans_sys.update();
@@ -497,6 +495,8 @@ void PhysicsSystem::update(
 ) {
     m_have_collided.reset();
     m_updateQuadTree();
+    m_applyGravity(delT);
+    m_applyAirDrag(delT);
     for (int i = 0; i < substep_count; i++) {
         m_step(trans_sys,
                col_sys,
