@@ -162,9 +162,9 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
     }
     auto tangent = delta_p_tangent / sliding_len;
 
-    static const float sliding_tolerance = 0.001f;
+    static const float sliding_tolerance = 0.1f;
     if (sliding_len <= sfriction * penetration ||
-        nearlyEqual(sfriction * penetration - sliding_len, 0.f, sliding_tolerance)) 
+        nearlyEqual(sfriction * penetration - sliding_len, 0.f, sliding_tolerance * delT)) 
     {
         auto friction_correction = calcPositionalCorrection(
                 PositionalCorrectionInfo(
@@ -361,9 +361,9 @@ void PhysicsSystem::m_solveVelocities(
         const float dfriction = constraint.dfriction;
         // Compute dynamic friction
         if (abs(tangent_speed) > 0.f ) {
-            const auto tangent = tangent_vel / tangent_speed;
-            const auto w1 = rb1.generalizedInverseMass(r1model, tangent);
-            const auto w2 = rb2.generalizedInverseMass(r2model, tangent);
+            const auto tangent_normal = tangent_vel / tangent_speed;
+            const auto w1 = rb1.generalizedInverseMass(r1model, tangent_normal);
+            const auto w2 = rb2.generalizedInverseMass(r2model, tangent_normal);
             auto friction_impulse = m_calcDynamicFriction(
                     dfriction,
                     tangent_speed,
@@ -371,7 +371,7 @@ void PhysicsSystem::m_solveVelocities(
                     constraint.info.normal_lagrange,
                     delT
             );
-            p -= tangent * friction_impulse;
+            p -= tangent_normal * friction_impulse;
         }
         if (!rb1.isStatic) {
             const auto delta_lin_vel = p / rb1.mass();
@@ -502,7 +502,7 @@ void PhysicsSystem::update(
                col_sys,
                rb_sys,
                const_sys,
-               delT / (float)substep_count);
+               delT / static_cast<float>(substep_count));
         for (const auto e : entities) {
             auto& rb = getComponent<Rigidbody>(e);
             rb.force = {0, 0};
