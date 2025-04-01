@@ -2,6 +2,7 @@
 #define EMP_MODEL_HPP
 
 #include <unordered_map>
+#include "graphics/texture.hpp"
 #include "vulkan/buffer.hpp"
 #include "vulkan/device.hpp"
 
@@ -34,7 +35,7 @@ public:
     static std::unique_ptr<ModelAsset> createModelFromFile(
             Device& device, const std::string& filepath
     );
-    void bind(VkCommandBuffer commandBuffer);
+    void bind(VkCommandBuffer commandBuffer) const;
     void draw(VkCommandBuffer commandBuffer) const;
 
 private:
@@ -60,6 +61,7 @@ private:
             m_model_table;
 
 public:
+    Texture texture;
     static void destroyAll() {
         m_model_table.clear();
     }

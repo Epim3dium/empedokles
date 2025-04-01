@@ -3,7 +3,6 @@
 
 #include "graphics/camera.hpp"
 #include "graphics/frame_info.hpp"
-#include "graphics/model_system.hpp"
 #include "vulkan/descriptors.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/pipeline.hpp"

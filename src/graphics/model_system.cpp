@@ -4,8 +4,35 @@
 #include <numeric>
 
 namespace emp {
+void ModelSystem::render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system) {
+    simple_rend_system.render(
+            frame_info,
+            this->entities,
+            [this](DescriptorWriter& desc_writer,
+                   int frame_index,
+                   const Entity& entity)->VkDescriptorSet {
 
-TexturedModelsSystem::TexturedModelsSystem(Device& device) {
+                auto& model = getComponent<Model>(entity);
+                VkDescriptorImageInfo& image_info = model.texture.texture().getImageInfo();
+
+                VkDescriptorBufferInfo buf_info;
+                buf_info = getBufferInfoForGameObject(frame_index, entity);
+
+                desc_writer.writeBuffer(0, &buf_info);
+                desc_writer.writeImage(1, &image_info);
+                VkDescriptorSet result;
+                desc_writer.build(result);
+                return result;
+            },
+            [this](const VkCommandBuffer& command_buf, const Entity& entity) {
+                const auto& model = getComponent<Model>(entity).model();
+                model.bind(command_buf);
+                model.draw(command_buf);
+            }
+    );
+}
+
+ModelSystem::ModelSystem(Device& device) {
     // including nonCoherentAtomSize allows us to flush a specific index at once
     int alignment = std::lcm(
             device.properties.limits.nonCoherentAtomSize,
@@ -26,7 +53,7 @@ TexturedModelsSystem::TexturedModelsSystem(Device& device) {
     Texture::create("default", device, "../assets/textures/invalid.png");
 }
 
-void TexturedModelsSystem::updateBuffer(int frameIndex) {
+void ModelSystem::updateBuffer(int frameIndex) {
     // copy model matrix and normal matrix for each gameObj into
     // buffer for this frame
     for (auto e : entities) {
@@ -34,7 +61,6 @@ void TexturedModelsSystem::updateBuffer(int frameIndex) {
         const auto& transform = getComponent<Transform>(e);
         TexturedModelInfo data{};
         data.modelMatrix = transform.global();
-        data.hasTexture[0][0] = ECS().hasComponent<Texture>(e);
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }
     uboBuffers[frameIndex]->flush();

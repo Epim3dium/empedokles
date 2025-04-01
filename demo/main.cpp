@@ -258,6 +258,22 @@ void Demo::setupAnimationForProtagonist(Entity entity) {
         build.addEdge("jumpfall", "fall");
         build.addEdge("fall", "idle", hasFallen);
     }
+    {
+        std::array<Vertex, 4U> verts;
+        for(auto& v : verts) {
+            v.color = {1, 0, 0};
+            v.uv = {0, 0};
+        }
+        verts[0].position = vec3f(def_size / 2.f, 0.f);
+        verts[1].position = vec3f(def_size.x / 2.f, -def_size.y / 2.f, 0.f);
+        verts[2].position = vec3f(-def_size / 2.f, 0.f);
+        verts[3].position = vec3f(-def_size.x / 2.f, def_size.y / 2.f, 0.f);
+        auto builder = ModelAsset::Builder();
+        builder.vertices = std::vector<Vertex>(verts.begin(), verts.end());
+        builder.indices = {0, 1, 2, 2, 3, 0};
+        Model::create("protagonist_debug", device, builder);
+        ECS.addComponent(protagonist, Model("protagonist_debug"));
+    }
     auto anim_sprite = AnimatedSprite(build);
     anim_sprite.position_offset = offset;
     ECS.addComponent(entity, anim_sprite);

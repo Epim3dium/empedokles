@@ -120,7 +120,7 @@ void ModelAsset::draw(VkCommandBuffer commandBuffer) const {
     }
 }
 
-void ModelAsset::bind(VkCommandBuffer commandBuffer) {
+void ModelAsset::bind(VkCommandBuffer commandBuffer) const {
     VkBuffer buffers[] = {vertexBuffer->getBuffer()};
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);

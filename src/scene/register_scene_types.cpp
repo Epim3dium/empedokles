@@ -32,7 +32,7 @@ void registerSceneSystems(Device& device, Coordinator& ECS) {
 
     ECS.registerSystem<SpriteSystem>(std::ref(device));
     ECS.registerSystem<AnimatedSpriteSystem>(std::ref(device));
-    ECS.registerSystem<TexturedModelsSystem>(std::ref(device));
+    ECS.registerSystem<ModelSystem>(std::ref(device));
     ECS.addComponent(ECS.world(), Transform(vec2f(0, 0), 0.f, {1.f, 1.f}));
 }
 } // namespace emp

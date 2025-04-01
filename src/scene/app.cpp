@@ -305,16 +305,19 @@ void App::renderFrame(
                 *context.ubo_compute_buffers[frame_index]);
 
             auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
+            auto& model_sys = *ECS.getSystem<ModelSystem>();
             auto& animated_sprite_sys = *ECS.getSystem<AnimatedSpriteSystem>();
 
             // models_sys->updateBuffer(frameIndex);
             sprite_sys.updateBuffer(frame_index);
+            model_sys.updateBuffer(frame_index);
             animated_sprite_sys.updateTransitions(delta_time);
             animated_sprite_sys.updateBuffer(frame_index);
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
 
                 sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
+                model_sys.render(frame_info, *renderer_context.model_rend_sys);
                 animated_sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
                 // renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
