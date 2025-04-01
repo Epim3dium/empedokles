@@ -19,13 +19,10 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
-layout(set = 1, binding = 0) uniform DebugShapeInfo{
+layout(set = 1, binding = 0) uniform ModelInfo {
     mat4 modelMatrix;
-    mat4 scaleMatrix;
-    vec4 fill_color;
-    vec4 outline_color;
-    float edge_outline;
-} gameObject;
+    mat4 normalMatrix;
+} model;
 
 void main() {
     vec4 color = fragColor;

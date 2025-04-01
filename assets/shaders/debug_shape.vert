@@ -22,19 +22,16 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
-layout(set = 1, binding = 0) uniform DebugShapeInfo{
+layout(set = 1, binding = 0) uniform ModelInfo {
     mat4 modelMatrix;
-    mat4 scaleMatrix;
-    vec4 fill_color;
-    vec4 outline_color;
-    float edge_outline;
-} gameObject;
+    mat4 normalMatrix;
+} model;
 
 
 void main() {
-    vec4 positionWorld = gameObject.modelMatrix * vec4(position, 1.0);
+    vec4 positionWorld = model.modelMatrix * vec4(position, 1.0);
     positionWorld.z = -0.1;
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
-    fragColor = gameObject.fill_color;
+    fragColor = vec4(1, 0, 0, 1);
 }

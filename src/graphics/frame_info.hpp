@@ -2,7 +2,6 @@
 #define EMP_FRAME_INFO_HPP
 
 #include "camera.hpp"
-#include "model_system.hpp"
 #include "vulkan/descriptors.hpp"
 
 // lib

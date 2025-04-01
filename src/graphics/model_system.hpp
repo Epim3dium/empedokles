@@ -1,6 +1,7 @@
 #ifndef EMP_MODEL_SYSTEM_HPP
 #define EMP_MODEL_SYSTEM_HPP
 
+#include "graphics/systems/simple_render_system.hpp"
 #include "model.hpp"
 #include "scene/transform.hpp"
 #include "texture.hpp"
@@ -18,12 +19,13 @@ namespace emp {
 struct TexturedModelInfo {
     glm::mat4 modelMatrix{1.f};
     glm::mat4 normalMatrix{1.f};
-    glm::mat4 hasTexture;
 };
 
-class TexturedModelsSystem : public System<Transform, Model> {
+class ModelSystem : public System<Transform, Model> {
 public:
-    TexturedModelsSystem(Device& device);
+    ModelSystem(Device& device);
+
+    void  render(FrameInfo& frame_info, SimpleRenderSystem& simple_rend_system);
 
     [[nodiscard]] VkDescriptorBufferInfo getBufferInfoForGameObject(
             int frameIndex, Entity entity

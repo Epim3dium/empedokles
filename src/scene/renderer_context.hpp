@@ -11,8 +11,7 @@ struct RendererContext {
     std::unique_ptr<DescriptorPool> globalPool;
     std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
     std::unique_ptr<SimpleRenderSystem> sprite_rend_sys;
-    std::unique_ptr<SimpleRenderSystem> debugShape_rend_sys;
-    std::unique_ptr<SimpleRenderSystem> debugShapeOutline_rend_sys;
+    std::unique_ptr<SimpleRenderSystem> model_rend_sys;
     // std::unique_ptr<ComputeDemo> compute_demo;
 
     std::vector<std::unique_ptr<Buffer>> ubo_buffers;
@@ -69,19 +68,12 @@ struct RendererContext {
             PipelineConfigInfo debug_shape_pipeline_config;
             Pipeline::defaultPipelineConfigInfo(debug_shape_pipeline_config);
             Pipeline::enableAlphaBlending(debug_shape_pipeline_config);
-            debugShape_rend_sys = std::make_unique<SimpleRenderSystem>(device,
+            model_rend_sys = std::make_unique<SimpleRenderSystem>(device,
                 renderer.getSwapChainRenderPass(),
                 global_set_layout->getDescriptorSetLayout(),
                 "../assets/shaders/debug_shape.vert.spv",
                 "../assets/shaders/debug_shape.frag.spv",
                 &debug_shape_pipeline_config);
-            debugShapeOutline_rend_sys =
-                std::make_unique<SimpleRenderSystem>(device,
-                    renderer.getSwapChainRenderPass(),
-                    global_set_layout->getDescriptorSetLayout(),
-                    "../assets/shaders/debug_shape_outline.vert.spv",
-                    "../assets/shaders/debug_shape.frag.spv",
-                    &debug_shape_pipeline_config);
         }
         sprite_rend_sys = std::make_unique<SimpleRenderSystem>(device,
             renderer.getSwapChainRenderPass(),
