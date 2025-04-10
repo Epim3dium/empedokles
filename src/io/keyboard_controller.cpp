@@ -4,13 +4,18 @@
 
 // std
 #include <limits>
+#include "debug/log.hpp"
 #include "math/math_func.hpp"
 #include "scene/scene_defs.hpp"
 
 namespace emp {
 
 std::unordered_map<int, KeyState> KeyboardController::keys;
+vec2f KeyboardController::scroll_velocity = {0.f, 0.f};
 
+void ScrollCallback(GLFWwindow* window, double xoff, double yoff) {
+    KeyboardController::scroll_velocity = {xoff, yoff};
+}
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 #if EMP_USING_IMGUI 
     ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
@@ -27,7 +32,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         KeyboardController::keys[key].held = false;
     }
     KeyboardController::keys[key].mod_flags = mods;
-
 }
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 #if EMP_USING_IMGUI 
@@ -49,6 +53,7 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 void KeyboardController::initCallbacks(GLFWwindow* window) {
     glfwSetKeyCallback(window, KeyCallback);
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
+    glfwSetScrollCallback(window, ScrollCallback);
 }
 KeyboardController::KeyboardController(GLFWwindow* window) {
     //means you are the first keyboard controller, so initialize
@@ -68,6 +73,9 @@ KeyboardController::KeyboardController(GLFWwindow* window) {
 void KeyboardController::update(
         Window& window, const Transform& camera_transform
 ) {
+    m_scroll_velocity = scroll_velocity;
+    scroll_velocity = {0, 0};
+
     double xpos, ypos;
     glfwGetCursorPos(window.getGLFWwindow(), &xpos, &ypos);
     xpos -= window.getSize().width / 2.f;

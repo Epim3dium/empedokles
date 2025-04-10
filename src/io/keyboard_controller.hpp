@@ -55,6 +55,8 @@ private:
     std::map<eKeyMappings, int> m_mappings;
     std::unordered_map<eKeyMappings, KeyState> m_key_states;
     static std::unordered_map<int, KeyState> keys;
+    static vec2f scroll_velocity;
+    vec2f m_scroll_velocity;
     vec2f m_mouse_pos;
     vec2f m_global_mouse_pos;
 
@@ -72,10 +74,15 @@ public:
     KeyState get(eKeyMappings action) {
         return m_key_states[action];
     }
+    vec2f scroll() const {
+        return m_scroll_velocity;
+    }
     vec2f movementInPlane2D();
     vec2f lookingInPlane2D();
     void update(Window& window, const Transform& camera_transform);
     KeyboardController(GLFWwindow* window);
+
+    friend void ScrollCallback(GLFWwindow* window, double xoff, double yoff);
     friend void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     friend void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 };
