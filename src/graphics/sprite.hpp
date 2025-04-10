@@ -24,8 +24,7 @@ public:
     // used for shaders stuff
     glm::vec4 color = {1, 1, 1, 1};
 
-    bool isOverridingColor = false;
-    glm::vec4 color_override = {1, 1, 1, 1};
+    std::optional<glm::vec4> color_override = {};
 
     inline int frameCount() const {
         return vframes * hframes;

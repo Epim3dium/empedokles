@@ -68,8 +68,8 @@ void SpriteSystem::updateBuffer(int frameIndex) {
         data.rect_max = rect.max;
 
         data.flip = {sprite.flipX, sprite.flipY}; // only 0.f or 1.f
-        if(sprite.isOverridingColor) {
-            data.color_override = sprite.color_override;
+        if(sprite.color_override.has_value()) {
+            data.color_override = sprite.color_override.value();
         }
         data.color = sprite.color;
 

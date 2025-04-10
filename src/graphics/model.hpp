@@ -1,6 +1,7 @@
 #ifndef EMP_MODEL_HPP
 #define EMP_MODEL_HPP
 
+#include <optional>
 #include <unordered_map>
 #include "graphics/texture.hpp"
 #include "vulkan/buffer.hpp"
@@ -62,6 +63,7 @@ private:
 
 public:
     Texture texture;
+    std::optional<vec3f> color;
     static void destroyAll() {
         m_model_table.clear();
     }

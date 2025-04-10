@@ -141,11 +141,17 @@ struct Inspector::Inspect<AnimatedSprite>{
         ImGui::Checkbox("flip horizontal", &sprite.flipX);
         ImGui::Checkbox("flip vertical", &sprite.flipY);
         ImGui::ColorEdit4("sprite tint", helper::VecToPtr(sprite.color));
-        ImGui::Checkbox("override color", &sprite.isOverridingColor);
-        if(sprite.isOverridingColor) {
+        if(sprite.color_override.has_value()) {
             ImGui::Indent();
-            ImGui::ColorEdit4("sprite color", helper::VecToPtr(sprite.color_override));
+            ImGui::ColorEdit4("sprite color override", helper::VecToPtr(sprite.color_override.value()));
+            if(ImGui::Button("no color override")) {
+                sprite.color_override = {};
+            }
             ImGui::Unindent();
+        }else {
+            if(ImGui::Button("add color override")) {
+                sprite.color_override = glm::vec4();
+            }
         }
         ImGui::SliderFloat("speed", &sprite.animation_speed, 0.f, 10.f);
         ImGui::DragFloat2("offset", helper::VecToPtr(sprite.position_offset));
@@ -157,11 +163,17 @@ struct Inspector::Inspect<Sprite>{
         ImGui::Checkbox("flip horizontal", &sprite.flipX);
         ImGui::Checkbox("flip vertical", &sprite.flipY);
         ImGui::ColorEdit4("sprite tint", helper::VecToPtr(sprite.color));
-        ImGui::Checkbox("override color", &sprite.isOverridingColor);
-        if(sprite.isOverridingColor) {
+        if(sprite.color_override.has_value()) {
             ImGui::Indent();
-            ImGui::ColorEdit4("sprite color", helper::VecToPtr(sprite.color_override));
+            ImGui::ColorEdit4("sprite color override", helper::VecToPtr(sprite.color_override.value()));
+            if(ImGui::Button("no color override")) {
+                sprite.color_override = {};
+            }
             ImGui::Unindent();
+        }else {
+            if(ImGui::Button("add color override")) {
+                sprite.color_override = glm::vec4();
+            }
         }
         ImGui::Text("texture: %s", sprite.textureID().c_str());
     }
