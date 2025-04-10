@@ -20,24 +20,8 @@ namespace emp {
 struct Constraint;
 class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     struct AABBextracter {
-        const Coordinator* coordinator;
-        std::unordered_map<uint32_t, AABB> cached_aabbs;
-        uint32_t hash(const std::pair<Entity, size_t>& v) const {
-            return v.first * MAX_ENTITIES + v.second;
-        }
-        AABB operator()(std::pair<Entity, size_t> v) {
-            auto collider = coordinator->getComponent<Collider>(v.first);
-            auto transform = coordinator->getComponent<Transform>(v.first);
-            assert(collider != nullptr);
-            assert(transform != nullptr);
-
-            auto hash = this->hash(v);
-            if(cached_aabbs.contains(hash))
-                return cached_aabbs.at(hash);
-            const auto& poly = collider->transformed_convex(*transform, v.second);
-            auto aabb = AABB::CreateFromVerticies(poly);
-            cached_aabbs[hash] = aabb;
-            return aabb;
+        AABB operator()(std::tuple<Entity, size_t, AABB> v) {
+            return std::get<AABB>(v);
         }
     };
     struct PenetrationConstraint {
@@ -109,7 +93,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             float deltaTime
     );
 
-    typedef QuadTree<std::pair<Entity, size_t>, AABBextracter&> QuadTree_t;
+    typedef QuadTree<std::tuple<Entity, size_t, AABB>, AABBextracter&> QuadTree_t;
     std::unique_ptr<QuadTree_t> m_quad_tree;
     AABBextracter m_aabb_extracter;
 

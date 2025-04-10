@@ -12,7 +12,7 @@
 #include "math/shapes/AABB.hpp"
 #include "templates/free_list.hpp"
 namespace emp {
-typedef std::pair<Entity, size_t> CollidingPoly;
+typedef std::tuple<Entity, size_t, AABB> CollidingPoly;
 typedef std::pair<CollidingPoly, CollidingPoly> CollidingPair;
 class SweepBroadPhase {
 public:
