@@ -194,10 +194,10 @@ PhysicsSystem::PenetrationConstraint PhysicsSystem::m_handleCollision(
 }
 bool PhysicsSystem::m_isCollisionAllowed(
     const CollidingPair& pair, const ColliderSystem& col_sys) const {
-    auto e1 = pair.first.first;
-    auto e2 = pair.second.first;
-    auto s1i = pair.first.second;
-    auto s2i = pair.second.second;
+    auto e1 = std::get<Entity>(pair.first);
+    auto e2 = std::get<Entity>(pair.second);
+    auto s1i = std::get<size_t>(pair.first);
+    auto s2i = std::get<size_t>(pair.second);
     const auto& col1 = getComponent<Collider>(e1);
     const auto& col2 = getComponent<Collider>(e2);
     const auto& rb1 = getComponent<Rigidbody>(e1);
@@ -235,23 +235,28 @@ void PhysicsSystem::m_updateQuadTree() {
         current_minimal.expandToContain(aabb.max);
     }
     if(m_quad_tree == nullptr || !AABBcontainsAABB(m_quad_tree->getAABB(), current_minimal)) {
-        EMP_LOG(DEBUG2) << "quad tree rebuilt";
+        if(m_quad_tree){
+            EMP_LOG(DEBUG2) << "quad tree rebuilt, size: " << m_quad_tree->getAABB().size().x << "\t" << m_quad_tree->getAABB().size().y;
+        }
         m_quad_tree.reset();
         current_minimal.setSize(current_minimal.size() * 2.f);
-        m_aabb_extracter.coordinator = &ECS();
         m_quad_tree = std::unique_ptr<QuadTree_t>(new QuadTree_t(current_minimal, m_aabb_extracter));
     }
     m_quad_tree->clear();
     for(auto e : entities) {
         const auto& col = getComponent<Collider>(e);
-        for(size_t i = 0; i < col.model_shape().size(); i++) {
-            m_quad_tree->add({e, i});
+        const auto& trans= getComponent<Transform>(e);
+        auto shape = col.transformed_shape(trans);
+        for(int i = 0; i < shape.size(); i++) {
+            auto aabb = AABB::CreateFromVerticies(shape[i]);
+            aabb.setSize(aabb.size() * 1.5f);
+            m_quad_tree->add({e, i, aabb});
         }
     }
     m_quad_tree->updateLeafes();
 }
 std::vector<CollidingPair> PhysicsSystem::m_broadPhase(const ColliderSystem& col_sys) {
-    m_aabb_extracter.cached_aabbs.clear();
+    // m_updateQuadTree();
     auto all_pairs = m_quad_tree->findAllIntersections();
     m_filterPotentialCollisions(all_pairs, col_sys);
     return all_pairs;
@@ -263,10 +268,10 @@ std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
 ) {
     std::vector<PenetrationConstraint> result;
     for (const auto pair : pairs) {
-        auto e1 = pair.first.first;
-        auto e2 = pair.second.first;
-        auto s1i = pair.first.second;
-        auto s2i = pair.second.second;
+        auto e1 = std::get<Entity>(pair.first);
+        auto e2 = std::get<Entity>(pair.second);
+        auto s1i = std::get<size_t>(pair.first);
+        auto s2i = std::get<size_t>(pair.second);
         auto res = m_handleCollision(e1, s1i, e2, s2i, delT);
         if (!res.detected) {
             continue;
@@ -494,6 +499,7 @@ void PhysicsSystem::update(
         float delT
 ) {
     m_have_collided.reset();
+    trans_sys.update();
     m_updateQuadTree();
     m_applyGravity(delT);
     m_applyAirDrag(delT);
