@@ -77,8 +77,8 @@ namespace emp {
 
             data.flip = {animated.sprite().flipX ^ animated.flipX, animated.sprite().flipY ^ animated.flipY}; // only 0.f or 1.f
             data.color = animated.color;
-            if(animated.isOverridingColor) {
-                data.color_override = animated.color_override;
+            if(animated.color_override.has_value()) {
+                data.color_override = animated.color_override.value();
             }
 
             uboBuffers[frameIndex]->writeToIndex(&data, entity);
