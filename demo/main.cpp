@@ -9,11 +9,6 @@
 #include <vector>
 using namespace emp;
 
-struct AABBFromAABB {
-    AABB operator()(AABB v) const {
-        return v;
-    }
-};
 class MouseSelectionSystem : public System<Transform, Collider, Rigidbody> {
 public:
     std::vector<Entity> query(vec2f point) {
@@ -45,6 +40,12 @@ class Demo : public App {
         Entity mouse_entity;
         Entity protagonist;
 
+        std::vector<vec2f> protagonist_shape = {
+                vec2f(-100.f/4, -100.f/1.5),
+                vec2f(-100.f/4, 100.f/1.5),
+                vec2f(100.f/4, 100.f/1.5),
+                vec2f(100.f/4, -100.f/1.5)
+        };
         
         float protagonist_speed = 600.f;
         Entity isProtagonistGrounded;
@@ -110,7 +111,6 @@ void Demo::onSetup(Window& window, Device& device) {
     controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
     controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
 
-    // coordinator.addComponent(cube, Model("cube"));
     protagonist = ECS.createEntity();
     gui_manager.alias(protagonist, "protagonist");
 
@@ -140,12 +140,6 @@ void Demo::onSetup(Window& window, Device& device) {
         rb.useAutomaticMass = true;
         rb.isRotationLocked = true;
         ECS.addComponent(protagonist, Transform(vec2f(), 0.f));
-        std::vector<vec2f> protagonist_shape = {
-                vec2f(-100.f/4, -100.f/1.5),
-                vec2f(-100.f/4, 100.f/1.5),
-                vec2f(100.f/4, 100.f/1.5),
-                vec2f(100.f/4, -100.f/1.5)
-        };
         auto col = Collider(protagonist_shape);
         col.collider_layer = PLAYER;
 
@@ -167,17 +161,28 @@ void Demo::onSetup(Window& window, Device& device) {
             {vec2f(0.f, -getHeight() / 2), 0.f},
             {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
     };
+    {
+        auto builder = ModelAsset::Builder();
+        for(auto v : cube_model_shape) {
+            builder.vertices.push_back({});
+            builder.vertices.back().position = vec3f(v.x, v.y, 0);
+        }
+        builder.indices = {0, 1, 2, 2, 3, 0};
+        Model::create("platform_debug", device, builder);
+    }
     for (int i = 0; i < 4; i++) {
         auto platform = ECS.createEntity();
         gui_manager.alias(platform, "platform");
         ECS.addComponent(
-                platform, Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len, 1.f})
+                platform, Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len * 2, 1.f})
         );
+
         auto col = Collider(cube_model_shape);
         col.collider_layer = GROUND;
         ECS.addComponent(platform, col);
         ECS.addComponent(platform, Rigidbody{true});
         ECS.addComponent(platform, Material());
+        ECS.addComponent(platform, Model("platform_debug"));
     }
 
     ECS.getSystem<PhysicsSystem>()->gravity = {0, 20000.f};
@@ -260,19 +265,13 @@ void Demo::setupAnimationForProtagonist(Entity entity) {
     }
     {
         std::array<Vertex, 4U> verts;
-        for(auto& v : verts) {
-            v.color = {1, 0, 0};
-            v.uv = {0, 0};
+        for(int i = 0; i < verts.size(); i++) {
+            verts[i].color = {1, 0, 0};
+            verts[i].uv = {0, 0};
+
+            auto v = protagonist_shape[i];
+            verts[i].position = vec3f(v.x, v.y, 0.f);
         }
-        verts[0].position = vec3f(def_size / 2.f, 0.f);
-        verts[1].position = vec3f(def_size.x / 2.f, -def_size.y / 2.f, 0.f);
-        verts[2].position = vec3f(-def_size / 2.f, 0.f);
-        verts[3].position = vec3f(-def_size.x / 2.f, def_size.y / 2.f, 0.f);
-        auto builder = ModelAsset::Builder();
-        builder.vertices = std::vector<Vertex>(verts.begin(), verts.end());
-        builder.indices = {0, 1, 2, 2, 3, 0};
-        Model::create("protagonist_debug", device, builder);
-        ECS.addComponent(protagonist, Model("protagonist_debug"));
     }
     auto anim_sprite = AnimatedSprite(build);
     anim_sprite.position_offset = offset;
