@@ -24,7 +24,6 @@ set(SOURCE_FILES
     physics/collider.cpp
     physics/rigidbody.cpp
     physics/physics_system.cpp
-    # physics/broad_phase.cpp
 
     graphics/imgui/imgui_emp_impl.cpp
     # graphics/systems/point_light_system.cpp
@@ -85,7 +84,6 @@ set(HEADER_FILES
     physics/rigidbody.hpp
     physics/material.hpp
     physics/physics_system.hpp
-    # physics/broad_phase.hpp
     
     scene/app.hpp
     scene/register_scene_types.hpp
@@ -115,6 +113,7 @@ set(HEADER_FILES
     templates/relative_vector.hpp
     templates/relative_string.hpp
     templates/quad_tree.hpp
+    templates/sweep_line.hpp
 
     debug/log.hpp
     debug/debug.hpp

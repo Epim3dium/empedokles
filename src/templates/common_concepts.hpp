@@ -11,10 +11,6 @@ concept IsVec2f = requires(const T& v) {
     { decltype(v.x)(v.x) } -> std::same_as<float>;
     { decltype(v.y)(v.y) } -> std::same_as<float>;
 };
-struct v {
-    float x;
-    float y;
-};
 static_assert(IsVec2f<vec2f>);
 
 template<typename C>

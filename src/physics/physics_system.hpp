@@ -6,11 +6,11 @@
 #include "graphics/utils.hpp"
 #include "math/geometry_func.hpp"
 #include "math/math_func.hpp"
-#include "physics/broad_phase.hpp"
 #include "physics/collider.hpp"
 #include "physics/constraint.hpp"
 #include "physics/material.hpp"
 #include "physics/rigidbody.hpp"
+#include "scene/transform.hpp"
 #include "templates/disjoint_set.hpp"
 #include "templates/quad_tree.hpp"
 
@@ -18,6 +18,8 @@
 #include <unordered_map>
 namespace emp {
 struct Constraint;
+typedef std::tuple<Entity, size_t, AABB> CollidingPoly;
+typedef std::pair<CollidingPoly, CollidingPoly> CollidingPair;
 class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
     struct AABBextracter {
         AABB operator()(std::tuple<Entity, size_t, AABB> v) {
@@ -59,7 +61,7 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             float compliance = 0.f
     );
 
-    std::vector<CollidingPair> m_broadPhase(const ColliderSystem& collider_system);
+    std::vector<CollidingPair> m_broadPhase(const ColliderSystem& collider_system, const TransformSystem& transform_system);
 
     bool m_isCollisionAllowed(const CollidingPair&, const ColliderSystem& col_sys) const;
     void m_filterPotentialCollisions(std::vector<CollidingPair>&, const ColliderSystem& col_sys);
