@@ -8,6 +8,8 @@
 #include "physics/collider.hpp"
 #include "physics/constraint.hpp"
 #include "physics/rigidbody.hpp"
+
+#include "templates/sweep_line.hpp"
 namespace emp {
 float PhysicsSystem::m_calcRestitution(
         float coef,
@@ -255,10 +257,22 @@ void PhysicsSystem::m_updateQuadTree() {
     }
     m_quad_tree->updateLeafes();
 }
-std::vector<CollidingPair> PhysicsSystem::m_broadPhase(const ColliderSystem& col_sys) {
+std::vector<CollidingPair> PhysicsSystem::m_broadPhase(const ColliderSystem& collider_system, const TransformSystem& transform_system) {
     // m_updateQuadTree();
     auto all_pairs = m_quad_tree->findAllIntersections();
-    m_filterPotentialCollisions(all_pairs, col_sys);
+    m_filterPotentialCollisions(all_pairs, collider_system);
+    // std::vector<CollidingPoly> objs;
+    // for(auto e : entities) {
+    //     const auto& collider = collider_system.getComponent<Collider>(e);
+    //     const auto& transform = transform_system.getComponent<Transform>(e);
+    //     auto shape = collider.transformed_shape(transform);
+    //     for(int i = 0; i < shape.size(); i++) {
+    //         objs.push_back({e, i, AABB::CreateFromVerticies(shape[i])});
+    //     }
+    // }
+    // auto all_pairs = sweepBroadPhase<CollidingPoly>(objs.begin(), objs.end(), [](const CollidingPoly& poly)->AABB {
+    //     return std::get<AABB>(poly);
+    // });
     return all_pairs;
 }
 std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
@@ -483,7 +497,7 @@ void PhysicsSystem::m_step(
     rb_sys.integrate(delta_time, DORMANT_TIME_THRESHOLD);
     trans_sys.update();
     const_sys.update(delta_time);
-    auto potential_pairs = m_broadPhase(col_sys);
+    auto potential_pairs = m_broadPhase(col_sys, trans_sys);
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);
     
     trans_sys.update();
