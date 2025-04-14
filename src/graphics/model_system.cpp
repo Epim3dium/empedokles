@@ -41,7 +41,7 @@ ModelSystem::ModelSystem(Device& device) {
     for (auto& uboBuffer : uboBuffers) {
         uboBuffer = std::make_unique<Buffer>(
                 device,
-                sizeof(TexturedModelInfo),
+                sizeof(ModelShaderInfo),
                 MAX_ENTITIES,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -59,8 +59,10 @@ void ModelSystem::updateBuffer(int frameIndex) {
     for (auto e : entities) {
         // auto &obj = kv.second;
         const auto& transform = getComponent<Transform>(e);
-        TexturedModelInfo data{};
+        const auto& model = getComponent<Model>(e);
+        ModelShaderInfo data{};
         data.modelMatrix = transform.global();
+        data.color = model.color.value_or(glm::vec4{1, 1, 1, 1});
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }
     uboBuffers[frameIndex]->flush();

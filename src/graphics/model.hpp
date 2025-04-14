@@ -63,7 +63,7 @@ private:
 
 public:
     Texture texture;
-    std::optional<vec3f> color;
+    std::optional<glm::vec4> color;
     static void destroyAll() {
         m_model_table.clear();
     }
