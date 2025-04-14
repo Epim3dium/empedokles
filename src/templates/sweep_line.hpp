@@ -2,19 +2,13 @@
 #define EMP_SWEEP_LINE_HPP
 #include <algorithm>
 #include <functional>
-#include <set>
-#include <map>
-#include <stack>
 #include <vector>
-#include "core/coordinator.hpp"
-#include "core/entity.hpp"
-#include "debug/log.hpp"
 #include "math/geometry_func.hpp"
 #include "math/shapes/AABB.hpp"
-#include "templates/free_list.hpp"
+
 namespace emp {
 template<class T, class Iterator>
-std::vector<std::pair<T, T>> sweepBroadPhase(
+std::vector<std::pair<T, T>> sweepLine(
         Iterator begin, Iterator end,
         std::function<AABB(const T&)> getAABB,
         std::function<bool(const T&, const T&)> filter = [](const T&, const T&){return true; }) {
