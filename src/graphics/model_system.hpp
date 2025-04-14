@@ -16,9 +16,10 @@
 
 namespace emp {
 
-struct TexturedModelInfo {
+struct ModelShaderInfo {
     glm::mat4 modelMatrix{1.f};
     glm::mat4 normalMatrix{1.f};
+    glm::vec4 color{1.f};
 };
 
 class ModelSystem : public System<Transform, Model> {
