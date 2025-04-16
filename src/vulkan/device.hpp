@@ -7,6 +7,7 @@
 // std lib headers
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -22,9 +23,18 @@ struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily{};
     std::optional<uint32_t> presentFamily{};
     std::optional<uint32_t> computeFamily{};
+    std::optional<uint32_t> graphicsNcomputeFamily{};
 
     bool isComplete() const {
-        return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value() &&
+               computeFamily.has_value() && graphicsNcomputeFamily.has_value();
+    }
+    std::set<uint32_t> getUniqueFamilies() const {
+        std::set<uint32_t> result;
+        for (auto f : {graphicsFamily, presentFamily, computeFamily, graphicsNcomputeFamily}) 
+            if(f.has_value())
+                result.insert(f.value());
+        return result;
     }
 };
 
@@ -55,6 +65,9 @@ public:
     VkCommandPool getComputeCommandPool() {
         return m_compute_command_pool;
     }
+    VkCommandPool getGraphicsComputeCommandPool() {
+        return m_graphics_compute_command_pool;
+    }
 
     VkDevice device() {
         return m_device;
@@ -69,6 +82,9 @@ public:
     }
     VkQueue computeQueue() {
         return m_compute_queue;
+    }
+    VkQueue graphicsComputeQueue() {
+        return m_graphics_compute_queue;
     }
 
     VkQueue presentQueue() {
@@ -192,9 +208,11 @@ private:
 
     VkCommandPool m_graphics_command_pool{};
     VkCommandPool m_compute_command_pool{};
+    VkCommandPool m_graphics_compute_command_pool{};
 
     VkDevice m_device{};
     VkSurfaceKHR m_surface{};
+    VkQueue m_graphics_compute_queue{};
     VkQueue m_compute_queue{};
     VkQueue m_graphics_queue{};
     VkQueue m_present_queue{};

@@ -157,17 +157,14 @@ void Device::pickPhysicalDevice() {
     EMP_LOG(INFO) << "physical device: " << properties.deviceName;
 }
 
+//after physical_device has been selected (has all queues and extensions)
 void Device::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(m_physical_device);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = {
-        indices.graphicsFamily.value(),
-        indices.presentFamily.value(),
-        indices.computeFamily.value()
-    };
+    auto uniqueQueueFamilies = indices.getUniqueFamilies();
 
-    float queuePriority = 1.0f;
+    const float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
         VkDeviceQueueCreateInfo queueCreateInfo = {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -207,6 +204,7 @@ void Device::createLogicalDevice() {
         throw std::runtime_error("failed to create logical device!");
     }
 
+    vkGetDeviceQueue(m_device, indices.graphicsNcomputeFamily.value(), 0, &m_graphics_compute_queue);
     vkGetDeviceQueue(m_device, indices.computeFamily.value(), 0, &m_compute_queue);
     vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphics_queue);
     vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_present_queue);
@@ -215,25 +213,23 @@ void Device::createLogicalDevice() {
 void Device::createCommandPools() {
     QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
 
-    VkCommandPoolCreateInfo graphics_pool_info = {};
-    graphics_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    graphics_pool_info.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-    graphics_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    for(auto info : {
+        std::pair{&m_graphics_command_pool, queueFamilyIndices.graphicsFamily.value()},
+        std::pair{&m_compute_command_pool, queueFamilyIndices.computeFamily.value()},
+        std::pair{&m_graphics_compute_command_pool, queueFamilyIndices.graphicsNcomputeFamily.value()},
+    }) {
+        auto command_pool = info.first;
+        auto family = info.second;
+        VkCommandPoolCreateInfo pool_info = {};
+        pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        pool_info.queueFamilyIndex = family;
+        pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
+                         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(m_device, &graphics_pool_info, nullptr, &m_graphics_command_pool) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("failed to create graphics command pool!");
-    }
-    VkCommandPoolCreateInfo compute_pool_info = {};
-    compute_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    compute_pool_info.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
-    compute_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-    if (vkCreateCommandPool(m_device, &compute_pool_info, nullptr, &m_compute_command_pool) !=
-        VK_SUCCESS) {
-        throw std::runtime_error("failed to create compute command pool!");
+        if (vkCreateCommandPool(m_device, &pool_info, nullptr, command_pool) !=
+            VK_SUCCESS) {
+            throw std::runtime_error("failed to create graphics command pool!");
+        }
     }
 }
 
@@ -399,8 +395,10 @@ QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) const {
         if (queueFamily.queueCount > 0 &&
             queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) 
         {
-            //family specifically for compute
-            if (!(queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                indices.graphicsNcomputeFamily = i;
+            }else {
+                //family specifically for compute
                 indices.computeFamily = i;
             }
         }
