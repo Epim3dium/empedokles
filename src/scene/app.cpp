@@ -39,8 +39,7 @@ App::App(const int w,
       window{w, h, "Empedokles Demo"},
       controller(window.getGLFWwindow()),
       device{window},
-      renderer{window, device},
-      compute{device} {
+      renderer{window, device} {
 }
 
 App::~App() = default;
@@ -280,7 +279,7 @@ void App::renderFrame(
     if (auto command_buffer = renderer.beginFrame()) {
         int frame_index = renderer.getFrameIndex();
         context.frame_pools[frame_index]->resetPool();
-        if(auto compute_buffer = compute.beginCompute(renderer)) {
+        if(auto compute_buffer = renderer.beginCompute()) {
             FrameInfo frame_info{
                 frame_index,
                 delta_time,
@@ -291,7 +290,7 @@ void App::renderFrame(
             };
 
             // renderer_context.compute_demo->performCompute(frame_info);
-            compute.endCompute();
+            renderer.endCompute();
         }
         FrameInfo frame_info{
             frame_index,
