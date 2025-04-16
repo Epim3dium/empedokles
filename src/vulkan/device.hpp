@@ -43,7 +43,7 @@ public:
 #ifdef NDEBUG
     const bool enable_validation_layers = false;
 #else
-    const bool enable_validation_layers = false;
+    const bool enable_validation_layers = true;
 #endif
 
     explicit Device(Window& window);

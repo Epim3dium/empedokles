@@ -1,6 +1,8 @@
 #ifndef EMP_RENDERER_CONTEXT_HPP
 #define EMP_RENDERER_CONTEXT_HPP
+#include <vulkan/vulkan_core.h>
 #include <memory>
+#include "graphics/frame_info.hpp"
 #include "graphics/particle_system.hpp"
 #include "graphics/renderer.hpp"
 #include "vulkan/descriptors.hpp"
@@ -26,10 +28,10 @@ struct RendererContext {
     
     void setup(Device& device, Renderer& renderer) {
         globalPool = DescriptorPool::Builder(device)
-                             .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                             .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2U)
                              .addPoolSize(
                                      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                     SwapChain::MAX_FRAMES_IN_FLIGHT
+                                     2U
                              )
                              .build();
 
@@ -48,8 +50,8 @@ struct RendererContext {
         for (auto& framePool : frame_pools) {
             framePool = framePoolBuilder.build();
         }
-        ubo_compute_buffers = m_setupGlobalUBOBuffers(device);
-        ubo_buffers = m_setupGlobalUBOBuffers(device);
+        ubo_compute_buffers = m_setupGlobalUBOBuffers<GlobalComputeUbo>(device);
+        ubo_buffers = m_setupGlobalUBOBuffers<GlobalUbo>(device);
         global_set_layout = DescriptorSetLayout::Builder(device)
                                    .addBinding(0,
                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -58,13 +60,13 @@ struct RendererContext {
         compute_set_layout = DescriptorSetLayout::Builder(device)
                                      .addBinding(0,
                                          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                         VK_SHADER_STAGE_ALL_GRAPHICS)
+                                         VK_SHADER_STAGE_COMPUTE_BIT)
                                      .build();
 
         global_descriptor_sets =
                 setupGlobalUBODescriptorSets(*global_set_layout, ubo_buffers, *globalPool);
         global_compute_descriptor_sets =
-            setupGlobalUBODescriptorSets(*compute_set_layout, ubo_compute_buffers, *globalPool);
+                setupGlobalUBODescriptorSets(*compute_set_layout, ubo_compute_buffers, *globalPool);
 
         {
             PipelineConfigInfo debug_shape_pipeline_config;
@@ -82,7 +84,10 @@ struct RendererContext {
             global_set_layout->getDescriptorSetLayout(),
             "../assets/shaders/sprite.vert.spv",
             "../assets/shaders/sprite.frag.spv");
-        particle_sys = std::make_unique<ParticleSystem>(device, renderer.getSwapChainRenderPass(), renderer.getAspectRatio());
+        particle_sys = std::make_unique<ParticleSystem>(device,
+            renderer.getSwapChainRenderPass(),
+            compute_set_layout->getDescriptorSetLayout(),
+            renderer.getAspectRatio());
         // compute_demo = std::make_unique<ComputeDemo>(device);
     }
     std::vector<VkDescriptorSet> setupGlobalUBODescriptorSets(
@@ -101,22 +106,8 @@ struct RendererContext {
         }
         return globalDescriptorSets;
     }
-    std::vector<std::unique_ptr<Buffer>> m_setupGlobalComputeUBOBuffers(Device& device) {
-        std::vector<std::unique_ptr<Buffer>> uboBuffers(
-                SwapChain::MAX_FRAMES_IN_FLIGHT
-        );
-        for (auto& uboBuffer : uboBuffers) {
-            uboBuffer = std::make_unique<Buffer>(
-                    device,
-                    sizeof(GlobalComputeUbo),
-                    1,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-            );
-            uboBuffer->map();
-        }
-        return uboBuffers;
-    }
+
+    template<class UBOclass>
     std::vector<std::unique_ptr<Buffer>> m_setupGlobalUBOBuffers(Device& device) {
         std::vector<std::unique_ptr<Buffer>> uboBuffers(
                 SwapChain::MAX_FRAMES_IN_FLIGHT
@@ -124,7 +115,7 @@ struct RendererContext {
         for (auto& uboBuffer : uboBuffers) {
             uboBuffer = std::make_unique<Buffer>(
                     device,
-                    sizeof(GlobalUbo),
+                    sizeof(UBOclass),
                     1,
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT

@@ -278,7 +278,12 @@ void App::renderFrame(
 
     if (auto command_buffer = renderer.beginFrame()) {
         int frame_index = renderer.getFrameIndex();
+
         context.frame_pools[frame_index]->resetPool();
+
+        m_updateUBO(delta_time, camera,
+            *context.ubo_buffers[frame_index],
+            *context.ubo_compute_buffers[frame_index]);
         if(auto compute_buffer = renderer.beginCompute()) {
             FrameInfo frame_info{
                 frame_index,
@@ -290,7 +295,6 @@ void App::renderFrame(
             };
             context.particle_sys->compute(frame_info);
 
-            // renderer_context.compute_demo->performCompute(frame_info);
             renderer.endCompute();
         }
         FrameInfo frame_info{
@@ -309,9 +313,6 @@ void App::renderFrame(
             );
             m_isRenderer_waiting = false;
 
-            m_updateUBO(frame_info, camera,
-                *context.ubo_buffers[frame_index],
-                *context.ubo_compute_buffers[frame_index]);
 
             auto& sprite_sys = *ECS.getSystem<SpriteSystem>();
             auto& model_sys = *ECS.getSystem<ModelSystem>();
@@ -342,17 +343,19 @@ void App::renderFrame(
     }
 }
 void App::m_updateUBO(
-        FrameInfo frameInfo, Camera& camera, Buffer& uboBuffer, Buffer& computeUboBuffer
+        float deltaTime, Camera& camera, Buffer& uboBuffer, Buffer& computeUboBuffer
 ) {
     GlobalUbo ubo{};
     ubo.projection = camera.getProjection();
     ubo.view = camera.getView();
     ubo.inverseView = camera.getInverseView();
     uboBuffer.writeToBuffer(&ubo);
-    uboBuffer.flush();
+
     GlobalComputeUbo compute_ubo{};
-    compute_ubo.delta_time = frameInfo.frameTime;
-    computeUboBuffer.writeToBuffer(&ubo);
+    compute_ubo.delta_time = deltaTime;
+    computeUboBuffer.writeToBuffer(&compute_ubo);
+
+    uboBuffer.flush();
     computeUboBuffer.flush();
 }
 

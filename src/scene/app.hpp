@@ -85,7 +85,7 @@ private:
 
     void setupECS();
 
-    void m_updateUBO(FrameInfo frameInfo,
+    void m_updateUBO(float deltaTime,
         Camera& camera,
         Buffer& uboBuffer,
         Buffer& computeUboBuffer);
