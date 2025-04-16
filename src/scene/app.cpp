@@ -146,6 +146,14 @@ void App::run() {
 #if not EMP_ENABLE_PHYSICS_THREAD
 
         static Stopwatch physics_clock;
+        if(physics_clock.getElapsedTime() < 1.f / m_physics_tick_rate) {
+            const float sleep_duration =
+                    (1.f / m_physics_tick_rate - physics_clock.getElapsedTime());
+            auto duration = std::chrono::nanoseconds(
+                    static_cast<long long>(floorf(1e9 * sleep_duration))
+            );
+            std::this_thread::sleep_for(duration);
+        }
         physics_clock.restart();
         onFixedUpdate(delta_time, window, controller);
         rigidbody_sys.updateMasses();
