@@ -1,7 +1,7 @@
 #ifndef EMP_MODEL_SYSTEM_HPP
 #define EMP_MODEL_SYSTEM_HPP
 
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "model.hpp"
 #include "scene/transform.hpp"
 #include "texture.hpp"

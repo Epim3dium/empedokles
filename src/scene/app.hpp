@@ -6,7 +6,7 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/model_system.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "gui/gui_manager.hpp"
 #include "scene/compute_demo.hpp"
 #include "scene/renderer_context.hpp"

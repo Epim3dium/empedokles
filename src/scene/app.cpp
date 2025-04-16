@@ -5,7 +5,7 @@
 #include "graphics/sprite_system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/camera.hpp"
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "scene/renderer_context.hpp"
 #include "vulkan/buffer.hpp"
 #include "io/keyboard_controller.hpp"
@@ -146,15 +146,16 @@ void App::run() {
 #if not EMP_ENABLE_PHYSICS_THREAD
 
         static Stopwatch physics_clock;
-        if(physics_clock.getElapsedTime() < 1.f / m_physics_tick_rate) {
+        float physics_time = physics_clock.getElapsedTime();
+        physics_clock.restart();
+        if(physics_time < 1.f / m_physics_tick_rate) {
             const float sleep_duration =
-                    (1.f / m_physics_tick_rate - physics_clock.getElapsedTime());
+                    (1.f / m_physics_tick_rate - physics_time);
             auto duration = std::chrono::nanoseconds(
                     static_cast<long long>(floorf(1e9 * sleep_duration))
             );
             std::this_thread::sleep_for(duration);
         }
-        physics_clock.restart();
         onFixedUpdate(delta_time, window, controller);
         rigidbody_sys.updateMasses();
         physics_sys.update(
