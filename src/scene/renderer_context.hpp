@@ -3,7 +3,7 @@
 #include <memory>
 #include "graphics/renderer.hpp"
 #include "vulkan/descriptors.hpp"
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "compute/compute_manager.hpp"
 #include "scene/compute_demo.hpp"
 namespace emp {

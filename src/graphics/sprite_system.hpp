@@ -1,7 +1,7 @@
 #ifndef EMP_SPRITE_SYSTEM_HPP
 #define EMP_SPRITE_SYSTEM_HPP
 #include "graphics/sprite.hpp"
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "scene/transform.hpp"
 #include "vulkan/swap_chain.hpp"
 namespace emp {

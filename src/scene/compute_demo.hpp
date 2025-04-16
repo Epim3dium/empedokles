@@ -6,7 +6,7 @@
 #include <memory>
 #include "graphics/frame_info.hpp"
 #include "graphics/sprite_system.hpp"
-#include "graphics/systems/simple_render_system.hpp"
+#include "graphics/render_systems/simple_render_system.hpp"
 #include "graphics/texture.hpp"
 #include "utils/time.hpp"
 #include "vulkan/pipeline.hpp"
