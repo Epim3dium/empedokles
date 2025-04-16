@@ -1,6 +1,7 @@
 #ifndef EMP_RENDERER_CONTEXT_HPP
 #define EMP_RENDERER_CONTEXT_HPP
 #include <memory>
+#include "graphics/particle_system.hpp"
 #include "graphics/renderer.hpp"
 #include "vulkan/descriptors.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
@@ -12,6 +13,7 @@ struct RendererContext {
     std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
     std::unique_ptr<SimpleRenderSystem> sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> model_rend_sys;
+    std::unique_ptr<ParticleSystem> particle_sys;
     // std::unique_ptr<ComputeDemo> compute_demo;
 
     std::vector<std::unique_ptr<Buffer>> ubo_buffers;
@@ -80,6 +82,7 @@ struct RendererContext {
             global_set_layout->getDescriptorSetLayout(),
             "../assets/shaders/sprite.vert.spv",
             "../assets/shaders/sprite.frag.spv");
+        particle_sys = std::make_unique<ParticleSystem>(device, renderer.getSwapChainRenderPass(), renderer.getAspectRatio());
         // compute_demo = std::make_unique<ComputeDemo>(device);
     }
     std::vector<VkDescriptorSet> setupGlobalUBODescriptorSets(
