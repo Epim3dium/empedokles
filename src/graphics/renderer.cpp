@@ -4,16 +4,19 @@
 #include <array>
 #include <cassert>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include "graphics/imgui/imgui_emp_impl.hpp"
 
 namespace emp {
 
 Renderer::Renderer(Window& window, Device& device)
-    : m_window{window}, m_device{device} 
+    : m_window{window}, m_device{device}
 {
     recreateSwapChain();
+    createComputeManager();
     createCommandBuffers();
+    createComputeCommandBuffers();
 #if EMP_USING_IMGUI 
     ImGuiSetup(device.getImGuiInitInfo(), window.getGLFWwindow(), device, *this, getSwapChainRenderPass());
 #endif
@@ -21,11 +24,15 @@ Renderer::Renderer(Window& window, Device& device)
 
 Renderer::~Renderer() {
     freeCommandBuffers();
+    freeComputeCommandBuffers();
 #if EMP_USING_IMGUI 
     ImGuiDestroy();
 #endif
 }
 
+void Renderer::createComputeManager() {
+    m_compute_manager = std::make_unique<ComputeManager>(m_device);
+}
 void Renderer::recreateSwapChain() {
     auto extent = m_window.getExtent();
     while (extent.width == 0 || extent.height == 0) {
@@ -34,13 +41,13 @@ void Renderer::recreateSwapChain() {
     }
     vkDeviceWaitIdle(m_device.device());
 
-    if (m_swapChain == nullptr) {
-        m_swapChain = std::make_unique<SwapChain>(m_device, extent);
+    if (m_swap_chain == nullptr) {
+        m_swap_chain = std::make_unique<SwapChain>(m_device, extent);
     } else {
-        std::shared_ptr<SwapChain> oldSwapChain = std::move(m_swapChain);
-        m_swapChain = std::make_unique<SwapChain>(m_device, extent, oldSwapChain);
+        std::shared_ptr<SwapChain> oldSwapChain = std::move(m_swap_chain);
+        m_swap_chain = std::make_unique<SwapChain>(m_device, extent, oldSwapChain);
 
-        if (!oldSwapChain->compareSwapFormats(*m_swapChain)) {
+        if (!oldSwapChain->compareSwapFormats(*m_swap_chain)) {
             throw std::runtime_error(
                     "Swap chain image(or depth) format has changed!"
             );
@@ -48,17 +55,41 @@ void Renderer::recreateSwapChain() {
     }
 }
 
+void Renderer::freeComputeCommandBuffers() {
+    vkFreeCommandBuffers(
+            m_device.device(),
+            m_device.getComputeCommandPool(),
+            static_cast<uint32_t>(m_compute_command_buffers.size()),
+            m_compute_command_buffers.data()
+    );
+    m_compute_command_buffers.clear();
+}
+void Renderer::createComputeCommandBuffers() {
+    m_compute_command_buffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = m_device.getComputeCommandPool();
+    allocInfo.commandBufferCount = static_cast<uint32_t>(m_compute_command_buffers.size());
+
+    if (vkAllocateCommandBuffers(
+                m_device.device(), &allocInfo, m_compute_command_buffers.data()
+        ) != VK_SUCCESS) 
+    {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+}
 void Renderer::createCommandBuffers() {
-    m_command_buffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+    m_graphics_command_buffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool = m_device.getGraphicsCommandPool();
-    allocInfo.commandBufferCount = static_cast<uint32_t>(m_command_buffers.size());
+    allocInfo.commandBufferCount = static_cast<uint32_t>(m_graphics_command_buffers.size());
 
     if (vkAllocateCommandBuffers(
-                m_device.device(), &allocInfo, m_command_buffers.data()
+                m_device.device(), &allocInfo, m_graphics_command_buffers.data()
         ) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
@@ -68,16 +99,39 @@ void Renderer::freeCommandBuffers() {
     vkFreeCommandBuffers(
             m_device.device(),
             m_device.getGraphicsCommandPool(),
-            static_cast<uint32_t>(m_command_buffers.size()),
-            m_command_buffers.data()
+            static_cast<uint32_t>(m_graphics_command_buffers.size()),
+            m_graphics_command_buffers.data()
     );
-    m_command_buffers.clear();
+    m_graphics_command_buffers.clear();
 }
 
+VkCommandBuffer Renderer::beginCompute() {
+    assert(!m_isComputeStarted && "Can't begin compute if compute was already started");
+    auto commandBuffer = getCurrentComputeCommandBuffer();
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+    m_isComputeStarted = true;
+    m_compute_manager->beginCompute(getFrameIndex());
+    return commandBuffer;
+}
+void Renderer::endCompute() {
+    assert(m_isComputeStarted && "Can't end compute that has not started");
+    auto commandBuffer = getCurrentComputeCommandBuffer();
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record compute command buffer!");
+    }
+    m_compute_finished_semaphore = m_compute_manager->endCompute(getFrameIndex(), commandBuffer);
+    m_isComputeStarted = false;
+}
 VkCommandBuffer Renderer::beginFrame() {
     assert(!m_isFrameStarted && "Can't call beginFrame while already in progress");
 
-    auto result = m_swapChain->acquireNextImage(&m_current_image_index);
+    auto result = m_swap_chain->acquireNextImage(&m_current_image_index);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         recreateSwapChain();
         return nullptr;
@@ -107,8 +161,8 @@ void Renderer::endFrame() {
         throw std::runtime_error("failed to record command buffer!");
     }
 
-    auto result = m_swapChain->submitCommandBuffers(
-        &commandBuffer, &m_current_image_index, &m_compute_finished_semaphore);
+    auto result = m_swap_chain->submitCommandBuffers(
+        &commandBuffer, &m_current_image_index, NULL);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_window.wasWindowResized()) {
         m_window.resetWindowResizedFlag();
@@ -130,11 +184,11 @@ void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = m_swapChain->getRenderPass();
-    renderPassInfo.framebuffer = m_swapChain->getFrameBuffer(m_current_image_index);
+    renderPassInfo.renderPass = m_swap_chain->getRenderPass();
+    renderPassInfo.framebuffer = m_swap_chain->getFrameBuffer(m_current_image_index);
 
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
+    renderPassInfo.renderArea.extent = m_swap_chain->getSwapChainExtent();
 
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = {0.01f, 0.01f, 0.01f, 1.0f};
@@ -149,12 +203,12 @@ void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(m_swapChain->getSwapChainExtent().width);
+    viewport.width = static_cast<float>(m_swap_chain->getSwapChainExtent().width);
     viewport.height =
-            static_cast<float>(m_swapChain->getSwapChainExtent().height);
+            static_cast<float>(m_swap_chain->getSwapChainExtent().height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
-    VkRect2D scissor{{0, 0}, m_swapChain->getSwapChainExtent()};
+    VkRect2D scissor{{0, 0}, m_swap_chain->getSwapChainExtent()};
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 #if EMP_USING_IMGUI 

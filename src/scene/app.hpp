@@ -52,7 +52,6 @@ protected:
 
     GUIManager gui_manager;
     Renderer renderer;
-    ComputeManager compute;
     // order of declarations matters
     
     KeyboardController controller;
