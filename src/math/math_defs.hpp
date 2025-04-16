@@ -8,6 +8,7 @@
 #define fEMP_PI 3.141592653f /* pi */
 
 typedef glm::mat4x4 TransformMatrix;
+typedef glm::vec<4, float> vec4f;
 typedef glm::vec<3, float> vec3f;
 typedef glm::vec<2, float> vec2f;
 typedef glm::vec<2, int> vec2i;
