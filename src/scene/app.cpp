@@ -288,6 +288,7 @@ void App::renderFrame(
                 context.global_compute_descriptor_sets[frame_index],
                 *context.frame_pools[frame_index]
             };
+            context.particle_sys->compute(frame_info);
 
             // renderer_context.compute_demo->performCompute(frame_info);
             renderer.endCompute();
@@ -330,6 +331,7 @@ void App::renderFrame(
                 // renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
 
                 onRender(device, frame_info);
+                context.particle_sys->render(frame_info);
                 gui_manager.draw(ECS, camera);
 
                 renderer.endSwapChainRenderPass(command_buffer);
