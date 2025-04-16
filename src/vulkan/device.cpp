@@ -16,7 +16,7 @@ ImGui_ImplVulkan_InitInfo Device::getImGuiInitInfo() const {
 	init_info.PhysicalDevice = m_physical_device;
 	init_info.Device = m_device;
 	init_info.Queue = m_graphics_queue;
-    init_info.QueueFamily = indices.graphicsFamily;
+    init_info.QueueFamily = indices.graphicsFamily.value();
 	init_info.DescriptorPool = ImGuiGetDescriptorPool(m_device);
 	init_info.MinImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
 	init_info.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
@@ -162,7 +162,9 @@ void Device::createLogicalDevice() {
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {
-            indices.graphicsFamily, indices.presentFamily, indices.computeFamily
+        indices.graphicsFamily.value(),
+        indices.presentFamily.value(),
+        indices.computeFamily.value()
     };
 
     float queuePriority = 1.0f;
@@ -205,9 +207,9 @@ void Device::createLogicalDevice() {
         throw std::runtime_error("failed to create logical device!");
     }
 
-    vkGetDeviceQueue(m_device, indices.computeFamily, 0, &m_compute_queue);
-    vkGetDeviceQueue(m_device, indices.graphicsFamily, 0, &m_graphics_queue);
-    vkGetDeviceQueue(m_device, indices.presentFamily, 0, &m_present_queue);
+    vkGetDeviceQueue(m_device, indices.computeFamily.value(), 0, &m_compute_queue);
+    vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphics_queue);
+    vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_present_queue);
 }
 
 void Device::createCommandPools() {
@@ -215,7 +217,7 @@ void Device::createCommandPools() {
 
     VkCommandPoolCreateInfo graphics_pool_info = {};
     graphics_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    graphics_pool_info.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+    graphics_pool_info.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
     graphics_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
                      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
@@ -225,7 +227,7 @@ void Device::createCommandPools() {
     }
     VkCommandPoolCreateInfo compute_pool_info = {};
     compute_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    compute_pool_info.queueFamilyIndex = queueFamilyIndices.computeFamily;
+    compute_pool_info.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
     compute_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
                      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
@@ -400,13 +402,11 @@ QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) const {
             //family specifically for compute
             if (!(queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
                 indices.computeFamily = i;
-                indices.computeFamilyHasValue = true;
             }
         }
         if (queueFamily.queueCount > 0 &&
             queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;
-            indices.graphicsFamilyHasValue = true;
         }
         VkBool32 presentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(
@@ -414,7 +414,6 @@ QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) const {
         );
         if (queueFamily.queueCount > 0 && presentSupport) {
             indices.presentFamily = i;
-            indices.presentFamilyHasValue = true;
         }
         if (indices.isComplete()) {
             break;
@@ -422,14 +421,13 @@ QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) const {
 
         i++;
     }
-    if(!indices.computeFamilyHasValue) {
+    if(!indices.computeFamily.has_value()) {
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
             //can be non exclusive for compute
             if (queueFamily.queueFlags > 0 &&
                 queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
                 indices.computeFamily = i;
-                indices.computeFamilyHasValue = true;
                 break;
             }
             i++;

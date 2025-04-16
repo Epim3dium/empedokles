@@ -187,7 +187,7 @@ void SwapChain::createSwapChain() {
 
     QueueFamilyIndices indices = m_device.findPhysicalQueueFamilies();
     uint32_t queueFamilyIndices[] = {
-            indices.graphicsFamily, indices.presentFamily
+            indices.graphicsFamily.value(), indices.presentFamily.value()
     };
 
     if (indices.graphicsFamily != indices.presentFamily) {

@@ -6,6 +6,7 @@
 
 // std lib headers
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -18,15 +19,12 @@ struct SwapChainSupportDetails {
 };
 
 struct QueueFamilyIndices {
-    uint32_t graphicsFamily{};
-    uint32_t presentFamily{};
-    uint32_t computeFamily{};
-    bool graphicsFamilyHasValue = false;
-    bool presentFamilyHasValue = false;
-    bool computeFamilyHasValue = false;
+    std::optional<uint32_t> graphicsFamily{};
+    std::optional<uint32_t> presentFamily{};
+    std::optional<uint32_t> computeFamily{};
 
     bool isComplete() const {
-        return graphicsFamilyHasValue && presentFamilyHasValue && computeFamilyHasValue;
+        return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
     }
 };
 
