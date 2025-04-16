@@ -51,6 +51,7 @@ set(SOURCE_FILES
     graphics/animated_sprite.cpp
     graphics/animated_sprite_system.cpp
     graphics/sprite_system.cpp
+    graphics/particle_system.cpp
 
     io/keyboard_controller.cpp
     io/window.cpp
@@ -147,6 +148,7 @@ set(HEADER_FILES
     graphics/animated_sprite_system.hpp
     graphics/sprite_system.hpp
     graphics/utils.hpp
+    graphics/particle_system.hpp
 
     io/keyboard_controller.hpp
     io/window.hpp
