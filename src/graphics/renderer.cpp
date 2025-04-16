@@ -162,7 +162,7 @@ void Renderer::endFrame() {
     }
 
     auto result = m_swap_chain->submitCommandBuffers(
-        &commandBuffer, &m_current_image_index, NULL);
+        &commandBuffer, &m_current_image_index, &m_compute_finished_semaphore);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_window.wasWindowResized()) {
         m_window.resetWindowResizedFlag();

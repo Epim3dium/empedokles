@@ -32,11 +32,6 @@ SimpleRenderSystem::~SimpleRenderSystem() {
 
 void SimpleRenderSystem::createPipelineLayout(
     VkDescriptorSetLayout globalSetLayout, size_t push_const_size) {
-    VkPushConstantRange pushConstantRange{};
-    pushConstantRange.stageFlags =
-        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    pushConstantRange.offset = 0;
-    pushConstantRange.size = push_const_size;
 
     render_system_layout =
         DescriptorSetLayout::Builder(device)
@@ -56,9 +51,6 @@ void SimpleRenderSystem::createPipelineLayout(
     pipelineLayoutInfo.setLayoutCount =
         static_cast<uint32_t>(descriptorSetLayouts.size());
     pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-    pipelineLayoutInfo.pushConstantRangeCount = push_const_size ? 1 : 0;
-    pipelineLayoutInfo.pPushConstantRanges =
-        push_const_size ? &pushConstantRange : nullptr;
     if (vkCreatePipelineLayout(
             device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout) !=
         VK_SUCCESS) {
