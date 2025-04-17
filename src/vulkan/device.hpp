@@ -1,6 +1,7 @@
 #ifndef EMP_DEVICE_HPP
 #define EMP_DEVICE_HPP
 
+#include <vulkan/vulkan_core.h>
 #include "graphics/imgui/imgui_emp_impl.hpp"
 #include "io/window.hpp"
 
@@ -223,7 +224,7 @@ private:
     const std::vector<const char*> device_extensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
 #ifdef __APPLE__
-            "VK_KHR_portability_subset"
+            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
 #endif
     };
 };
