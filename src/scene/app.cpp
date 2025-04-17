@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include <memory>
 #include <ranges>
 
 #include "core/coordinator.hpp"
@@ -169,7 +170,7 @@ void App::run() {
 #if not EMP_ENABLE_RENDER_THREAD
     static Stopwatch render_clock;
     render_clock.restart();
-    renderFrame(camera, delta_time);
+    renderFrame(camera, renderer_context, delta_time);
     gui_manager.addRendererTime(render_clock.restart());
 #endif
 
@@ -203,7 +204,7 @@ std::unique_ptr<std::thread> App::createRenderThread(
         while (isAppRunning) {
             float delta_time = clock.restart();
 
-            renderFrame(camera,
+            renderFrame(camera, renderer_context,
                 delta_time);
             EMP_LOG_INTERVAL(DEBUG2, 5.f)
                     << "{render thread}: " << 1.f / delta_time << " FPS";
@@ -272,10 +273,9 @@ std::unique_ptr<std::thread> App::createPhysicsThread() {
 }
 void App::renderFrame(
         Camera& camera,
+        RendererContext& context,
         float delta_time
 ) {
-    auto& context = renderer_context;
-
     if (auto command_buffer = renderer.beginFrame()) {
         int frame_index = renderer.getFrameIndex();
 
@@ -326,10 +326,9 @@ void App::renderFrame(
             {
                 renderer.beginSwapChainRenderPass(command_buffer);
 
-                sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
-                model_sys.render(frame_info, *renderer_context.model_rend_sys);
-                animated_sprite_sys.render(frame_info, *renderer_context.sprite_rend_sys);
-                // renderer_context.compute_demo->render(frame_info, *renderer_context.sprite_rend_sys);
+                sprite_sys.render(frame_info, *context.sprite_rend_sys);
+                model_sys.render(frame_info, *context.model_rend_sys);
+                animated_sprite_sys.render(frame_info, *context.sprite_rend_sys);
 
                 onRender(device, frame_info);
                 context.particle_sys->render(frame_info);

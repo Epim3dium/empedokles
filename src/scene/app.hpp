@@ -93,6 +93,7 @@ private:
 
     void renderFrame(
             Camera& camera,
+            RendererContext& render_contex,
             float delta_time
     );
     std::unique_ptr<std::thread> createRenderThread(
