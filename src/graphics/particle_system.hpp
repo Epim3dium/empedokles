@@ -49,7 +49,8 @@ class ParticleSystem {
 public:
     static constexpr uint32_t MAX_PARTICLE_COUNT = 65536U;
 private:
-    VkPipelineLayout pipeline_layout{};
+    VkPipelineLayout compute_pipeline_layout{};
+    VkPipelineLayout graphics_pipeline_layout{};
     std::unique_ptr<Pipeline> compute_pipeline;
     std::unique_ptr<Pipeline> graphics_pipeline;
     std::vector<std::unique_ptr<Buffer>> shaderStorageBuffers;
@@ -59,6 +60,7 @@ private:
 
     std::unique_ptr<DescriptorPool> compute_pool;
     std::vector<VkDescriptorSet> descriptorBufferSets;
+    Device& m_device;
 
     void m_initRandomParticles(Device& device, float aspect) {
         std::vector<ParticleData> particles(MAX_PARTICLE_COUNT);
@@ -155,9 +157,9 @@ private:
             pipelineLayoutInfo.pSetLayouts = layouts;
 
             vkCreatePipelineLayout(
-                device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout);
+                device.device(), &pipelineLayoutInfo, nullptr, &compute_pipeline_layout);
 
-            config.pipelineLayout = pipeline_layout;
+            config.pipelineLayout = compute_pipeline_layout;
             compute_pipeline = std::make_unique<Pipeline>(
                 device, "../assets/shaders/particle_update.comp.spv", config);
         }
@@ -175,9 +177,9 @@ private:
             pipelineLayoutInfo.setLayoutCount = 1;
             pipelineLayoutInfo.pSetLayouts = &layouts;
             vkCreatePipelineLayout(
-                device.device(), &pipelineLayoutInfo, nullptr, &pipeline_layout);
+                device.device(), &pipelineLayoutInfo, nullptr, &graphics_pipeline_layout);
 
-            config.pipelineLayout = pipeline_layout;
+            config.pipelineLayout = graphics_pipeline_layout;
             graphics_pipeline = std::make_unique<Pipeline>(
                 device, "../assets/shaders/particle_draw.vert.spv", "../assets/shaders/particle_draw.frag.spv", config);
         }
@@ -204,7 +206,11 @@ public:
 
         // frame_info.
     }
-    ParticleSystem(Device& device, VkRenderPass render_pass, VkDescriptorSetLayout global_layout, float aspect) {
+    ~ParticleSystem() {
+        vkDestroyPipelineLayout(m_device.device(), compute_pipeline_layout, NULL);
+        vkDestroyPipelineLayout(m_device.device(), graphics_pipeline_layout, NULL);
+    }
+    ParticleSystem(Device& device, VkRenderPass render_pass, VkDescriptorSetLayout global_layout, float aspect) : m_device(device) {
         m_setupStorageBuffers(device);
         m_initRandomParticles(device, aspect);
         m_setupDescriptorsLayout(device);
