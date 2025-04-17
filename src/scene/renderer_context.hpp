@@ -16,7 +16,6 @@ struct RendererContext {
     std::unique_ptr<SimpleRenderSystem> sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> model_rend_sys;
     std::unique_ptr<ParticleSystem> particle_sys;
-    // std::unique_ptr<ComputeDemo> compute_demo;
 
     std::vector<std::unique_ptr<Buffer>> ubo_buffers;
     std::vector<std::unique_ptr<Buffer>> ubo_compute_buffers;
@@ -31,7 +30,7 @@ struct RendererContext {
                              .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2U)
                              .addPoolSize(
                                      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                     2U
+                                     4U
                              )
                              .build();
 
@@ -88,7 +87,6 @@ struct RendererContext {
             renderer.getSwapChainRenderPass(),
             compute_set_layout->getDescriptorSetLayout(),
             renderer.getAspectRatio());
-        // compute_demo = std::make_unique<ComputeDemo>(device);
     }
     std::vector<VkDescriptorSet> setupGlobalUBODescriptorSets(
             DescriptorSetLayout& globalSetLayout,
@@ -100,9 +98,10 @@ struct RendererContext {
         );
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            DescriptorWriter(globalSetLayout, *globalPool)
+            DescriptorWriter(globalSetLayout, global_pool)
                     .writeBuffer(0, &bufferInfo)
                     .build(globalDescriptorSets[i]);
+            assert(globalDescriptorSets[i] != NULL);
         }
         return globalDescriptorSets;
     }
