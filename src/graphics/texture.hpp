@@ -6,6 +6,7 @@
 
 // libs
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 #include <unordered_map>
 
 // std
@@ -101,7 +102,7 @@ private:
     VkImageView m_texture_image_view = nullptr;
     VkSampler m_texture_sampler = nullptr;
     VkFormat m_format;
-    VkImageLayout m_texture_layout;
+    VkImageLayout m_texture_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     uint32_t m_mip_levels{1};
     uint32_t m_layer_count{1};
     VkExtent3D m_extent{};
