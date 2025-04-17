@@ -10,21 +10,50 @@ struct Particle {
     vec4 color;
     float lifetime;
 };
-
 layout(std140, set = 1, binding = 0) readonly buffer ParticleSSBOIn {
    Particle particlesIn[ ];
 };
-
 layout(std140, set = 1, binding = 1) buffer ParticleSSBOOut {
    Particle particlesOut[ ];
 };
+struct EmitData {
+    uint count;
+    float _pad1;
+    vec2 position_min;
+    vec2 position_max;
+
+    float speed_min;
+    float speed_max;
+
+    float lifetime_min;
+    float lifetime_max;
+
+    float angle_min;
+    float angle_max;
+
+    vec4 color;
+};
+layout(set = 2, binding = 0) uniform EmitUniform {
+    EmitData emit_calls[16];
+    uint call_count;
+    uint work_start;
+    uint work_end;
+    uint _pad; // pad to 16 bytes
+} emit;
 
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-void main() 
+highp float rand(vec2 co)
 {
-    uint index = gl_GlobalInvocationID.x;  
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(co.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
+}
 
+void processPhysics(uint index) {
     Particle particleIn = particlesIn[index];
 
     particlesOut[index].position = particleIn.position + particleIn.velocity.xy * ubo.deltaTime;
@@ -32,5 +61,51 @@ void main()
     particlesOut[index].lifetime = particleIn.lifetime - ubo.deltaTime;
     if(particleIn.lifetime - ubo.deltaTime < 0) {
         particlesOut[index].color = vec4(0, 0, 0, 0);
+    }
+}
+void initParticle(uint particleIdx, uint emitIdx) {
+    vec2 pos_min = emit.emit_calls[emitIdx].position_min;
+    vec2 pos_max = emit.emit_calls[emitIdx].position_max;
+    float speed_min = emit.emit_calls[emitIdx].speed_min;
+    float speed_max = emit.emit_calls[emitIdx].speed_max;
+    float angle_min = emit.emit_calls[emitIdx].angle_min;
+    float angle_max = emit.emit_calls[emitIdx].angle_max;
+    float life_min = emit.emit_calls[emitIdx].lifetime_min;
+    float life_max = emit.emit_calls[emitIdx].lifetime_max;
+
+    vec2 seedx = vec2(particleIdx, particleIdx * 13 - emitIdx);
+    vec2 seedy = vec2(particleIdx * 17 - emitIdx * 9, particleIdx * 5 - emitIdx);
+
+    float speed = speed_min + (speed_max - speed_min) * rand(seedx + seedy + vec2(speed_max, speed_min));
+    float angle = angle_min + (angle_max - angle_min) * rand(seedx - seedy + vec2(angle_max, angle_min));
+    vec2 dir = vec2(cos(angle), sin(angle));
+
+    particlesOut[particleIdx].velocity = dir * speed;
+    particlesOut[particleIdx].position.x = pos_min.x + (pos_max.x - pos_min.x) * rand(seedx + pos_min);
+    particlesOut[particleIdx].position.y = pos_min.y + (pos_max.y - pos_min.y) * rand(seedy + pos_max);
+
+    float life = life_min + (life_max - life_min) * rand(seedx - seedy + vec2(life_max * 100.f, life_min * 100.f));
+    particlesOut[particleIdx].lifetime = life;
+    particlesOut[particleIdx].color = emit.emit_calls[emitIdx].color;
+}
+void emitParticle(uint index) {
+    uint cur_idx = emit.work_start;
+    for(uint i = 0; i < emit.call_count; i++) {
+        uint cur_end = cur_idx + emit.emit_calls[i].count;
+        if(index >= cur_idx && index < cur_end) {
+            initParticle(index, i);
+            return;
+        }
+        cur_idx = cur_end;
+    }
+}
+
+void main() 
+{
+    uint index = gl_GlobalInvocationID.x;  
+    if(emit.call_count == 0 || index < emit.work_start || index >= emit.work_end) {
+        processPhysics(index);
+    }else {
+        emitParticle(index);
     }
 }

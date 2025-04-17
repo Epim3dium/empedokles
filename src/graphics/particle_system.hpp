@@ -11,6 +11,45 @@
 #include "vulkan/pipeline.hpp"
 #include "vulkan/swap_chain.hpp"
 namespace emp {
+struct alignas(16) ParticleEmitData {
+    uint32_t count; // 4 bytes
+    float _pad0;// 4 bytes
+    vec2f position_min;// 8 bytes
+    vec2f position_max;// 8 bytes
+
+    float speed_min;//4
+    float speed_max;//4
+
+    float lifetime_min;//4
+    float lifetime_max;//4
+
+    float angle_min;//4
+    float angle_max;//4
+
+    vec4f color;
+};
+constexpr uint32_t MAX_EMIT_CALLS = 16U;
+struct alignas(64) EmitQueue {
+    ParticleEmitData calls[MAX_EMIT_CALLS];
+    uint32_t call_count;
+    uint32_t work_start;
+    uint32_t work_end;
+    uint32_t _pad; // pad to 16 bytes
+    void emit(uint32_t part_count, vec2f pos, std::pair<float, float> speed, std::pair<float, float> lifetime,
+              std::pair<float, float> angle, vec4f c) 
+    {
+        work_end += part_count;
+        auto idx = call_count++;
+        calls[idx].count = part_count;
+        calls[idx].position_min = pos;
+        calls[idx].position_max = pos;
+        calls[idx].lifetime_min = lifetime.first;
+        calls[idx].lifetime_max = lifetime.second;
+        calls[idx].angle_min = angle.first;
+        calls[idx].angle_max = angle.second;
+        calls[idx].color = c;
+    }
+};
 struct alignas(16U) ParticleData {
     vec2f position;
     vec2f velocity;
@@ -53,13 +92,16 @@ private:
     VkPipelineLayout graphics_pipeline_layout{};
     std::unique_ptr<Pipeline> compute_pipeline;
     std::unique_ptr<Pipeline> graphics_pipeline;
-    std::vector<std::unique_ptr<Buffer>> shaderStorageBuffers;
 
-    std::unique_ptr<DescriptorSetLayout> compute_system_layout;
-    std::unique_ptr<DescriptorSetLayout> graphics_system_layout;
+    std::vector<std::unique_ptr<Buffer>> SSBO_buffers;
+    std::vector<std::unique_ptr<Buffer>> emit_buffers;
+
+    std::unique_ptr<DescriptorSetLayout> SSBO_layout;
+    std::unique_ptr<DescriptorSetLayout> emit_buffer_layout;
 
     std::unique_ptr<DescriptorPool> compute_pool;
-    std::vector<VkDescriptorSet> descriptorBufferSets;
+    std::vector<VkDescriptorSet> SSBO_descriptors;
+    std::vector<VkDescriptorSet> emit_buffer_descriptors;
     Device& m_device;
 
     void m_initRandomParticles(Device& device, float aspect) {
@@ -87,29 +129,57 @@ private:
 
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*)particles.data());
-        for(auto& buf : shaderStorageBuffers) {
+        for(auto& buf : SSBO_buffers) {
             device.copyBuffer(
                 stagingBuffer.getBuffer(), buf->getBuffer(), stagingBuffer.getBufferSize()
             );
         }
         stagingBuffer.unmap();
+        EmitQueue data;
+        data.calls[0].color = {1, 0, 0, 1};
+        data.calls[0].count = 2000;
+        data.calls[0].position_min = {-0.5, -0.5};
+        data.calls[0].position_max = {0.5, 0.5};
+        data.call_count++;
+        data.work_start = 2000;
+        data.work_end = 4000;
+        emit_buffers[0]->writeToBuffer(&data);
+        emit_buffers[0]->flushIndex(0);
+        emit_buffers[1]->writeToBuffer(&data);
+        emit_buffers[1]->flushIndex(0);
     }
 
     void m_setupStorageBuffers(Device& device) {
-        shaderStorageBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        SSBO_buffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-            shaderStorageBuffers[i] = 
-                std::make_unique<Buffer>(device, sizeof(ParticleData), MAX_PARTICLE_COUNT, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            SSBO_buffers[i] = std::make_unique<Buffer>(device,
+                sizeof(ParticleData),
+                MAX_PARTICLE_COUNT,
+                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        }
+    }
+    void m_setupEmitBuffers(Device& device) {
+        emit_buffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+            emit_buffers[i] = std::make_unique<Buffer>(device,
+                sizeof(EmitQueue),
+                1U,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            emit_buffers[i]->map();
         }
     }
     void m_setupDescriptorsLayout(Device& device) {
         compute_pool = DescriptorPool::Builder(device)
-                           .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-                           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)
+                           .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2U)
+                           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4)
                            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2)
                            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2)
                            .build();
-        compute_system_layout =
+        SSBO_layout =
             DescriptorSetLayout::Builder(device)
                 .addBinding(0,
                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
@@ -118,29 +188,39 @@ private:
                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                     VK_SHADER_STAGE_COMPUTE_BIT)
                 .build();
-        graphics_system_layout =
-            DescriptorSetLayout::Builder(device)
-                // .addBinding(0,
-                //     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                //     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build();
-        descriptorBufferSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        SSBO_descriptors.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
         for(int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-            DescriptorWriter desc_writer(*compute_system_layout, *compute_pool);
+            DescriptorWriter desc_writer(*SSBO_layout, *compute_pool);
 
             VkDescriptorBufferInfo storageBufferInfoLastFrame{};
-            storageBufferInfoLastFrame.buffer = shaderStorageBuffers[(i + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT]->getBuffer();
+            storageBufferInfoLastFrame.buffer = SSBO_buffers[(i + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT]->getBuffer();
             storageBufferInfoLastFrame.offset = 0;
             storageBufferInfoLastFrame.range = sizeof(ParticleData) * MAX_PARTICLE_COUNT;
             desc_writer.writeBuffer(0, &storageBufferInfoLastFrame);
 
             VkDescriptorBufferInfo storageBufferInfoCurrentFrame{};
-            storageBufferInfoCurrentFrame.buffer = shaderStorageBuffers[i]->getBuffer();
+            storageBufferInfoCurrentFrame.buffer = SSBO_buffers[i]->getBuffer();
             storageBufferInfoCurrentFrame.offset = 0;
             storageBufferInfoCurrentFrame.range = sizeof(ParticleData) * MAX_PARTICLE_COUNT;
             desc_writer.writeBuffer(1, &storageBufferInfoCurrentFrame);
-            desc_writer.build(descriptorBufferSets[i]);
+            desc_writer.build(SSBO_descriptors[i]);
+        }
+        emit_buffer_layout =
+            DescriptorSetLayout::Builder(device)
+                .addBinding(0,
+                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    VK_SHADER_STAGE_COMPUTE_BIT)
+                .build();
+        emit_buffer_descriptors.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+            DescriptorWriter desc_writer(*emit_buffer_layout, *compute_pool);
+            VkDescriptorBufferInfo queryBuffer_info{};
+            queryBuffer_info.buffer = emit_buffers[i]->getBuffer();
+            queryBuffer_info.offset = 0;
+            queryBuffer_info.range = sizeof(EmitQueue);
+            desc_writer.writeBuffer(0, &queryBuffer_info);
+            desc_writer.build(emit_buffer_descriptors[i]);
         }
     }
     void m_createPipeline(Device& device, VkRenderPass render_pass, VkDescriptorSetLayout computeSetLayout) {
@@ -148,12 +228,13 @@ private:
             PipelineConfigInfo config;
             VkDescriptorSetLayout layouts[] = {
                 computeSetLayout,
-                compute_system_layout->getDescriptorSetLayout(),
+                SSBO_layout->getDescriptorSetLayout(),
+                emit_buffer_layout->getDescriptorSetLayout()
             };
             // Create pipeline layout
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.setLayoutCount = 2;
+            pipelineLayoutInfo.setLayoutCount = 3;
             pipelineLayoutInfo.pSetLayouts = layouts;
 
             vkCreatePipelineLayout(
@@ -165,7 +246,6 @@ private:
         }
         {
             PipelineConfigInfo config;
-            auto layouts = graphics_system_layout->getDescriptorSetLayout();
             Pipeline::defaultPipelineConfigInfo(config);
             config.renderPass = render_pass;
             config.attributeDescriptions = ParticleData::getAttributeDescriptions();
@@ -174,8 +254,7 @@ private:
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.setLayoutCount = 1;
-            pipelineLayoutInfo.pSetLayouts = &layouts;
+            pipelineLayoutInfo.setLayoutCount = 0;
             vkCreatePipelineLayout(
                 device.device(), &pipelineLayoutInfo, nullptr, &graphics_pipeline_layout);
 
@@ -190,8 +269,13 @@ public:
         auto frame_index = frame_info.frameIndex;
         compute_pipeline->bind(frame_info.commandBuffer);
 
-        VkDescriptorSet descriptors[] = {frame_info.globalDescriptorSet, descriptorBufferSets[frame_index]};
-        compute_pipeline->bindDescriptorSets(frame_info.commandBuffer, descriptors, 0, 2);
+        const int desc_nb = 3;
+        VkDescriptorSet descriptors[desc_nb] = {
+            frame_info.globalDescriptorSet,
+            SSBO_descriptors[frame_index],
+            emit_buffer_descriptors[frame_index]
+        };
+        compute_pipeline->bindDescriptorSets(frame_info.commandBuffer, descriptors, 0, desc_nb);
         vkCmdDispatch(frame_info.commandBuffer, MAX_PARTICLE_COUNT / 256, 1, 1);
     }
     void render(const FrameInfo& frame_info) {
@@ -199,7 +283,7 @@ public:
         graphics_pipeline->bind(frame_info.commandBuffer);
 
         VkDeviceSize offsets[] = {0};
-        VkBuffer buffers[] = {shaderStorageBuffers[frame_index]->getBuffer()};
+        VkBuffer buffers[] = {SSBO_buffers[frame_index]->getBuffer()};
 
         vkCmdBindVertexBuffers(frame_info.commandBuffer, 0, 1, buffers, offsets);
         vkCmdDraw(frame_info.commandBuffer, MAX_PARTICLE_COUNT, 1, 0, 0);
@@ -212,6 +296,7 @@ public:
     }
     ParticleSystem(Device& device, VkRenderPass render_pass, VkDescriptorSetLayout global_layout, float aspect) : m_device(device) {
         m_setupStorageBuffers(device);
+        m_setupEmitBuffers(device);
         m_initRandomParticles(device, aspect);
         m_setupDescriptorsLayout(device);
         m_createPipeline(device, render_pass, global_layout);
