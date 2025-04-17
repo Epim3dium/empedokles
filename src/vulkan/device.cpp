@@ -77,6 +77,7 @@ Device::Device(Window& window) : m_window{window} {
 Device::~Device() {
     vkDestroyCommandPool(m_device, m_graphics_command_pool, nullptr);
     vkDestroyCommandPool(m_device, m_compute_command_pool, nullptr);
+    vkDestroyCommandPool(m_device, m_graphics_compute_command_pool, nullptr);
     vkDestroyDevice(m_device, nullptr);
 
     if (enable_validation_layers) {

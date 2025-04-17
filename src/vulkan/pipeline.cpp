@@ -70,6 +70,7 @@ void Pipeline::createComputePipeline(
 Pipeline::~Pipeline() {
     vkDestroyShaderModule(m_device.device(), m_vert_shader_module, nullptr);
     vkDestroyShaderModule(m_device.device(), m_frag_shader_module, nullptr);
+    vkDestroyShaderModule(m_device.device(), m_compute_shader_module, nullptr);
     vkDestroyPipeline(m_device.device(), m_pipeline, nullptr);
 }
 
