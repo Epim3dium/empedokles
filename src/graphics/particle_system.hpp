@@ -3,6 +3,7 @@
 #include <vulkan/vulkan_core.h>
 #include <iostream>
 #include <random>
+#include "debug/log.hpp"
 #include "graphics/frame_info.hpp"
 #include "math/math_defs.hpp"
 #include "vulkan/buffer.hpp"
@@ -11,82 +12,96 @@
 #include "vulkan/pipeline.hpp"
 #include "vulkan/swap_chain.hpp"
 namespace emp {
-struct alignas(16) ParticleEmitData {
-    uint32_t count; // 4 bytes
-    float _pad0;// 4 bytes
-    vec2f position_min;// 8 bytes
-    vec2f position_max;// 8 bytes
-
-    float speed_min;//4
-    float speed_max;//4
-
-    float lifetime_min;//4
-    float lifetime_max;//4
-
-    float angle_min;//4
-    float angle_max;//4
-
-    vec4f color;
-};
-constexpr uint32_t MAX_EMIT_CALLS = 16U;
-struct alignas(64) EmitQueue {
-    ParticleEmitData calls[MAX_EMIT_CALLS];
-    uint32_t call_count;
-    uint32_t work_start;
-    uint32_t work_end;
-    uint32_t _pad; // pad to 16 bytes
-    void emit(uint32_t part_count, vec2f pos, std::pair<float, float> speed, std::pair<float, float> lifetime,
-              std::pair<float, float> angle, vec4f c) 
-    {
-        work_end += part_count;
-        auto idx = call_count++;
-        calls[idx].count = part_count;
-        calls[idx].position_min = pos;
-        calls[idx].position_max = pos;
-        calls[idx].lifetime_min = lifetime.first;
-        calls[idx].lifetime_max = lifetime.second;
-        calls[idx].angle_min = angle.first;
-        calls[idx].angle_max = angle.second;
-        calls[idx].color = c;
-    }
-};
-struct alignas(16U) ParticleData {
-    vec2f position;
-    vec2f velocity;
-    vec4f color;
-    float lifetime;
-    static std::vector<VkVertexInputBindingDescription> getBindingDescriptions() {
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
-        bindingDescriptions[0].binding = 0;
-        bindingDescriptions[0].stride = sizeof(ParticleData);
-        bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-        return bindingDescriptions;
-    }
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() {
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-
-        int location = 0;
-        int binding = 0;
-        for(auto info : {
-            std::pair(VK_FORMAT_R32G32_SFLOAT, offsetof(ParticleData, position)),
-            std::pair(VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ParticleData, color))})
-        {
-            attributeDescriptions.push_back({});
-            auto& attr = attributeDescriptions.back();
-            attr.binding = binding;
-            attr.location = location++;
-            attr.offset = info.second;
-            attr.format = info.first;
-        }
-
-        return attributeDescriptions;
-    }
-};
-static_assert(sizeof(ParticleData) == 48, "Wrong struct size");
 
 class ParticleSystem {
 public:
     static constexpr uint32_t MAX_PARTICLE_COUNT = 65536U;
+    //float to 4
+    //vec2 to 8
+    //vec3/vec4 to 16
+    struct alignas(16) ParticleEmitData {
+        uint32_t count; // 4, 4
+        float _pad0;// 4,8
+        vec2f position_min;// 8, 16
+        vec2f position_max;// 8, 24
+
+        float speed_min;//4, 28
+        float speed_max;//4, 32
+
+        float lifetime_min;//4, 36
+        float lifetime_max;//4, 40
+
+        float angle_min;//4, 44
+        float angle_max;//4, 48
+
+        //48 % 16 == 0 C:
+        vec4f color;
+    };
+    static constexpr uint32_t MAX_EMIT_CALLS = 16U;
+    struct alignas(64) EmitQueue {
+        ParticleEmitData calls[MAX_EMIT_CALLS];
+        uint32_t call_count = 0;
+        uint32_t work_start = 0;
+        uint32_t work_end = 0;
+        uint32_t max_particles = MAX_PARTICLE_COUNT; // pad to 16 bytes
+        void emit(uint32_t part_count, std::pair<vec2f, vec2f> pos, std::pair<float, float> speed, std::pair<float, float> lifetime,
+                  std::pair<float, float> angle, vec4f c) 
+        {
+            if(call_count >= MAX_EMIT_CALLS) {
+                return;
+            }
+            EMP_LOG_DEBUG << work_end;
+            work_end += part_count;
+            auto idx = call_count++;
+            calls[idx].count = part_count;
+            calls[idx].position_min = pos.first;
+            calls[idx].position_max = pos.second;
+            calls[idx].lifetime_min = lifetime.first;
+            calls[idx].lifetime_max = lifetime.second;
+            calls[idx].angle_min = angle.first;
+            calls[idx].angle_max = angle.second;
+            calls[idx].speed_min = speed.first;
+            calls[idx].speed_max = speed.second;
+            calls[idx].color = c;
+        }
+        void reset() {
+            work_start = work_end;
+            call_count = 0;
+        }
+    };
+    struct alignas(16U) ParticleData {
+        vec2f position;
+        vec2f velocity;
+        vec4f color;
+        float lifetime;
+        static std::vector<VkVertexInputBindingDescription> getBindingDescriptions() {
+            std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+            bindingDescriptions[0].binding = 0;
+            bindingDescriptions[0].stride = sizeof(ParticleData);
+            bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            return bindingDescriptions;
+        }
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() {
+            std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+
+            int location = 0;
+            int binding = 0;
+            for(auto info : {
+                std::pair(VK_FORMAT_R32G32_SFLOAT, offsetof(ParticleData, position)),
+                std::pair(VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(ParticleData, color))})
+            {
+                attributeDescriptions.push_back({});
+                auto& attr = attributeDescriptions.back();
+                attr.binding = binding;
+                attr.location = location++;
+                attr.offset = info.second;
+                attr.format = info.first;
+            }
+
+            return attributeDescriptions;
+        }
+    };
+    static_assert(sizeof(ParticleData) == 48, "Wrong struct size");
 private:
     VkPipelineLayout compute_pipeline_layout{};
     VkPipelineLayout graphics_pipeline_layout{};
@@ -103,6 +118,7 @@ private:
     std::vector<VkDescriptorSet> SSBO_descriptors;
     std::vector<VkDescriptorSet> emit_buffer_descriptors;
     Device& m_device;
+    EmitQueue m_emit_queue;
 
     void m_initRandomParticles(Device& device, float aspect) {
         std::vector<ParticleData> particles(MAX_PARTICLE_COUNT);
@@ -135,18 +151,11 @@ private:
             );
         }
         stagingBuffer.unmap();
-        EmitQueue data;
-        data.calls[0].color = {1, 0, 0, 1};
-        data.calls[0].count = 2000;
-        data.calls[0].position_min = {-0.5, -0.5};
-        data.calls[0].position_max = {0.5, 0.5};
-        data.call_count++;
-        data.work_start = 2000;
-        data.work_end = 4000;
-        emit_buffers[0]->writeToBuffer(&data);
-        emit_buffers[0]->flushIndex(0);
-        emit_buffers[1]->writeToBuffer(&data);
-        emit_buffers[1]->flushIndex(0);
+        m_emit_queue.emit(2000, {{-0.1, -0.1}, {0.1, 0.1}}, {0, 0.3}, {6, 7}, {0, 6.282}, {1, 0, 0, 1});
+        for(auto& b : emit_buffers) {
+            b->writeToBuffer(&m_emit_queue);
+            b->flush();
+        }
     }
 
     void m_setupStorageBuffers(Device& device) {
@@ -266,6 +275,11 @@ private:
     }
 public:
     void compute(const FrameInfo& frame_info) {
+        emit_buffers[frame_info.frameIndex]->writeToBuffer(&m_emit_queue);
+        emit_buffers[frame_info.frameIndex]->flush();
+        m_emit_queue.reset();
+        m_emit_queue.emit(200, {{-0.1, -0.1}, {0.1, 0.1}}, {0, 0.3}, {6, 7}, {0, 6.282}, {1, 0, 0, 1});
+
         auto frame_index = frame_info.frameIndex;
         compute_pipeline->bind(frame_info.commandBuffer);
 
