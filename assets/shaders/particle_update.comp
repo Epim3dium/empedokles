@@ -38,7 +38,7 @@ layout(set = 2, binding = 0) uniform EmitUniform {
     uint call_count;
     uint work_start;
     uint work_end;
-    uint _pad; // pad to 16 bytes
+    uint max_particles; // pad to 16 bytes
 } emit;
 
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -59,6 +59,7 @@ void processPhysics(uint index) {
     particlesOut[index].position = particleIn.position + particleIn.velocity.xy * ubo.deltaTime;
     particlesOut[index].velocity = particleIn.velocity;
     particlesOut[index].lifetime = particleIn.lifetime - ubo.deltaTime;
+    particlesOut[index].color = particleIn.color;
     if(particleIn.lifetime - ubo.deltaTime < 0) {
         particlesOut[index].color = vec4(0, 0, 0, 0);
     }
@@ -89,21 +90,34 @@ void initParticle(uint particleIdx, uint emitIdx) {
     particlesOut[particleIdx].color = emit.emit_calls[emitIdx].color;
 }
 void emitParticle(uint index) {
-    uint cur_idx = emit.work_start;
+    uint cur_start = emit.work_start;
     for(uint i = 0; i < emit.call_count; i++) {
-        uint cur_end = cur_idx + emit.emit_calls[i].count;
-        if(index >= cur_idx && index < cur_end) {
+        uint cur_end = cur_start + emit.emit_calls[i].count;
+        uint upper_limit = cur_end;
+        uint lower_limit = cur_start;
+        while(upper_limit > emit.max_particles) {
+            upper_limit -= emit.max_particles;
+            lower_limit -= emit.max_particles;
+        }
+        if(index >= lower_limit && index < upper_limit) {
             initParticle(index, i);
             return;
         }
-        cur_idx = cur_end;
+        cur_start = cur_end;
     }
 }
 
 void main() 
 {
     uint index = gl_GlobalInvocationID.x;  
-    if(emit.call_count == 0 || index < emit.work_start || index >= emit.work_end) {
+
+    uint upper_limit = emit.work_end;
+    uint lower_limit = emit.work_start;
+    while(upper_limit > emit.max_particles) {
+        upper_limit -= emit.max_particles;
+        lower_limit -= emit.max_particles;
+    }
+    if(emit.call_count == 0 || index < lower_limit  || index >= upper_limit) {
         processPhysics(index);
     }else {
         emitParticle(index);
