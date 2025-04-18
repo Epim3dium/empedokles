@@ -187,7 +187,7 @@ void Demo::onSetup(Window& window, Device& device) {
 
     ECS.getSystem<PhysicsSystem>()->gravity = {0, 20000.f};
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
-    this->setPhysicsTickrate(60.f);
+    this->setPhysicsTickrate(120.f);
     
 }
 

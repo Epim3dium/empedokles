@@ -74,7 +74,7 @@ private:
     std::atomic<bool> m_isRenderer_waiting = false;
     std::atomic<bool> m_isPhysics_waiting = false;
 
-    std::atomic<float> m_physics_tick_rate = 60.f;
+    std::atomic<float> m_physics_tick_rate = INFINITY;
     std::atomic<bool> isAppRunning = true;
 
     RendererContext renderer_context;
