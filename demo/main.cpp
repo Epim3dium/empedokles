@@ -1,5 +1,6 @@
 #include "debug/log.hpp"
 #include "graphics/animated_sprite.hpp"
+#include "graphics/particle_system.hpp"
 #include "gui/gui_manager.hpp"
 #include "io/keyboard_controller.hpp"
 #include "physics/collider.hpp"
@@ -134,6 +135,13 @@ void Demo::onSetup(Window& window, Device& device) {
     mouse_entity = ECS.createEntity();
     gui_manager.alias(mouse_entity, "mouse_entity");
     ECS.addComponent(mouse_entity, Transform({0.f, 0.f}));
+    ParticleEmitter emitter;
+    emitter.enabled = false;
+    emitter.colors = {vec4f(1, 0, 0, 1)};
+    emitter.lifetime = {0.f, 1.f};
+    emitter.count = 50U;
+    emitter.speed = {1.f, 10.f};
+    ECS.addComponent(mouse_entity, emitter);
 
     {
         Rigidbody rb;
@@ -348,6 +356,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             }else {
                 mouse_entity = ECS.createEntity();
             }
+
             auto target = entities.front();
             auto mouse_transform = ECS.getComponent<Transform>(mouse_entity);
             auto target_transform = ECS.getComponent<Transform>(target);
@@ -364,11 +373,14 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         }
     }
     if(controller.get(eKeyMappings::Shoot).released) {
+
         auto entities= ECS.getSystem<MouseSelectionSystem>()->query(mouse_pos);
+
         if(entities.size() == 2 && ECS.getComponent<Constraint>(entities.front()) == nullptr) {
             assert(ECS.getComponent<Transform>(entities.front()) && ECS.getComponent<Transform>(entities.back()));
             assert(ECS.getComponent<Collider>(entities.front()) && ECS.getComponent<Collider>(entities.back()));
             assert(ECS.getComponent<Rigidbody>(entities.front()) && ECS.getComponent<Rigidbody>(entities.back()));
+
             auto chain = Constraint::Builder()
                 .setCompliance(0.1e-7f)
                 .enableCollision()
@@ -383,6 +395,17 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
 
         }
         ECS.removeComponentIfExists<Constraint>(mouse_entity);
+    }
+
+    if(controller.get(eKeyMappings::Shoot).released) {
+        auto emitter = ECS.getComponent<ParticleEmitter>(mouse_entity);
+        assert(emitter);
+        emitter->enabled = false;
+    }
+    if (controller.get(eKeyMappings::Shoot).pressed) {
+        auto emitter = ECS.getComponent<ParticleEmitter>(mouse_entity);
+        assert(emitter);
+        emitter->enabled = true;
     }
 }
 int main()
