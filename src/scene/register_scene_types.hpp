@@ -4,6 +4,7 @@
 #include "graphics/animated_sprite.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/model.hpp"
+#include "graphics/particle_system.hpp"
 #include "graphics/sprite_system.hpp"
 #include "graphics/texture.hpp"
 #include "physics/collider.hpp"
@@ -23,6 +24,7 @@ namespace emp {
         Collider,
         Rigidbody,
         Model,
+        ParticleEmitter,
         Sprite,
         AnimatedSprite> AllComponentTypes;
 

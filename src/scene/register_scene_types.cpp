@@ -2,6 +2,7 @@
 #include "core/coordinator.hpp"
 #include "core/system.hpp"
 #include "graphics/animated_sprite_system.hpp"
+#include "graphics/particle_system.hpp"
 #include "graphics/sprite.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "graphics/sprite_system.hpp"
@@ -30,6 +31,7 @@ void registerSceneSystems(Device& device, Coordinator& ECS) {
     ECS.registerSystem<ConstraintSystem>();
     ECS.registerSystem<PhysicsSystem>();
 
+    ECS.registerSystem<ParticleSystem>();
     ECS.registerSystem<SpriteSystem>(std::ref(device));
     ECS.registerSystem<AnimatedSpriteSystem>(std::ref(device));
     ECS.registerSystem<ModelSystem>(std::ref(device));
