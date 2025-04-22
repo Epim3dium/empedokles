@@ -3,7 +3,7 @@
 #include <vulkan/vulkan_core.h>
 #include <memory>
 #include "graphics/frame_info.hpp"
-#include "graphics/particle_system.hpp"
+#include "graphics/render_systems/particle_render_system.hpp"
 #include "graphics/renderer.hpp"
 #include "vulkan/descriptors.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
@@ -15,7 +15,7 @@ struct RendererContext {
     std::vector<std::unique_ptr<DescriptorPool>> frame_pools;
     std::unique_ptr<SimpleRenderSystem> sprite_rend_sys;
     std::unique_ptr<SimpleRenderSystem> model_rend_sys;
-    std::unique_ptr<ParticleSystem> particle_sys;
+    std::unique_ptr<ParticleRenderSystem> particle_rend_sys;
 
     std::vector<std::unique_ptr<Buffer>> ubo_buffers;
     std::vector<std::unique_ptr<Buffer>> ubo_compute_buffers;
@@ -83,9 +83,10 @@ struct RendererContext {
             global_set_layout->getDescriptorSetLayout(),
             "../assets/shaders/sprite.vert.spv",
             "../assets/shaders/sprite.frag.spv");
-        particle_sys = std::make_unique<ParticleSystem>(device,
+        particle_rend_sys = std::make_unique<ParticleRenderSystem>(device,
             renderer.getSwapChainRenderPass(),
             compute_set_layout->getDescriptorSetLayout(),
+            global_set_layout->getDescriptorSetLayout(),
             renderer.getAspectRatio());
     }
     std::vector<VkDescriptorSet> setupGlobalUBODescriptorSets(

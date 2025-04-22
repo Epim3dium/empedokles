@@ -3,6 +3,7 @@
 #include <ranges>
 
 #include "core/coordinator.hpp"
+#include "graphics/particle_system.hpp"
 #include "graphics/sprite_system.hpp"
 #include "graphics/animated_sprite_system.hpp"
 #include "graphics/camera.hpp"
@@ -285,6 +286,7 @@ void App::renderFrame(
             *context.ubo_buffers[frame_index],
             *context.ubo_compute_buffers[frame_index]);
         if(auto compute_buffer = renderer.beginCompute()) {
+            auto& particle_sys = *ECS.getSystem<ParticleSystem>();
             FrameInfo frame_info{
                 frame_index,
                 delta_time,
@@ -293,8 +295,9 @@ void App::renderFrame(
                 context.global_compute_descriptor_sets[frame_index],
                 *context.frame_pools[frame_index]
             };
-            context.particle_sys->compute(frame_info);
-
+            // context.particle_sys->compute(frame_info);
+            particle_sys.update(delta_time);
+            particle_sys.compute(frame_info, *context.particle_rend_sys);
             renderer.endCompute();
         }
         FrameInfo frame_info{
@@ -331,7 +334,7 @@ void App::renderFrame(
                 animated_sprite_sys.render(frame_info, *context.sprite_rend_sys);
 
                 onRender(device, frame_info);
-                context.particle_sys->render(frame_info);
+                context.particle_rend_sys->render(frame_info);
                 gui_manager.draw(ECS, camera);
 
                 renderer.endSwapChainRenderPass(command_buffer);
