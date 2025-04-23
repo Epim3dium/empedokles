@@ -8,7 +8,7 @@ enum class eEmitType : uint32_t {
     POINT = 0,
     LINE = 1,
     RING = 2,
-    AABB = 3,
+    RECT = 3,
 };
 struct alignas(16) ParticleEmitData {
     uint32_t count; // 4, 4
