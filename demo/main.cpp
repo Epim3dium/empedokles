@@ -140,6 +140,7 @@ void Demo::onSetup(Window& window, Device& device) {
     emitter.colors = {vec4f(1, 0, 0, 1)};
     emitter.lifetime = {0.f, 1.f};
     emitter.count = 50U;
+    emitter.setLine({100.f, 0});
     emitter.speed = {1.f, 10.f};
     ECS.addComponent(mouse_entity, emitter);
 
@@ -395,6 +396,14 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
 
         }
         ECS.removeComponentIfExists<Constraint>(mouse_entity);
+    }
+
+    {
+        static vec2f last_mouse_pos;
+        auto emitter = ECS.getComponent<ParticleEmitter>(mouse_entity);
+        assert(emitter);
+        emitter->setLine(last_mouse_pos - mouse_pos);
+        last_mouse_pos = mouse_pos;
     }
 
     if(controller.get(eKeyMappings::Shoot).released) {
