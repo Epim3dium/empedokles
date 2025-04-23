@@ -12,10 +12,10 @@
 namespace emp {
 struct ParticleEmitter {
 private:
-    EmitType m_type = POINT;
+    eEmitType m_type = eEmitType::POINT;
     std::pair<float, float> m_type_data;
 public:
-    EmitType type() const { return m_type; }
+    eEmitType type() const { return m_type; }
     std::pair<float, float> type_data() const { return m_type_data; }
     template<class T>
     struct OptionalRange {
@@ -56,11 +56,11 @@ public:
 
     void setRing(float min_dist, float max_dist) {
         m_type_data = {min_dist, max_dist};
-        m_type = EmitType::RING;
+        m_type = eEmitType::RING;
     }
     void setLine(vec2f direction) {
         m_type_data = {direction.x, direction.y};
-        m_type = EmitType::LINE;
+        m_type = eEmitType::LINE;
     }
     //emits if enabled is true or if enableFor is set to some value
     bool enabled = false;
