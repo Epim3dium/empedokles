@@ -4,10 +4,11 @@
 #include "math/math_defs.hpp"
 namespace emp {
 static constexpr uint32_t MAX_EMIT_CALLS = 16U;
-enum EmitType {
+enum class eEmitType : uint32_t {
     POINT = 0,
     LINE = 1,
     RING = 2,
+    AABB = 3,
 };
 struct alignas(16) ParticleEmitData {
     uint32_t count; // 4, 4
@@ -40,14 +41,14 @@ struct alignas(64) EmitQueue {
     uint32_t work_start = 0; //4, 8
     uint32_t work_end = 0;   //4, 12
     uint32_t max_particles;
-    void emit(uint32_t part_count, EmitType type, vec2f pos, std::pair<float, float> type_data, std::pair<float, float> speed, std::pair<float, float> lifetime, std::pair<float, float> angle, vec4f c)
+    void emit(uint32_t part_count, eEmitType type, vec2f pos, std::pair<float, float> type_data, std::pair<float, float> speed, std::pair<float, float> lifetime, std::pair<float, float> angle, vec4f c)
     {
         if(call_count >= MAX_EMIT_CALLS) {
             return;
         }
         work_end += part_count;
         auto idx = call_count++;
-        calls[idx].type = type;
+        calls[idx].type = static_cast<uint32_t>(type);
         calls[idx].type_data[0] = type_data.first;
         calls[idx].type_data[1] = type_data.second;
         calls[idx].count = part_count;
