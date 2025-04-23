@@ -16,11 +16,16 @@ layout(std140, set = 1, binding = 0) readonly buffer ParticleSSBOIn {
 layout(std140, set = 1, binding = 1) buffer ParticleSSBOOut {
    Particle particlesOut[ ];
 };
+#define POINT 0
+#define LINE 1
+#define RING 2
 struct EmitData {
     uint count;
-    float _pad1;
-    vec2 position_min;
-    vec2 position_max;
+    uint type;
+    
+    vec2 position;
+    float data0;
+    float data1;
 
     float speed_min;
     float speed_max;
@@ -64,9 +69,23 @@ void processPhysics(uint index) {
         particlesOut[index].color = vec4(0, 0, 0, 0);
     }
 }
+void handleType(uint particleIdx, uint emitIdx, float random) {
+    uint type = emit.emit_calls[emitIdx].type;
+    float data0 = emit.emit_calls[emitIdx].data0;
+    float data1 = emit.emit_calls[emitIdx].data1;
+    vec2 pos = emit.emit_calls[emitIdx].position;
+    switch(type) {
+        case POINT:
+        break;
+        case LINE:
+            particlesOut[particleIdx].position = pos + (vec2(data0, data1) * random);
+        break;
+        case RING:
+            // particlesOut[particleIdx].position = pos + (vec2(data0, data1) * random);
+        break;
+    }
+}
 void initParticle(uint particleIdx, uint emitIdx) {
-    vec2 pos_min = emit.emit_calls[emitIdx].position_min;
-    vec2 pos_max = emit.emit_calls[emitIdx].position_max;
     float speed_min = emit.emit_calls[emitIdx].speed_min;
     float speed_max = emit.emit_calls[emitIdx].speed_max;
     float angle_min = emit.emit_calls[emitIdx].angle_min;
@@ -82,12 +101,13 @@ void initParticle(uint particleIdx, uint emitIdx) {
     vec2 dir = vec2(cos(angle), sin(angle));
 
     particlesOut[particleIdx].velocity = dir * speed;
-    particlesOut[particleIdx].position.x = pos_min.x + (pos_max.x - pos_min.x) * rand(seedx + pos_min);
-    particlesOut[particleIdx].position.y = pos_min.y + (pos_max.y - pos_min.y) * rand(seedy + pos_max);
+    particlesOut[particleIdx].position = emit.emit_calls[emitIdx].position;
 
     float life = life_min + (life_max - life_min) * rand(seedx - seedy + vec2(life_max * 100.f, life_min * 100.f));
     particlesOut[particleIdx].lifetime = life;
     particlesOut[particleIdx].color = emit.emit_calls[emitIdx].color;
+
+    handleType(particleIdx, emitIdx, rand(-seedx + seedy));
 }
 void emitParticle(uint index) {
     uint cur_start = emit.work_start;

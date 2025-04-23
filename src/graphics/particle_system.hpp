@@ -11,6 +11,12 @@
 #include "scene/transform.hpp"
 namespace emp {
 struct ParticleEmitter {
+private:
+    EmitType m_type = POINT;
+    std::pair<float, float> m_type_data;
+public:
+    EmitType type() const { return m_type; }
+    std::pair<float, float> type_data() const { return m_type_data; }
     template<class T>
     struct OptionalRange {
     private:
@@ -42,10 +48,20 @@ struct ParticleEmitter {
         OptionalRange(const T& v) : m_min(v), isRangeSet(false) {}
         OptionalRange() : isRangeSet(false) {}
     };
+
     OptionalRange<uint32_t> count;
     OptionalRange<float> speed;
     OptionalRange<float> lifetime;
     std::vector<vec4f> colors;
+
+    void setRing(float min_dist, float max_dist) {
+        m_type_data = {min_dist, max_dist};
+        m_type = EmitType::RING;
+    }
+    void setLine(vec2f direction) {
+        m_type_data = {direction.x, direction.y};
+        m_type = EmitType::LINE;
+    }
     //emits if enabled is true or if enableFor is set to some value
     bool enabled = false;
     float enable_for_seconds = 0.f;
