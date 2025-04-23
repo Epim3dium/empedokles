@@ -8,6 +8,7 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/particle_emit_queue.hpp"
 #include "graphics/render_systems/particle_render_system.hpp"
+#include "math/shapes/AABB.hpp"
 #include "scene/transform.hpp"
 namespace emp {
 struct ParticleEmitter {
@@ -61,6 +62,10 @@ public:
     void setLine(vec2f direction) {
         m_type_data = {direction.x, direction.y};
         m_type = eEmitType::LINE;
+    }
+    void setRect(vec2f size) {
+        m_type_data = {size.x, size.y};
+        m_type = eEmitType::RECT;
     }
     //emits if enabled is true or if enableFor is set to some value
     bool enabled = false;

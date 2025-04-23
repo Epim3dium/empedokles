@@ -19,6 +19,7 @@ layout(std140, set = 1, binding = 1) buffer ParticleSSBOOut {
 #define POINT 0
 #define LINE 1
 #define RING 2
+#define RECT 3
 struct EmitData {
     uint count;
     uint type;
@@ -69,7 +70,7 @@ void processPhysics(uint index) {
         particlesOut[index].color = vec4(0, 0, 0, 0);
     }
 }
-void handleType(uint particleIdx, uint emitIdx, float random) {
+void handleType(uint particleIdx, uint emitIdx, float randomx, float randomy) {
     uint type = emit.emit_calls[emitIdx].type;
     float data0 = emit.emit_calls[emitIdx].data0;
     float data1 = emit.emit_calls[emitIdx].data1;
@@ -78,10 +79,17 @@ void handleType(uint particleIdx, uint emitIdx, float random) {
         case POINT:
         break;
         case LINE:
-            particlesOut[particleIdx].position = pos + (vec2(data0, data1) * random);
+            particlesOut[particleIdx].position = pos + (vec2(data0, data1) * randomx);
         break;
         case RING:
             // particlesOut[particleIdx].position = pos + (vec2(data0, data1) * random);
+        break;
+        case RECT:
+            {
+                float x = data0 * randomx;
+                float y = data1 * randomy;
+                particlesOut[particleIdx].position = pos + vec2(x, y);
+            }
         break;
     }
 }
@@ -107,7 +115,7 @@ void initParticle(uint particleIdx, uint emitIdx) {
     particlesOut[particleIdx].lifetime = life;
     particlesOut[particleIdx].color = emit.emit_calls[emitIdx].color;
 
-    handleType(particleIdx, emitIdx, rand(-seedx + seedy));
+    handleType(particleIdx, emitIdx, rand(-seedx + seedy), rand(-seedx - seedy));
 }
 void emitParticle(uint index) {
     uint cur_start = emit.work_start;
