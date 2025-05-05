@@ -75,7 +75,7 @@ void ParticleRenderSystem::m_setupDescriptorsLayout(Device& device) {
         DescriptorWriter desc_writer(*SSBO_layout, *compute_pool);
 
         VkDescriptorBufferInfo storageBufferInfoLastFrame{};
-        storageBufferInfoLastFrame.buffer = SSBO_buffers[(i + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT]->getBuffer();
+        storageBufferInfoLastFrame.buffer = SSBO_buffers[(i - 1 + SwapChain::MAX_FRAMES_IN_FLIGHT) % SwapChain::MAX_FRAMES_IN_FLIGHT]->getBuffer();
         storageBufferInfoLastFrame.offset = 0;
         storageBufferInfoLastFrame.range = sizeof(ParticleData) * MAX_PARTICLE_COUNT;
         desc_writer.writeBuffer(0, &storageBufferInfoLastFrame);
