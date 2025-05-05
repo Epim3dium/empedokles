@@ -7,15 +7,12 @@
 - collision
     - more constraints+
         - piston
-    - collision optimization
-        - tighter locked critical section
 - graphics
     - debug shapes improved
-    - instanced rendering
+    - instanced rendering for sprites
     - 2d lighting
 - core
     - serialization 
-        - conversion between 'entity spaces' (ref to e1 in ECS1 should stay in ECS2)
     - message bus
 - networking?
 
@@ -33,8 +30,6 @@
 
 # ✅ DONE:
 
-- core
-    - serialization / deserialization (Basic)
 - collision
     - added more constraints
         - anchored swivel
