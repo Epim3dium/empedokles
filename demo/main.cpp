@@ -28,6 +28,12 @@ public:
     }
 };
 
+struct Player {
+    std::set<Entity> driver;
+    std::set<Entity> wheels;
+    std::set<Entity> chassis;
+    std::set<Entity> constraints;
+};
 enum CollisionLayers {
     GROUND,
     PLAYER,
@@ -39,19 +45,6 @@ class Demo : public App {
 
         Texture crate_texture;
         Entity mouse_entity;
-        Entity protagonist;
-
-        std::vector<vec2f> protagonist_shape = {
-                vec2f(-100.f/4, -100.f/1.5),
-                vec2f(-100.f/4, 100.f/1.5),
-                vec2f(100.f/4, 100.f/1.5),
-                vec2f(100.f/4, -100.f/1.5)
-        };
-        
-        float protagonist_speed = 600.f;
-        Entity isProtagonistGrounded;
-        float isProtagonistGroundedSec;
-        static constexpr float cayote_time = 0.25f;
         static constexpr float cube_side_len = 70.f;
         std::vector<vec2f> unit_cube = {
                 vec2f(-1.f/2.f, -1.f/2.f),
@@ -65,13 +58,12 @@ class Demo : public App {
                 vec2f(cube_side_len/2, cube_side_len/2),
                 vec2f(cube_side_len/2, -cube_side_len/2)
         };
-        // static constexpr int markers_count = 64;
-        // Entity markers[markers_count];
         Entity last_created_crate = 0;
+        Player player;
 
 
-        void setupAnimationForProtagonist(Entity prot);
         void onRender(Device&, const FrameInfo& frame) override final;
+        void setupPlayer(Player&);
         void onSetup(Window& window, Device& device) override final;
         void onUpdate(const float delta_time, Window& window, KeyboardController& controller) override final;
         void onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller)override final;
@@ -112,26 +104,6 @@ void Demo::onSetup(Window& window, Device& device) {
     controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
     controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
 
-    protagonist = ECS.createEntity();
-    gui_manager.alias(protagonist, "protagonist");
-
-    ECS.getSystem<ColliderSystem>()
-        ->onCollisionEnter(protagonist,
-            protagonist,
-            [&](const CollisionInfo& info) {
-                auto ang = angle(info.collision_normal, vec2f(0, 1));
-                if (cos(ang) > -M_PI / 4.f) {
-                    return;
-                }
-                isProtagonistGrounded = info.collidee_entity;
-            })
-        .onCollisionExit(
-            protagonist, protagonist, [&](Entity me, Entity other) {
-                if (other == isProtagonistGrounded || isProtagonistGrounded == false) {
-                    isProtagonistGrounded = false;
-                }
-            });
-
     mouse_entity = ECS.createEntity();
     gui_manager.alias(mouse_entity, "mouse_entity");
     ECS.addComponent(mouse_entity, Transform({0.f, 0.f}));
@@ -143,26 +115,6 @@ void Demo::onSetup(Window& window, Device& device) {
     emitter.setLine({100.f, 0});
     emitter.speed = {1.f, 10.f};
     ECS.addComponent(mouse_entity, emitter);
-
-    {
-        Rigidbody rb;
-        rb.useAutomaticMass = true;
-        rb.isRotationLocked = true;
-        ECS.addComponent(protagonist, Transform(vec2f(), 0.f));
-        auto col = Collider(protagonist_shape);
-        col.collider_layer = PLAYER;
-
-        ECS.addComponent(protagonist, col);
-        ECS.addComponent(protagonist, rb);
-
-        auto mat = Material(); 
-        ECS.addComponent(protagonist, mat);
-
-        setupAnimationForProtagonist(protagonist);
-        auto child = ECS.createEntity();
-        gui_manager.alias(child, "child");
-        ECS.addComponent(child, Transform(protagonist, vec2f(0, 0)));
-    }
 
     std::pair<vec2f, float> ops[4] = {
             {vec2f(0.f, getHeight() / 2), 0.f},
@@ -198,94 +150,122 @@ void Demo::onSetup(Window& window, Device& device) {
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
     this->setPhysicsTickrate(120.f);
     
+    setupPlayer(player);
+}
+void Demo::setupPlayer(Player& player) {
+    std::vector<vec2f> wheel_shape;
+    static const int wheel_vert_count = 32U;
+    static const float wheel_size = 50.f;
+    for(int i = 0; i < wheel_vert_count; i++) {
+        float t = static_cast<float>(i) / static_cast<float>( wheel_vert_count );
+        wheel_shape.push_back({cosf(t * EMP_PI * 2.f) * wheel_size, -sinf(t * EMP_PI * 2.f) * wheel_size});
+    }
+    {
+        auto builder = ModelAsset::Builder();
+        builder.vertices.push_back({{0, 0, 0}});
+        for(auto v : wheel_shape) {
+            builder.vertices.push_back({});
+            builder.vertices.back().position = vec3f(v.x, v.y, 0);
+        }
+        for(int i = 1; i < wheel_vert_count+1; i++) {
+            builder.indices.push_back(0);
+            builder.indices.push_back(i);
+            if(i + 1 == wheel_vert_count+1) {
+                //change here to make uniform wheel 0->1
+                builder.indices.push_back(0);
+            }else {
+                builder.indices.push_back(i + 1);
+            }
+        }
+        Model::create("wheel", device, builder);
+    }
+    std::vector<vec2f> wheel_positions = {{100, 100}};
+    auto col = Collider(wheel_shape);
+    auto rb = Rigidbody(false);
+    auto mat = Material{};
+    for (auto wheel_pos : wheel_positions) {
+        auto wheel = ECS.createEntity();
+        ECS.addComponent(wheel, Model("wheel"));
+        ECS.addComponent(wheel, col);
+        ECS.addComponent(wheel, rb);
+        ECS.addComponent(wheel, mat);
+        ECS.addComponent( wheel, Transform(wheel_pos, 0.f, {1.f, 1.f}));
+        gui_manager.alias(wheel, "wheel");
+    }
 }
 
-void Demo::setupAnimationForProtagonist(Entity entity) {
-    auto def_size = vec2f(300.f, 300.f);
-    auto offset = vec2f(10.f, -def_size.y / 3.5f);
-    MovingSprite idle_moving;
-    {
-        Sprite idle_sprite = Sprite(Texture("idle"), def_size);
-        idle_sprite.centered = true;
-        idle_sprite.hframes = 10;
-        idle_sprite.vframes = 1;
-        idle_moving.sprite = idle_sprite;
-        for(int i = 0; i < idle_sprite.frameCount(); i++) {
-            idle_moving.add(i, 0.085f);
-        }
-    }
-    AnimatedSprite::Builder build("idle", idle_moving);
-    {
-        {
-            Sprite running_sprite = Sprite(Texture("running"), def_size);
-            running_sprite.centered = true;
-            running_sprite.hframes = 10;
-            running_sprite.vframes = 1;
-            build.addNode("run",  MovingSprite::allFrames(running_sprite, 0.6f));
-        }
-        {
-            Sprite jumping_spr = Sprite(Texture("jump-up"), def_size);
-            jumping_spr.centered = true;
-            jumping_spr.hframes = 3;
-            jumping_spr.vframes = 1;
-            build.addNode("jump", MovingSprite::allFrames(jumping_spr, 0.25f, false));
-        }
-        {
-            Sprite jumpfall_spr = Sprite(Texture("jumpfall"), def_size);
-            jumpfall_spr.centered = true;
-            jumpfall_spr.hframes = 2;
-            jumpfall_spr.vframes = 1;
-            build.addNode("jumpfall", MovingSprite::allFrames(jumpfall_spr, 0.25f, false));
-        }
-        {
-            Sprite falling_spr = Sprite(Texture("jump-down"), def_size);
-            falling_spr.centered = true;
-            falling_spr.hframes = 3;
-            falling_spr.vframes = 1;
-            build.addNode("fall", MovingSprite::allFrames(falling_spr, 0.25f, false));
-        }
-
-        build.addEdge("idle", "run", [this](Entity owner) {
-            return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) >
-                   25.f;
-        });
-        build.addEdge("run", "idle", [this](Entity owner, bool isended) {
-            return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) <
-                   25.f;
-        });
-        auto isJumping = [this](Entity owner) {
-            return ECS.getComponent<Rigidbody>(owner)->velocity.y <
-                   -100.f;
-        };
-        auto isFalling = [this](Entity owner) {
-            return ECS.getComponent<Rigidbody>(owner)->velocity.y >
-                   25.f;
-        };
-        auto hasFallen = [&](Entity owner) {
-            return isProtagonistGrounded != false;
-        };
-        build.addEdge("idle", "fall", isFalling);
-        build.addEdge("run", "fall", isFalling);
-        build.addEdge("idle", "jump", isJumping);
-        build.addEdge("run", "jump", isJumping);
-        build.addEdge("jump", "jumpfall", isFalling);
-        build.addEdge("jumpfall", "fall");
-        build.addEdge("fall", "idle", hasFallen);
-    }
-    {
-        std::array<Vertex, 4U> verts;
-        for(int i = 0; i < verts.size(); i++) {
-            verts[i].color = {1, 0, 0};
-            verts[i].uv = {0, 0};
-
-            auto v = protagonist_shape[i];
-            verts[i].position = vec3f(v.x, v.y, 0.f);
-        }
-    }
-    auto anim_sprite = AnimatedSprite(build);
-    anim_sprite.position_offset = offset;
-    ECS.addComponent(entity, anim_sprite);
-}
+// void Demo::setupAnimationForProtagonist(Entity entity) {
+//     auto def_size = vec2f(300.f, 300.f);
+//     auto offset = vec2f(10.f, -def_size.y / 3.5f);
+//     MovingSprite idle_moving;
+//     {
+//         Sprite idle_sprite = Sprite(Texture("idle"), def_size);
+//         idle_sprite.centered = true;
+//         idle_sprite.hframes = 10;
+//         idle_sprite.vframes = 1;
+//         idle_moving.sprite = idle_sprite;
+//         for(int i = 0; i < idle_sprite.frameCount(); i++) {
+//             idle_moving.add(i, 0.085f);
+//         }
+//     }
+//     AnimatedSprite::Builder build("idle", idle_moving);
+//     {
+//         {
+//             Sprite running_sprite = Sprite(Texture("running"), def_size);
+//             running_sprite.centered = true;
+//             running_sprite.hframes = 10;
+//             running_sprite.vframes = 1;
+//             build.addNode("run",  MovingSprite::allFrames(running_sprite, 0.6f));
+//         }
+//         {
+//             Sprite jumping_spr = Sprite(Texture("jump-up"), def_size);
+//             jumping_spr.centered = true;
+//             jumping_spr.hframes = 3;
+//             jumping_spr.vframes = 1;
+//             build.addNode("jump", MovingSprite::allFrames(jumping_spr, 0.25f, false));
+//         }
+//         {
+//             Sprite jumpfall_spr = Sprite(Texture("jumpfall"), def_size);
+//             jumpfall_spr.centered = true;
+//             jumpfall_spr.hframes = 2;
+//             jumpfall_spr.vframes = 1;
+//             build.addNode("jumpfall", MovingSprite::allFrames(jumpfall_spr, 0.25f, false));
+//         }
+//         {
+//             Sprite falling_spr = Sprite(Texture("jump-down"), def_size);
+//             falling_spr.centered = true;
+//             falling_spr.hframes = 3;
+//             falling_spr.vframes = 1;
+//             build.addNode("fall", MovingSprite::allFrames(falling_spr, 0.25f, false));
+//         }
+//
+//         build.addEdge("idle", "run", [this](Entity owner) {
+//             return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) >
+//                    25.f;
+//         });
+//         build.addEdge("run", "idle", [this](Entity owner, bool isended) {
+//             return abs(ECS.getComponent<Rigidbody>(owner)->velocity.x) <
+//                    25.f;
+//         });
+//         auto isJumping = [this](Entity owner) {
+//             return ECS.getComponent<Rigidbody>(owner)->velocity.y <
+//                    -100.f;
+//         };
+//         auto isFalling = [this](Entity owner) {
+//             return ECS.getComponent<Rigidbody>(owner)->velocity.y >
+//                    25.f;
+//         };
+//         build.addEdge("idle", "fall", isFalling);
+//         build.addEdge("run", "fall", isFalling);
+//         build.addEdge("idle", "jump", isJumping);
+//         build.addEdge("run", "jump", isJumping);
+//         build.addEdge("jump", "jumpfall", isFalling);
+//         build.addEdge("jumpfall", "fall");
+//     }
+//     auto anim_sprite = AnimatedSprite(build);
+//     anim_sprite.position_offset = offset;
+//     ECS.addComponent(entity, anim_sprite);
+// }
 void Demo::onFixedUpdate(const float delta_time, Window& window, KeyboardController& controller) {
 }
 
@@ -296,37 +276,6 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     auto& phy_sys = *ECS.getSystem<PhysicsSystem>();
     ECS.getComponent<Transform>(mouse_entity)->position =
         controller.global_mouse_pos();
-    if(ECS.isEntityAlive(protagonist)){
-        isProtagonistGroundedSec += delta_time;
-        if(isProtagonistGrounded) {
-            isProtagonistGroundedSec = 0.f;
-        } 
-        if(ECS.isEntityAlive(protagonist)){
-            ECS.getComponent<Rigidbody>(protagonist)->velocity.x +=
-                    controller.movementInPlane2D().x *
-                    (protagonist_speed / 2.f + protagonist_speed / 2.f *
-                            (isProtagonistGrounded != false)) *
-                    delta_time;
-            auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
-            if (controller.get(eKeyMappings::Jump).pressed && isProtagonistGroundedSec < cayote_time) {
-                isProtagonistGroundedSec = cayote_time;
-                isProtagonistGrounded = false;
-                vec2f direction = vec2f(0, -10);
-                direction.x = controller.movementInPlane2D().x;
-                direction = normal(direction);
-                rb.velocity += 500.f * direction;
-            }
-        }
-        auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
-        auto& spr = *ECS.getComponent<AnimatedSprite>(protagonist);
-        bool isRunningLeft = rb.velocity.x < 0.f;
-        if(abs(rb.velocity.x) > 10.f) {
-            if(spr.flipX ^ isRunningLeft) {
-                spr.position_offset.x *= -1.f;
-            }
-            spr.flipX = isRunningLeft ?  true : false;
-        }
-    }
 
     static vec2f last_pos;
     if (controller.get(eKeyMappings::Ability1).held) {
