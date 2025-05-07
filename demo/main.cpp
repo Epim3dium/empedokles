@@ -1,15 +1,102 @@
+#include "core/coordinator.hpp"
 #include "debug/log.hpp"
 #include "graphics/animated_sprite.hpp"
 #include "graphics/particle_system.hpp"
 #include "gui/gui_manager.hpp"
 #include "io/keyboard_controller.hpp"
+#include "math/math_func.hpp"
 #include "physics/collider.hpp"
+#include "utils/perlin.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include <cstdio>
 #include <vector>
 using namespace emp;
 
+std::vector<vec2f> unit_cube = {
+        vec2f(-1.f/2.f, -1.f/2.f),
+        vec2f(-1.f/2.f, 1.f/2.f),
+        vec2f(1.f/2.f, 1.f/2.f),
+        vec2f(1.f/2.f, -1.f/2.f)
+};
+struct GroundSystem {
+    std::vector<Entity> blocks;
+    float freq = 1.f;
+    float amp = 400.f;
+    vec2f base_pos;
+    uint32_t seed = 0;
+    uint32_t cur_block_idx = 0;
+
+    float block_len;
+    float amp_inc = 4;
+
+    void setBlock(Coordinator& ECS, uint32_t idx) {
+        auto spacing = block_len;
+        auto block = blocks[idx%blocks.size()];
+        auto h = Perlin::perlin((float)seed / blocks.size(), (float)seed / blocks.size() * 0.49) * amp; 
+        auto next_h = Perlin::perlin((float)(seed+1) / blocks.size(), (float)(seed+1) / blocks.size() * 0.49) * (amp + amp_inc);
+        vec2f diff (spacing, next_h-h);
+        float diff_l = length(diff);
+        auto ang = angle(vec2f(1, 0), diff);
+        auto& transform = *ECS.getComponent<Transform>(block);
+
+        vec2f diff_perp = {-diff.y, diff.x};
+        vec2f pos = vec2f{spacing * (idx + 0.5), (h+next_h)/2.f} + base_pos;
+        float height = block_len * 9;
+        pos += normal(diff_perp) * (height/2);
+        transform = Transform(pos, ang, {diff_l, height});
+        amp += amp_inc;
+    }
+
+    void setCurBlock(Coordinator& ECS) {
+        seed ++;
+        setBlock(ECS, cur_block_idx);
+        cur_block_idx++;
+    }
+    void init(Coordinator& ECS, Device& device, vec2f player_pos, uint32_t nb_blocks = 32, float seg_len = 70.f) {
+        block_len = seg_len;
+        base_pos = {player_pos.x - block_len * 5, player_pos.y + 100.f + block_len * 2};
+        seed = player_pos.x / block_len + player_pos.y / block_len * 3.f + time(NULL) % nb_blocks;
+
+        auto col_shape = unit_cube;
+        auto builder = ModelAsset::Builder();
+        for(auto v : unit_cube) {
+            builder.vertices.push_back({});
+            builder.vertices.back().position = vec3f(v.x, v.y, 0);
+        }
+        builder.vertices[1].position.x *= 3;
+        builder.vertices[2].position.x *= 3;
+        builder.indices = {0, 1, 2, 2, 3, 0};
+        Model::create("ground", device, builder);
+
+        auto model = Model("ground");
+        auto rb = Rigidbody(true);
+        auto mat = Material();
+        auto col = Collider(col_shape);
+        for(int i = 0; i < nb_blocks; i++) {
+            auto block = ECS.createEntity();
+            blocks.push_back(block);
+            ECS.addComponent(block, Transform(base_pos));
+            ECS.addComponent(block, model);
+            ECS.addComponent(block, rb);
+            ECS.addComponent(block, mat);
+            ECS.addComponent(block, col);
+        }
+        for(int i = 0; i < nb_blocks; i++) {
+            setCurBlock(ECS);
+        }
+
+    }
+    void update(Coordinator& ECS, vec2f player_position) {
+        const float threshold = block_len * blocks.size()/2;
+        auto last = cur_block_idx + blocks.size();
+        auto block = blocks[last % blocks.size()];
+        auto trans = ECS.getComponent<Transform>(block);
+        while(trans && player_position.x - trans->position.x  > threshold) {
+            setCurBlock(ECS);
+        }
+    }
+};
 class MouseSelectionSystem : public System<Transform, Collider, Rigidbody> {
 public:
     std::vector<Entity> query(vec2f point) {
@@ -29,6 +116,7 @@ public:
 };
 
 struct Player {
+    float wheel_size = 17.f;
     std::set<Entity> driver;
     std::set<Entity> wheels;
     std::set<Entity> chassis;
@@ -37,8 +125,6 @@ struct Player {
 enum CollisionLayers {
     GROUND,
     PLAYER,
-    FRIENDLY,
-    ITEM
 };
 class Demo : public App {
     public:
@@ -46,12 +132,6 @@ class Demo : public App {
         Texture crate_texture;
         Entity mouse_entity;
         static constexpr float cube_side_len = 70.f;
-        std::vector<vec2f> unit_cube = {
-                vec2f(-1.f/2.f, -1.f/2.f),
-                vec2f(-1.f/2.f, 1.f/2.f),
-                vec2f(1.f/2.f, 1.f/2.f),
-                vec2f(1.f/2.f, -1.f/2.f)
-        };
         std::vector<vec2f> cube_model_shape = {
                 vec2f(-cube_side_len/2, -cube_side_len/2),
                 vec2f(-cube_side_len/2, cube_side_len/2),
@@ -60,6 +140,7 @@ class Demo : public App {
         };
         Entity last_created_crate = 0;
         Player player;
+        GroundSystem ground;
 
 
         void onRender(Device&, const FrameInfo& frame) override final;
@@ -73,19 +154,15 @@ class Demo : public App {
                 {
                     {"../assets/textures/dummy.png", "dummy"},
                     {"../assets/textures/crate.jpg", "crate"},
-                    {"../assets/textures/knight/_Run.png", "running"},
-                    {"../assets/textures/knight/_Jump.png", "jump-up"},
-                    {"../assets/textures/knight/_Fall.png", "jump-down"},
-                    {"../assets/textures/knight/_Idle.png", "idle"},
-                    {"../assets/textures/knight/_JumpFallInbetween.png", "jumpfall"}
+                    {"../assets/textures/HCR/Car.png", "car"},
+                    {"../assets/textures/HCR/Tire.png", "tire"},
                 })
                 {}
 };
 void Demo::onSetup(Window& window, Device& device) {
-    Log::enableLoggingToCerr();
     gui_manager.alias(ECS.world(), "world_entity");
     ECS.registerSystem<MouseSelectionSystem>();
-    ECS.getSystem<ColliderSystem>()->disableCollision(FRIENDLY, FRIENDLY);
+    ECS.getSystem<ColliderSystem>()->disableCollision(PLAYER, PLAYER);
 
     crate_texture = Texture("crate");
     controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
@@ -116,49 +193,20 @@ void Demo::onSetup(Window& window, Device& device) {
     emitter.speed = {1.f, 10.f};
     ECS.addComponent(mouse_entity, emitter);
 
-    std::pair<vec2f, float> ops[4] = {
-            {vec2f(0.f, getHeight() / 2), 0.f},
-            {vec2f(getWidth()/ 2, 0.0f), M_PI / 2.f},
-            {vec2f(0.f, -getHeight() / 2), 0.f},
-            {vec2f(-getWidth() / 2, 0.0f), M_PI / 2.f}
-    };
-    {
-        auto builder = ModelAsset::Builder();
-        for(auto v : cube_model_shape) {
-            builder.vertices.push_back({});
-            builder.vertices.back().position = vec3f(v.x, v.y, 0);
-        }
-        builder.indices = {0, 1, 2, 2, 3, 0};
-        Model::create("platform_debug", device, builder);
-    }
-    for (int i = 0; i < 4; i++) {
-        auto platform = ECS.createEntity();
-        gui_manager.alias(platform, "platform");
-        ECS.addComponent(
-                platform, Transform(ops[i].first, ops[i].second, {getWidth() / cube_side_len * 2, 1.f})
-        );
-
-        auto col = Collider(cube_model_shape);
-        col.collider_layer = GROUND;
-        ECS.addComponent(platform, col);
-        ECS.addComponent(platform, Rigidbody{true});
-        ECS.addComponent(platform, Material());
-        ECS.addComponent(platform, Model("platform_debug"));
-    }
-
     ECS.getSystem<PhysicsSystem>()->gravity = {0, 20000.f};
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
     this->setPhysicsTickrate(120.f);
+
     
     setupPlayer(player);
+    ground.init(ECS, device, {-500, 50});
 }
 void Demo::setupPlayer(Player& player) {
     std::vector<vec2f> wheel_shape;
     static const int wheel_vert_count = 32U;
-    static const float wheel_size = 50.f;
     for(int i = 0; i < wheel_vert_count; i++) {
         float t = static_cast<float>(i) / static_cast<float>( wheel_vert_count );
-        wheel_shape.push_back({cosf(t * EMP_PI * 2.f) * wheel_size, -sinf(t * EMP_PI * 2.f) * wheel_size});
+        wheel_shape.push_back({cosf(t * EMP_PI * 2.f) * player.wheel_size, -sinf(t * EMP_PI * 2.f) * player.wheel_size});
     }
     {
         auto builder = ModelAsset::Builder();
@@ -179,18 +227,46 @@ void Demo::setupPlayer(Player& player) {
         }
         Model::create("wheel", device, builder);
     }
-    std::vector<vec2f> wheel_positions = {{100, 100}};
-    auto col = Collider(wheel_shape);
+    std::vector<vec2f> wheel_positions = {{50, player.wheel_size * 1.5}, {-50, player.wheel_size * 1.5}};
+    auto col = Collider(wheel_shape); col.collider_layer = PLAYER;
     auto rb = Rigidbody(false);
-    auto mat = Material{};
+    auto mat = Material{}; mat.dynamic_friction = 0.8f;
+    auto model = Model("wheel"); model.color = {0.3, 0.3, 0.3, 1};
+    auto spr = Sprite(Texture("tire"), {player.wheel_size*2, player.wheel_size*2});
     for (auto wheel_pos : wheel_positions) {
         auto wheel = ECS.createEntity();
-        ECS.addComponent(wheel, Model("wheel"));
+        ECS.addComponent(wheel, spr);
         ECS.addComponent(wheel, col);
         ECS.addComponent(wheel, rb);
         ECS.addComponent(wheel, mat);
         ECS.addComponent( wheel, Transform(wheel_pos, 0.f, {1.f, 1.f}));
         gui_manager.alias(wheel, "wheel");
+        player.wheels.insert(wheel);
+    }
+
+    auto chassis = ECS.createEntity();
+    player.chassis.insert(chassis);
+    col = Collider(cube_model_shape);
+    col.collider_layer = PLAYER;
+    auto sprite = Sprite(Texture("car"), {70.f, 90.f});
+    ECS.addComponent(chassis, col);
+    ECS.addComponent(chassis, Rigidbody(false));
+    ECS.addComponent(chassis, Material());
+    ECS.addComponent(chassis, sprite);
+    ECS.addComponent(chassis, Transform({0, -player.wheel_size/3}, 0.f, {2.25f, 0.75}));
+    gui_manager.alias(chassis, "chassis");
+
+    for(auto wheel : player.wheels) {
+        auto constr_entity = ECS.createEntity();
+        Constraint::Builder builder;
+        builder
+            .addConstrainedEntity(wheel, *ECS.getComponent<Transform>(wheel))
+            .addConstrainedEntity(chassis, *ECS.getComponent<Transform>(chassis))
+            .enableCollision(false)
+            .setCompliance(2e-7f)
+            .setHinge(ECS.getComponent<Transform>(wheel)->position);
+        ECS.addComponent<Constraint>(constr_entity, builder.build());
+        gui_manager.alias(constr_entity, "spring");
     }
 }
 
@@ -282,7 +358,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
         Rigidbody rb;
-        auto col = Collider(cube_model_shape); col.collider_layer = ITEM;
+        auto col = Collider(cube_model_shape); 
         auto entity = ECS.createEntity();
         gui_manager.alias(entity, "cube");
 
@@ -338,8 +414,8 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
                 .addConstrainedEntity(entities.front(), *ECS.getComponent<Transform>(entities.front()))
                 .addConstrainedEntity(entities.back(), *ECS.getComponent<Transform>(entities.back()))
                 .build();
-            ECS.getComponent<Collider>(entities.front())->collider_layer = FRIENDLY;
-            ECS.getComponent<Collider>(entities.back())->collider_layer = FRIENDLY;
+            ECS.getComponent<Collider>(entities.front())->collider_layer = PLAYER;
+            ECS.getComponent<Collider>(entities.back())->collider_layer = PLAYER;
             EMP_LOG(INFO) << "constraint added";
             ECS.addComponent(entities.front(), chain);
 
@@ -365,6 +441,28 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         assert(emitter);
         emitter->enabled = true;
     }
+    static const float drive_speed = 500000.f;
+    static const float max_velocity = 3000.f;
+    float direction = 0.f;
+    if(controller.get(eKeyMappings::MoveRight).held) {
+        direction = 1.f;
+    }
+    if(controller.get(eKeyMappings::MoveLeft).held) {
+        direction = -1.f;
+    }
+    for(auto wheel : player.wheels) {
+        auto rb = ECS.getComponent<Rigidbody>(wheel);
+        if(!rb) continue;
+        rb->torque += drive_speed * rb->inertia() * delta_time * direction;
+    }
+    const float camera_damping = 10.0f;
+    auto& viewer_transform =
+            *ECS.getComponent<Transform>(viewer_entity);
+    auto player_pos = ECS.getComponent<Transform>(*player.chassis.begin())->position;
+    viewer_transform.position = viewer_transform.position * (1-camera_damping*delta_time) +
+         player_pos * (camera_damping * delta_time);
+
+    ground.update(ECS, player_pos);
 }
 int main()
 {

@@ -51,7 +51,7 @@ void App::setupECS() {
     registerSceneSystems(device, ECS);
 }
 void App::run() {
-    // Log::enableLoggingToCerr();
+    Log::enableLoggingToCerr();
     Log::enableLoggingToFlie("log.log");
     EMP_LOG(LogLevel::INFO) << "start running ...";
     EMP_LOG(LogLevel::INFO) << "ECS...";
@@ -75,8 +75,8 @@ void App::run() {
 
     Camera camera{};
 
-    auto viewer_object = ECS.createEntity();
-    ECS.addComponent(viewer_object, Transform({0.f, 0.f}));
+    viewer_entity = ECS.createEntity();
+    ECS.addComponent(viewer_entity, Transform({0.f, 0.f}));
     // viewerObject.transform.translation.z = -2.5f;
 
     auto& physics_sys = *ECS.getSystem<PhysicsSystem>();
@@ -112,17 +112,15 @@ void App::run() {
 
         float delta_time = delta_clock.restart();
 
-        controller.update( window, *ECS.getComponent<Transform>(viewer_object));
+        controller.update( window, *ECS.getComponent<Transform>(viewer_entity));
 
         gui_manager.addUpdateTime(delta_time);
         onUpdate(delta_time, window, controller);
         {
-            assert(ECS.hasComponent<Transform>(viewer_object));
+            assert(ECS.hasComponent<Transform>(viewer_entity));
 
             auto& viewer_transform =
-                    *ECS.getComponent<Transform>(viewer_object);
-            viewer_transform.position +=
-                    controller.lookingInPlane2D() * delta_time * 500.f;
+                    *ECS.getComponent<Transform>(viewer_entity);
 
             camera.setView(
                     viewer_transform.position, viewer_transform.rotation

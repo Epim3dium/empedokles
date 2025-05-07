@@ -176,7 +176,8 @@ private:
     int add(const int node_idx, size_t depth, const AABB& box, const T& value)
     {
         assert(node_idx != invalid);
-        assert(AABBcontainsAABB(box, m_getAABB(value)));
+        if(!AABBcontainsAABB(box, m_getAABB(value)))
+            return -1;
         if (isLeaf(node_idx))
         {
             if (depth >= max_depth || m_nodes[node_idx].count < threshold) {

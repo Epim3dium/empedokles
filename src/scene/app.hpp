@@ -56,6 +56,8 @@ protected:
     
     KeyboardController controller;
     Coordinator ECS;
+    //holds camera
+    Entity viewer_entity;
 
     void setPhysicsTickrate(const float tick_rate);
     float getWidth() const {
