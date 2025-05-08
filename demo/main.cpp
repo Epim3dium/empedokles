@@ -10,6 +10,8 @@
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
 #include <cstdio>
+#include <iterator>
+#include <string>
 #include <vector>
 using namespace emp;
 
@@ -30,7 +32,34 @@ struct GroundSystem {
     float block_len;
     float amp_inc = 4;
 
-    void setBlock(Coordinator& ECS, uint32_t idx) {
+    std::vector<std::string> models_to_dispose;
+
+    void createModel(Coordinator& ECS, Device& device, Entity block, vec2f p1, vec2f p2, float angle, float scale_x) {
+        auto prev_model = ECS.getComponent<Model>(block);
+        if(prev_model) {
+            while (models_to_dispose.size() > 8) {
+                Model::remove(models_to_dispose.front());
+                models_to_dispose.erase(models_to_dispose.begin());
+            }
+            models_to_dispose.push_back(prev_model->getID());
+            // Model::remove(prev_model->getID());
+            ECS.removeComponent<Model>(block);
+        }
+        p1.x -= 0.01;
+        p2.x += 0.01;
+        auto pad = rotateVec(vec2f(0, 500+amp), -angle);
+        pad.x /= scale_x;
+        auto builder = ModelAsset::Builder();
+        builder.vertices.push_back(Vertex{vec3f((p1.x + pad.x), pad.y ,  0)});
+        builder.vertices.push_back(Vertex{vec3f((p1.x), p1.y , 0)});
+        builder.vertices.push_back(Vertex{vec3f((p2.x), p2.y , 0)});
+        builder.vertices.push_back(Vertex{vec3f((p2.x + pad.x), pad.y ,  0)});
+        builder.indices = {0, 1, 2, 2, 3, 0};
+        std::string id = "block" + std::to_string(block) + std::to_string(p1.x) + std::to_string(angle); 
+        Model::create(id, device, builder);
+        ECS.addComponent(block, Model(id));
+    }
+    void setBlock(Coordinator& ECS, Device& device, uint32_t idx) {
         auto spacing = block_len;
         auto block = blocks[idx%blocks.size()];
         auto h = Perlin::perlin((float)seed / blocks.size(), (float)seed / blocks.size() * 0.49) * amp; 
@@ -42,15 +71,15 @@ struct GroundSystem {
 
         vec2f diff_perp = {-diff.y, diff.x};
         vec2f pos = vec2f{spacing * (idx + 0.5), (h+next_h)/2.f} + base_pos;
-        float height = block_len * 9;
-        pos += normal(diff_perp) * (height/2);
-        transform = Transform(pos, ang, {diff_l, height});
+        pos += normal(diff_perp);
+        transform = Transform(pos, ang, {diff_l, 1.f});
         amp += amp_inc;
+        createModel(ECS, device, block, {-0.5 ,0}, {0.5 ,0}, ang, diff_l);
     }
 
-    void setCurBlock(Coordinator& ECS) {
+    void setCurBlock(Coordinator& ECS, Device& device) {
         seed ++;
-        setBlock(ECS, cur_block_idx);
+        setBlock(ECS, device, cur_block_idx);
         cur_block_idx++;
     }
     void init(Coordinator& ECS, Device& device, vec2f player_pos, uint32_t nb_blocks = 32, float seg_len = 70.f) {
@@ -59,17 +88,7 @@ struct GroundSystem {
         seed = player_pos.x / block_len + player_pos.y / block_len * 3.f + time(NULL) % nb_blocks;
 
         auto col_shape = unit_cube;
-        auto builder = ModelAsset::Builder();
-        for(auto v : unit_cube) {
-            builder.vertices.push_back({});
-            builder.vertices.back().position = vec3f(v.x, v.y, 0);
-        }
-        builder.vertices[1].position.x *= 3;
-        builder.vertices[2].position.x *= 3;
-        builder.indices = {0, 1, 2, 2, 3, 0};
-        Model::create("ground", device, builder);
 
-        auto model = Model("ground");
         auto rb = Rigidbody(true);
         auto mat = Material();
         auto col = Collider(col_shape);
@@ -77,23 +96,22 @@ struct GroundSystem {
             auto block = ECS.createEntity();
             blocks.push_back(block);
             ECS.addComponent(block, Transform(base_pos));
-            ECS.addComponent(block, model);
             ECS.addComponent(block, rb);
             ECS.addComponent(block, mat);
             ECS.addComponent(block, col);
         }
         for(int i = 0; i < nb_blocks; i++) {
-            setCurBlock(ECS);
+            setCurBlock(ECS, device);
         }
 
     }
-    void update(Coordinator& ECS, vec2f player_position) {
+    void update(Coordinator& ECS, Device& device, vec2f player_position) {
         const float threshold = block_len * blocks.size()/2;
         auto last = cur_block_idx + blocks.size();
         auto block = blocks[last % blocks.size()];
         auto trans = ECS.getComponent<Transform>(block);
         while(trans && player_position.x - trans->position.x  > threshold) {
-            setCurBlock(ECS);
+            setCurBlock(ECS, device);
         }
     }
 };
@@ -193,7 +211,7 @@ void Demo::onSetup(Window& window, Device& device) {
     emitter.speed = {1.f, 10.f};
     ECS.addComponent(mouse_entity, emitter);
 
-    ECS.getSystem<PhysicsSystem>()->gravity = {0, 20000.f};
+    ECS.getSystem<PhysicsSystem>()->gravity = {0, 10000.f};
     ECS.getSystem<PhysicsSystem>()->substep_count = 16U;
     this->setPhysicsTickrate(120.f);
 
@@ -227,6 +245,19 @@ void Demo::setupPlayer(Player& player) {
         }
         Model::create("wheel", device, builder);
     }
+    auto chassis = ECS.createEntity();
+    {
+        player.chassis.insert(chassis);
+        auto col = Collider(cube_model_shape);
+        col.collider_layer = PLAYER;
+        auto sprite = Sprite(Texture("car"), {70.f, 90.f});
+        ECS.addComponent(chassis, col);
+        ECS.addComponent(chassis, Rigidbody(false));
+        ECS.addComponent(chassis, Material());
+        ECS.addComponent(chassis, sprite);
+        ECS.addComponent(chassis, Transform({0, -player.wheel_size/3}, 0.f, {2.25f, 0.75}));
+        gui_manager.alias(chassis, "chassis");
+    }
     std::vector<vec2f> wheel_positions = {{50, player.wheel_size * 1.5}, {-50, player.wheel_size * 1.5}};
     auto col = Collider(wheel_shape); col.collider_layer = PLAYER;
     auto rb = Rigidbody(false);
@@ -244,26 +275,15 @@ void Demo::setupPlayer(Player& player) {
         player.wheels.insert(wheel);
     }
 
-    auto chassis = ECS.createEntity();
-    player.chassis.insert(chassis);
-    col = Collider(cube_model_shape);
-    col.collider_layer = PLAYER;
-    auto sprite = Sprite(Texture("car"), {70.f, 90.f});
-    ECS.addComponent(chassis, col);
-    ECS.addComponent(chassis, Rigidbody(false));
-    ECS.addComponent(chassis, Material());
-    ECS.addComponent(chassis, sprite);
-    ECS.addComponent(chassis, Transform({0, -player.wheel_size/3}, 0.f, {2.25f, 0.75}));
-    gui_manager.alias(chassis, "chassis");
 
     for(auto wheel : player.wheels) {
         auto constr_entity = ECS.createEntity();
         Constraint::Builder builder;
         builder
-            .addConstrainedEntity(wheel, *ECS.getComponent<Transform>(wheel))
             .addConstrainedEntity(chassis, *ECS.getComponent<Transform>(chassis))
+            .addConstrainedEntity(wheel, *ECS.getComponent<Transform>(wheel))
             .enableCollision(false)
-            .setCompliance(2e-7f)
+            .setCompliance(1e-7f)
             .setHinge(ECS.getComponent<Transform>(wheel)->position);
         ECS.addComponent<Constraint>(constr_entity, builder.build());
         gui_manager.alias(constr_entity, "spring");
@@ -462,7 +482,7 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     viewer_transform.position = viewer_transform.position * (1-camera_damping*delta_time) +
          player_pos * (camera_damping * delta_time);
 
-    ground.update(ECS, player_pos);
+    ground.update(ECS, device, player_pos);
 }
 int main()
 {
