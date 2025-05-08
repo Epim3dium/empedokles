@@ -73,6 +73,11 @@ public:
     ModelAsset& model() {
         return *m_model_table.at(m_id);
     }
+    static void remove(std::string id) {
+        if(!m_model_table.contains(id))
+            return;
+        m_model_table.erase(id);
+    }
     static void create(
             std::string id, Device& device, const ModelAsset::Builder& builder
     ) {
