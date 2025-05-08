@@ -3,6 +3,7 @@
 #include <memory>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
+#include "templates/sweep_line.hpp"
 #include "math/geometry_func.hpp"
 #include "math/math_func.hpp"
 #include "physics/collider.hpp"
@@ -224,55 +225,22 @@ void PhysicsSystem::m_filterPotentialCollisions(
         }
     }
 }
-void PhysicsSystem::m_updateQuadTree() {
-    AABB current_minimal = AABB::Expandable();
-    for(auto e : entities) {
-        const auto& col = getComponent<Collider>(e);
-        const auto& trans = getComponent<Transform>(e);
-
-        auto aabb = col.extent();
-        aabb = AABB::TransformedAABB(trans.global(), aabb);
-
-        current_minimal.expandToContain(aabb.min);
-        current_minimal.expandToContain(aabb.max);
-    }
-    if(m_quad_tree == nullptr || !AABBcontainsAABB(m_quad_tree->getAABB(), current_minimal)) {
-        if(m_quad_tree){
-            EMP_LOG(DEBUG2) << "quad tree rebuilt, size: " << m_quad_tree->getAABB().size().x << "\t" << m_quad_tree->getAABB().size().y;
-        }
-        m_quad_tree.reset();
-        current_minimal.setSize(current_minimal.size() * 2.f);
-        m_quad_tree = std::unique_ptr<QuadTree_t>(new QuadTree_t(current_minimal, m_aabb_extracter));
-    }
-    m_quad_tree->clear();
-    for(auto e : entities) {
-        const auto& col = getComponent<Collider>(e);
-        const auto& trans= getComponent<Transform>(e);
-        auto shape = col.transformed_shape(trans);
-        for(int i = 0; i < shape.size(); i++) {
-            auto aabb = AABB::CreateFromVerticies(shape[i]);
-            aabb.setSize(aabb.size() * 1.5f);
-            m_quad_tree->add({e, i, aabb});
-        }
-    }
-    m_quad_tree->updateLeafes();
-}
 std::vector<CollidingPair> PhysicsSystem::m_broadPhase(const ColliderSystem& collider_system, const TransformSystem& transform_system) {
     // m_updateQuadTree();
-    auto all_pairs = m_quad_tree->findAllIntersections();
+    // auto all_pairs = m_quad_tree->findAllIntersections();
+    std::vector<CollidingPoly> objs;
+    for(auto e : entities) {
+        auto& col = collider_system.getComponent<Collider>(e);
+        auto& trans = collider_system.getComponent<Transform>(e);
+        auto shape = col.transformed_shape(trans);
+        for(int i = 0; i < shape.size(); i++) {
+            objs.push_back({e, i, AABB::CreateFromVerticies(shape[i])});
+        }
+    }
+    auto all_pairs = sweepLine<CollidingPoly>(objs.begin(), objs.end(), [](const CollidingPoly& poly)->AABB {
+        return std::get<AABB>(poly);
+    });
     m_filterPotentialCollisions(all_pairs, collider_system);
-    // std::vector<CollidingPoly> objs;
-    // for(auto e : entities) {
-    //     const auto& collider = collider_system.getComponent<Collider>(e);
-    //     const auto& transform = transform_system.getComponent<Transform>(e);
-    //     auto shape = collider.transformed_shape(transform);
-    //     for(int i = 0; i < shape.size(); i++) {
-    //         objs.push_back({e, i, AABB::CreateFromVerticies(shape[i])});
-    //     }
-    // }
-    // auto all_pairs = sweepBroadPhase<CollidingPoly>(objs.begin(), objs.end(), [](const CollidingPoly& poly)->AABB {
-    //     return std::get<AABB>(poly);
-    // });
     return all_pairs;
 }
 std::vector<PhysicsSystem::PenetrationConstraint> PhysicsSystem::m_narrowPhase(
@@ -514,7 +482,6 @@ void PhysicsSystem::update(
 ) {
     m_have_collided.reset();
     trans_sys.update();
-    m_updateQuadTree();
     m_applyGravity(delT);
     m_applyAirDrag(delT);
     for (int i = 0; i < substep_count; i++) {

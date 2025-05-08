@@ -12,7 +12,6 @@
 #include "physics/rigidbody.hpp"
 #include "scene/transform.hpp"
 #include "templates/disjoint_set.hpp"
-#include "templates/quad_tree.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -65,7 +64,6 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
 
     bool m_isCollisionAllowed(const CollidingPair&, const ColliderSystem& col_sys) const;
     void m_filterPotentialCollisions(std::vector<CollidingPair>&, const ColliderSystem& col_sys);
-    void m_updateQuadTree();
 
     std::vector<PenetrationConstraint> m_narrowPhase(
             ColliderSystem& col_sys,
@@ -95,8 +93,6 @@ class PhysicsSystem : public System<Transform, Collider, Rigidbody, Material> {
             float deltaTime
     );
 
-    typedef QuadTree<std::tuple<Entity, size_t, AABB>, AABBextracter&> QuadTree_t;
-    std::unique_ptr<QuadTree_t> m_quad_tree;
     AABBextracter m_aabb_extracter;
 
     DisjointSet<MAX_ENTITIES> m_collision_islands;
