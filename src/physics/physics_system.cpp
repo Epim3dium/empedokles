@@ -1,5 +1,6 @@
 #include "physics_system.hpp"
 #include <glm/vector_relational.hpp>
+#include <cmath>
 #include <memory>
 #include "core/coordinator.hpp"
 #include "debug/log.hpp"
@@ -393,12 +394,14 @@ void PhysicsSystem::m_applyAirDrag(float delta_time) {
         }
         auto& material = getComponent<Material>(e);
         auto magnitude = dot(rb.velocity, rb.velocity);
-        if(magnitude == 0.f) {
-            continue;
-        }
+        auto mag_torque = rb.angular_velocity * rb.angular_velocity;
         auto direction = -normal(rb.velocity);
+        auto dir_torque = -std::copysign(1.f, rb.angular_velocity);
         if (!rb.isStatic) {
-            rb.force += direction * magnitude * material.air_friction * delta_time;
+            if(magnitude != 0)
+                rb.force += direction * magnitude * material.air_friction * delta_time;
+            if(mag_torque != 0)
+                rb.torque += dir_torque * mag_torque * material.air_friction * delta_time;
         }
     }
 }
@@ -464,9 +467,9 @@ void PhysicsSystem::m_step(
     m_processSleep(delta_time, const_sys);
     rb_sys.integrate(delta_time, DORMANT_TIME_THRESHOLD);
     trans_sys.update();
-    const_sys.update(delta_time);
     auto potential_pairs = m_broadPhase(col_sys, trans_sys);
     auto penetrations = m_narrowPhase(col_sys, potential_pairs, delta_time);
+    const_sys.update(delta_time);
     
     trans_sys.update();
     rb_sys.deriveVelocities(delta_time, DORMANT_TIME_THRESHOLD);
