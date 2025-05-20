@@ -2,7 +2,31 @@
 My dream project of an engine able to run interactive live simulations of fluid, solid and liquid. 
 My goal is not to achieve accuracy but to make it playable in real time.
 ![basic_scene](https://github.com/Epim3dium/empedokles/blob/39062b4dae5caba00d29362d9f37a9e74a699d27/assets/captures/KnightShowcase.gif)
-### Requirements (🎯 Target)
+# ✅ DONE:
+- collision
+    - added more constraints
+        - anchored swivel
+        - unanchored swivel
+        - anchored fixed 
+        - unanchored fixed 
+- collision
+    - collision optimization
+        - collision idle state
+    - collision triggers
+- graphics
+    - gui - mainly for debuggin for now
+    - resizable window
+    - render system abstraction
+    - basic animation system
+        - animated sprites
+        - finite state machine animated sprite switching
+- basic editor
+- constraints as components
+
+### Editor:
+![editor](https://github.com/Epim3dium/empedokles/blob/a870e205c718a59be28882cd5341082e882f092d/assets/captures/EditorView.png)
+
+### 🎯 Requirements (Target)
 * Basic animation system either bone or sprite based
 * Interactive simulation of:
     * Liquid 
@@ -13,13 +37,13 @@ My goal is not to achieve accuracy but to make it playable in real time.
 * Cross platform
 * Single-player (for now)
 * min req: M1 mac (without GPU it should work on anything else)
-### Specification
+### 📐 Specification
 * simulations working at runtime (60FPS) (for the cost of precision which I am able to sacrifice)
 * controls using keyboard and mouse
-### Art & Design
+### 🎨 Art & Design
 * Pixelart
 * Can be very simplistic
-### Implementation
+### </> Implementation
 * C++ as I need very good performance for all the simulation systems
 * git for version control
 * Main game logic uses hand crafted Entity Component System for speed and flexibility.
