@@ -47,6 +47,26 @@ My goal is not to achieve accuracy but to make it playable in real time.
 * C++ as I need very good performance for all the simulation systems
 * git for version control
 * Main game logic uses hand crafted Entity Component System for speed and flexibility.
+    * example of creating a platform through code:
+```c++
+        uint32_t platform = ECS.createEntity();
+        ECS.addComponent(
+                platform, Transform(position, rotation, scale)
+        );
+        auto col = Collider(platform_shape);
+        col.collider_layer = GROUND;
+        ECS.addComponent(platform, col);
+        ECS.addComponent(platform, Rigidbody{ .isStatic = true });
+        ECS.addComponent(platform, Material());
+        auto model = Model("platform_debug");
+        model.color = {0.05, 0.15, 0.05, 1};
+        ECS.addComponent(platform, model);
+```
+    * adding a new component/system is as easy as:
+```c++
+        ECS.registerComponent<TestComponent>();
+        ECS.registerSystem<TestSystem>();
+```
 * Rendering done from the ground up using vulkan. (Huge thanks to awesome guides: [vulkan-tutorial](https://vulkan-tutorial.com/) and [vkguide](https://vkguide.dev/))
 * dependancies:
     * [GLM](https://github.com/g-truc/glm) as a math library, because implementation of all the math functions would be very time consuming.
