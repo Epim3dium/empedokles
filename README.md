@@ -10,6 +10,7 @@ My goal is not to achieve accuracy but to make it playable in real time.
     * Rigidbody
 * Interaction between simulation systems
 * Cross platform
+* Single-player (for now)
 * min req: M1 mac (without GPU it should work on anything else)
 ### Specification
 * simulations working at runtime (60FPS) (for the cost of precision which I am able to sacrifice)
@@ -17,7 +18,6 @@ My goal is not to achieve accuracy but to make it playable in real time.
 ### Art & Design
 * Pixelart
 * Can be very simplistic
-* Single-player (for now)
 ### Implementation
 * C++ as I need very good performance for all the simulation systems
 * git for version control
