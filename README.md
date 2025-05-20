@@ -1,7 +1,7 @@
 # Empedokles
 My dream project of an engine able to run interactive live simulations of fluid, solid and liquid. 
 My goal is not to achieve accuracy but to make it playable in real time.
-### Requirements
+### Requirements (🎯 Target)
 * Basic animation system either bone or sprite based
 * Interactive simulation of:
     * Liquid 
@@ -14,10 +14,9 @@ My goal is not to achieve accuracy but to make it playable in real time.
 ### Specification
 * simulations working at runtime (60FPS) (for the cost of precision which I am able to sacrifice)
 * controls using keyboard and mouse
-### Design
+### Art & Design
 * Pixelart
 * Can be very simplistic
-* Can be single screen, according to the performance might upscale it to multiscreen in the future
 * Single-player (for now)
 ### Implementation
 * C++ as I need very good performance for all the simulation systems
