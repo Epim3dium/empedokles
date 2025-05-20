@@ -1,6 +1,7 @@
 # Empedokles
 My dream project of an engine able to run interactive live simulations of fluid, solid and liquid. 
 My goal is not to achieve accuracy but to make it playable in real time.
+![basic_scene](https://github.com/Epim3dium/empedokles/blob/39062b4dae5caba00d29362d9f37a9e74a699d27/assets/captures/KnightShowcase.gif)
 ### Requirements (🎯 Target)
 * Basic animation system either bone or sprite based
 * Interactive simulation of:
