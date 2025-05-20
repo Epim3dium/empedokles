@@ -17,6 +17,8 @@ struct SpriteInfo {
     glm::vec2 rect_min = {0, 0};
     glm::vec2 rect_max = {1, 1};
     glm::vec2 flip = {0, 0}; // only 0.f or 1.f
+    float order;
+    float padding;
 };
 struct SpriteSystem : public System<Sprite, Transform> {
     SpriteSystem(Device& device);

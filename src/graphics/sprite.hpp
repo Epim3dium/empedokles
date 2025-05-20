@@ -46,6 +46,7 @@ public:
     }
 
     vec2f position_offset = vec2f(0, 0);
+    float order = 0.f;
 
     // size set by default
     Sprite() { }

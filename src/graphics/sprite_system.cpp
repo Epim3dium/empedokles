@@ -72,6 +72,7 @@ void SpriteSystem::updateBuffer(int frameIndex) {
             data.color_override = sprite.color_override.value();
         }
         data.color = sprite.color;
+        data.order= sprite.order;
 
         uboBuffers[frameIndex]->writeToIndex(&data, e);
     }

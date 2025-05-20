@@ -35,11 +35,14 @@ layout(set = 1, binding = 0) uniform SpriteInfo {
     vec2 rect_min;
     vec2 rect_max;
     vec2 flip; // only 0.f or 1.f
+    float order;
+    float _pad;
 } sprite;
 
 
 void main() {
     vec4 positionWorld = sprite.model_matrix * sprite.offset_matrix * sprite.pivot_matrix * sprite.size_matrix * vec4(position, 1.0);
+    positionWorld = vec4(positionWorld.x, positionWorld.y, sprite.order, 1);
     gl_Position = ubo.projection * ubo.view * positionWorld;
     fragPosWorld = positionWorld.xyz;
     fragColor = vec4(color, 1);
