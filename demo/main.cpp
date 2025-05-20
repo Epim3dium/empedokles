@@ -6,6 +6,8 @@
 #include "physics/collider.hpp"
 #include "physics/rigidbody.hpp"
 #include "scene/app.hpp"
+#include "utils/time.hpp"
+#include <cmath>
 #include <cstdio>
 #include <vector>
 using namespace emp;
@@ -40,6 +42,7 @@ class Demo : public App {
         Texture crate_texture;
         Entity mouse_entity;
         Entity protagonist;
+        Entity background_static;
 
         std::vector<vec2f> protagonist_shape = {
                 vec2f(-100.f/4, -100.f/1.5),
@@ -49,7 +52,11 @@ class Demo : public App {
         };
         
         float protagonist_speed = 600.f;
+        float protagonist_speed_max = 100000.f;
         Entity isProtagonistGrounded;
+        bool isProtagonistAttacking;
+        bool isProtagonistRolling;
+        Stopwatch timerSinceRoll;
         float isProtagonistGroundedSec;
         static constexpr float cayote_time = 0.25f;
         static constexpr float cube_side_len = 70.f;
@@ -81,11 +88,14 @@ class Demo : public App {
                 {
                     {"../assets/textures/dummy.png", "dummy"},
                     {"../assets/textures/crate.jpg", "crate"},
+                    {"../assets/textures/background.jpg", "background"},
                     {"../assets/textures/knight/_Run.png", "running"},
                     {"../assets/textures/knight/_Jump.png", "jump-up"},
                     {"../assets/textures/knight/_Fall.png", "jump-down"},
                     {"../assets/textures/knight/_Idle.png", "idle"},
-                    {"../assets/textures/knight/_JumpFallInbetween.png", "jumpfall"}
+                    {"../assets/textures/knight/_AttackNoMovement.png", "attack"},
+                    {"../assets/textures/knight/_Roll.png", "roll"},
+                    {"../assets/textures/knight/_JumpFallInbetween.png", "jumpfall"},
                 })
                 {}
 };
@@ -94,12 +104,15 @@ void Demo::onSetup(Window& window, Device& device) {
     gui_manager.alias(ECS.world(), "world_entity");
     ECS.registerSystem<MouseSelectionSystem>();
     ECS.getSystem<ColliderSystem>()->disableCollision(FRIENDLY, FRIENDLY);
+    ECS.getSystem<ColliderSystem>()->disableCollision(FRIENDLY, PLAYER);
 
     crate_texture = Texture("crate");
     controller.bind(eKeyMappings::Shoot, GLFW_MOUSE_BUTTON_LEFT);
 
     controller.bind(eKeyMappings::Ability1, GLFW_KEY_C);
     controller.bind(eKeyMappings::Ability2, GLFW_KEY_T);
+    controller.bind(eKeyMappings::Ability3, GLFW_KEY_H);
+    controller.bind(eKeyMappings::Ability4, GLFW_KEY_J);
     controller.bind(eKeyMappings::Jump, GLFW_KEY_SPACE);
 
     controller.bind(eKeyMappings::LookUp, GLFW_KEY_W);
@@ -111,6 +124,13 @@ void Demo::onSetup(Window& window, Device& device) {
     controller.bind(eKeyMappings::MoveDown, GLFW_KEY_DOWN);
     controller.bind(eKeyMappings::MoveLeft, GLFW_KEY_LEFT);
     controller.bind(eKeyMappings::MoveRight, GLFW_KEY_RIGHT);
+
+    background_static = ECS.createEntity();
+    auto spr = Sprite(Texture("background"));
+    spr.order = 0.7;
+    spr.color = {0.3, 0.3, 0.3, 1};
+    ECS.addComponent(background_static, spr);
+    ECS.addComponent(background_static, Transform(vec2f(0, 0), 0, vec2f(2, 2)));
 
     protagonist = ECS.createEntity();
     gui_manager.alias(protagonist, "protagonist");
@@ -191,7 +211,9 @@ void Demo::onSetup(Window& window, Device& device) {
         ECS.addComponent(platform, col);
         ECS.addComponent(platform, Rigidbody{true});
         ECS.addComponent(platform, Material());
-        ECS.addComponent(platform, Model("platform_debug"));
+        auto model = Model("platform_debug");
+        model.color = {0.05, 0.15, 0.05, 1};
+        ECS.addComponent(platform, model);
     }
 
     ECS.getSystem<PhysicsSystem>()->gravity = {0, 20000.f};
@@ -216,6 +238,20 @@ void Demo::setupAnimationForProtagonist(Entity entity) {
     }
     AnimatedSprite::Builder build("idle", idle_moving);
     {
+        {
+            Sprite jumping_spr = Sprite(Texture("attack"), def_size);
+            jumping_spr.centered = true;
+            jumping_spr.hframes = 4;
+            jumping_spr.vframes = 1;
+            build.addNode("attack", MovingSprite::allFrames(jumping_spr, 0.30f, false));
+        }
+        {
+            Sprite jumping_spr = Sprite(Texture("roll"), def_size);
+            jumping_spr.centered = true;
+            jumping_spr.hframes = 12;
+            jumping_spr.vframes = 1;
+            build.addNode("roll", MovingSprite::allFrames(jumping_spr, 0.30f, false));
+        }
         {
             Sprite running_sprite = Sprite(Texture("running"), def_size);
             running_sprite.centered = true;
@@ -264,6 +300,19 @@ void Demo::setupAnimationForProtagonist(Entity entity) {
         auto hasFallen = [&](Entity owner) {
             return isProtagonistGrounded != false;
         };
+        auto isAttacking = [&](Entity owner) {
+            return isProtagonistAttacking;
+        };
+        auto isRolling = [&](Entity owner) {
+            return isProtagonistRolling;
+        };
+        build.addEdge("idle", "attack", isAttacking);
+        build.addEdge("run", "attack", isAttacking);
+        build.addEdge("attack", "idle");
+
+        build.addEdge("run", "roll", isRolling);
+        build.addEdge("roll", "run");
+
         build.addEdge("idle", "fall", isFalling);
         build.addEdge("run", "fall", isFalling);
         build.addEdge("idle", "jump", isJumping);
@@ -302,9 +351,10 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
             isProtagonistGroundedSec = 0.f;
         } 
         if(ECS.isEntityAlive(protagonist)){
+            auto direction = controller.movementInPlane2D().x;
             ECS.getComponent<Rigidbody>(protagonist)->velocity.x +=
-                    controller.movementInPlane2D().x *
-                    (protagonist_speed / 2.f + protagonist_speed / 2.f *
+                    direction * 
+                    (protagonist_speed * 0.5 + protagonist_speed / 2.f *
                             (isProtagonistGrounded != false)) *
                     delta_time;
             auto& rb = *ECS.getComponent<Rigidbody>(protagonist);
@@ -329,9 +379,10 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
     }
 
     static vec2f last_pos;
-    if (controller.get(eKeyMappings::Ability1).held) {
+    if (controller.get(eKeyMappings::Ability1).pressed) {
         last_pos = vec2f(controller.global_mouse_pos());
         Sprite spr = Sprite(crate_texture, {cube_side_len, cube_side_len});
+        spr.order = 0;
         Rigidbody rb;
         auto col = Collider(cube_model_shape); col.collider_layer = ITEM;
         auto entity = ECS.createEntity();
@@ -346,6 +397,46 @@ void Demo::onUpdate(const float delta_time, Window& window, KeyboardController& 
         Material mat; mat.static_friction = 0.8f;
         ECS.addComponent(entity, mat);
         ECS.addComponent(entity, spr);
+    }
+    if (controller.get(eKeyMappings::Ability2).pressed) {
+        Sprite spr = Sprite(Texture("dummy"), {cube_side_len * 2, cube_side_len * 2});
+        Rigidbody rb;
+        auto shape = cube_model_shape;
+        for(auto& v : shape) v.y *= 2.f;
+        auto col = Collider(shape); col.collider_layer = FRIENDLY;
+        auto entity = ECS.createEntity();
+        gui_manager.alias(entity, "dummy");
+
+        ECS.addComponent(
+                entity, Transform(vec2f(controller.global_mouse_pos()), 0.f)
+        );
+        ECS.addComponent(entity, col);
+        ECS.addComponent(entity, rb);
+        Material mat; mat.static_friction = 0.8f;
+        ECS.addComponent(entity, mat);
+        ECS.addComponent(entity, spr);
+    }
+    if (controller.get(eKeyMappings::Ability3).pressed) {
+        if(isProtagonistGrounded && abs(ECS.getComponent<Rigidbody>(protagonist)->velocity.x) < 50.f) {
+            isProtagonistAttacking = true;
+        }
+    }else {
+            isProtagonistAttacking = false;
+    }
+    if (controller.get(eKeyMappings::Ability4).pressed) {
+        if(isProtagonistGrounded && abs(ECS.getComponent<Rigidbody>(protagonist)->velocity.x) > 25.f) {
+            auto vel = ECS.getComponent<Rigidbody>(protagonist)->velocity.x;
+            auto rolling_vel = 500.f;
+            ECS.getComponent<Rigidbody>(protagonist)->velocity.x += copysign(rolling_vel - abs(vel), vel);
+
+            isProtagonistRolling = true;
+            timerSinceRoll.restart();
+        }
+    }else {
+        if(timerSinceRoll.getElapsedTime() > 0.5f && timerSinceRoll.getElapsedTime() < 1.f) {
+            ECS.getComponent<Rigidbody>(protagonist)->velocity.x *= 0.95f;
+        }
+        isProtagonistRolling = false;
     }
     
     auto mouse_pos = controller.global_mouse_pos();
