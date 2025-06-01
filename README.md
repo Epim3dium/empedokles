@@ -1,28 +1,7 @@
 # Empedokles
+A work-in-progress game engine based on custom ECS, rendered using Vulkan API.
 My dream project of an engine able to run interactive live simulations of fluid, solid and liquid. 
-My goal is not to achieve accuracy but to make it playable in real time.
 ![basic_scene](https://github.com/Epim3dium/empedokles/blob/39062b4dae5caba00d29362d9f37a9e74a699d27/assets/captures/KnightShowcase.gif)
-### ✅ DONE:
-- collision
-    - added more constraints
-        - anchored swivel
-        - unanchored swivel
-        - anchored fixed 
-        - unanchored fixed 
-- collision
-    - collision optimization
-        - collision idle state
-    - collision triggers
-- graphics
-    - gui - mainly for debuggin for now
-    - resizable window
-    - render system abstraction
-    - basic animation system
-        - animated sprites
-        - finite state machine animated sprite switching
-- basic editor
-- constraints as components
-
 ### Editor:
 ![editor](https://github.com/Epim3dium/empedokles/blob/a870e205c718a59be28882cd5341082e882f092d/assets/captures/EditorView.png)
 
@@ -43,6 +22,35 @@ My goal is not to achieve accuracy but to make it playable in real time.
 ### 🎨 Art & Design
 * Pixelart
 * Can be very simplistic
+### ✅ DONE:
+- custom ECS where every entity is just a number
+    - registering of more components
+    - registering of more systems
+    - custom system onEnitityAdded/removed
+- collision
+    - basic of collision detection & resolution using XPBD
+    - added more constraints
+        - anchored swivel
+        - unanchored swivel
+        - anchored fixed 
+        - unanchored fixed 
+    - optimization
+        - broad phase
+        - idle state
+    - triggers
+- graphics
+    - gui - mainly for debugging for now
+    - resizable window
+    - render system abstraction
+    - basic animation system
+        - animated sprites
+        - finite state machine animated sprite switching
+    - abstraction of all basic components (Textures, RenderSystems etc.)
+    - work ready compute pipeline
+    - compute-updated particle system
+- basic editor
+- constraints as components
+
 ### </> Implementation
 * C++ as I need very good performance for all the simulation systems
 * git for version control
